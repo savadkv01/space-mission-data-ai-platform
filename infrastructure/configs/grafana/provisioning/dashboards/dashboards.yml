@@ -1,0 +1,16 @@
+# ============================================================================
+# Grafana dashboard provider — Phase 4 Infrastructure Blueprint
+# Loads dashboard JSON files placed under /etc/grafana/provisioning/dashboards.
+# ============================================================================
+apiVersion: 1
+
+providers:
+  - name: space-platform
+    orgId: 1
+    folder: "Space Platform"
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards

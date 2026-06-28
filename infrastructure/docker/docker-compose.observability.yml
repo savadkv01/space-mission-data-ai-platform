@@ -1,0 +1,129 @@
+# ============================================================================
+# Observability + BI Stack — Prometheus, Grafana, OTel Collector, Superset
+# Extends docker-compose.yml. Cross-cutting; start AFTER storage.
+#   docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+#
+# NOTE: YAML anchors are file-scoped; shared anchors are re-declared here.
+# ============================================================================
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-resource-small: &resource-small
+  mem_limit: 512m
+  mem_reservation: 256m
+  cpus: 0.50
+
+x-defaults: &service-defaults
+  restart: unless-stopped
+  logging: *default-logging
+
+services:
+  prometheus:
+    <<: [*service-defaults, *resource-small]
+    image: prom/prometheus:latest
+    container_name: prometheus
+    profiles: ["obs", "all"]
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=72h"
+      - "--storage.tsdb.path=/prometheus"
+    volumes:
+      - ../configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    networks:
+      - ops-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    <<: *service-defaults
+    image: grafana/grafana:latest
+    container_name: grafana
+    profiles: ["obs", "all"]
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ../configs/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - ops-net
+      - edge-net
+    mem_limit: 256m
+    mem_reservation: 128m
+    cpus: 0.25
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  otel-collector:
+    <<: *service-defaults
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    profiles: ["obs", "all"]
+    command: ["--config=/etc/otel/otel-collector-config.yaml"]
+    volumes:
+      - ../configs/otel/otel-collector-config.yaml:/etc/otel/otel-collector-config.yaml:ro
+    ports:
+      - "${OTEL_GRPC_PORT:-4317}:4317"   # OTLP gRPC
+      - "${OTEL_HTTP_PORT:-4318}:4318"   # OTLP HTTP
+    networks:
+      - ops-net
+    mem_limit: 256m
+    mem_reservation: 128m
+    cpus: 0.25
+
+  superset:
+    <<: *service-defaults
+    image: apache/superset:latest
+    container_name: superset
+    profiles: ["obs", "bi", "all"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+      SUPERSET_LOAD_EXAMPLES: "no"
+      DATABASE_DIALECT: postgresql
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_DB: ${POSTGRES_DB}
+      DATABASE_USER: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      ADMIN_USERNAME: ${SUPERSET_ADMIN_USER}
+      ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+    # Superset metadata DB uses the 'superset' schema; first run requires
+    # `superset db upgrade && superset init` (handled by bootstrap.sh).
+    ports:
+      - "${SUPERSET_PORT:-8089}:8088"
+    volumes:
+      - superset-home:/app/superset_home
+    networks:
+      - edge-net
+      - data-net
+    mem_limit: 1g
+    mem_reservation: 512m
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5

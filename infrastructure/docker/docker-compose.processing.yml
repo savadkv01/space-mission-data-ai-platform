@@ -1,0 +1,136 @@
+# ============================================================================
+# Processing Stack — Spark (master + worker), Airflow, dbt
+# Extends docker-compose.yml. Start AFTER storage (+ ingestion for streaming).
+#   docker compose -f docker-compose.yml -f docker-compose.processing.yml up -d
+#
+# NOTE: YAML anchors are file-scoped; shared anchors are re-declared here.
+# Heavy stack — run Spark batch WITHOUT a concurrent Ollama peak.
+# ============================================================================
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-defaults: &service-defaults
+  restart: unless-stopped
+  logging: *default-logging
+
+services:
+  spark-master:
+    <<: *service-defaults
+    image: apache/spark:3.5.1
+    container_name: spark-master
+    profiles: ["processing", "core", "all"]
+    command: >
+      /opt/spark/bin/spark-class
+      org.apache.spark.deploy.master.Master
+    environment:
+      SPARK_MODE: master
+      SPARK_MASTER_HOST: spark-master
+    ports:
+      - "${SPARK_MASTER_UI_PORT:-8080}:8080"   # master UI
+    volumes:
+      - ../configs/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+    networks:
+      - compute-net
+      - data-net
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  spark-worker:
+    <<: *service-defaults
+    image: apache/spark:3.5.1
+    container_name: spark-worker
+    profiles: ["processing", "core", "all"]
+    restart: on-failure:3
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    command: >
+      /opt/spark/bin/spark-class
+      org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: 1500m
+      SPARK_WORKER_CORES: 2
+    ports:
+      - "${SPARK_WORKER_UI_PORT:-8081}:8081"   # worker UI
+    volumes:
+      - spark-work:/opt/spark/work
+      - ../configs/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+    networks:
+      - compute-net
+      - data-net
+      - stream-net
+    mem_limit: 2g
+    mem_reservation: 1g
+    cpus: 2.0
+
+  airflow:
+    <<: *service-defaults
+    image: apache/airflow:2.9.2
+    container_name: airflow
+    profiles: ["processing", "core", "all"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # 'standalone' runs webserver + scheduler in one process (LocalExecutor)
+    # to conserve memory on a 16 GB laptop.
+    command: ["bash", "-c", "airflow db migrate && airflow standalone"]
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?options=-csearch_path%3Dairflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "false"
+      AIRFLOW__METRICS__STATSD_ON: "false"
+    ports:
+      - "${AIRFLOW_PORT:-8082}:8080"
+    volumes:
+      - airflow-dags:/opt/airflow/dags
+      - airflow-logs:/opt/airflow/logs
+    networks:
+      - compute-net
+      - data-net
+      - ops-net
+    mem_limit: 1536m
+    mem_reservation: 768m
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # dbt runs as an ephemeral, on-demand transformation runner (no long-running
+  # process). It is typically invoked by Airflow. Profile 'tools' keeps it out
+  # of the default 'up'. Provide a project under dbt-project volume.
+  dbt:
+    <<: *service-defaults
+    image: ghcr.io/dbt-labs/dbt-postgres:1.7.latest
+    container_name: dbt
+    profiles: ["tools"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["tail", "-f", "/dev/null"]   # keep alive for exec-driven runs
+    working_dir: /usr/app
+    environment:
+      DBT_PROFILES_DIR: /usr/app/.dbt
+    volumes:
+      - dbt-project:/usr/app
+    networks:
+      - compute-net
+      - data-net
+    mem_limit: 384m
+    mem_reservation: 128m
+    cpus: 0.5

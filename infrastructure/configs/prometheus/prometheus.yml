@@ -1,0 +1,50 @@
+# ============================================================================
+# Prometheus scrape configuration — Phase 4 Infrastructure Blueprint
+# Mounted read-only into the prometheus container.
+# Targets use Docker DNS names on the ops-net network.
+# See docs/infrastructure/07-observability.md
+# ============================================================================
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    platform: space-data-ai
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: otel-collector
+    static_configs:
+      - targets: ["otel-collector:8889"]
+
+  - job_name: minio
+    metrics_path: /minio/v2/metrics/cluster
+    static_configs:
+      - targets: ["minio:9000"]
+
+  - job_name: qdrant
+    static_configs:
+      - targets: ["qdrant:6333"]
+
+  # The following targets require an exporter/instrumentation to be enabled
+  # when the corresponding service is implemented. They are listed so the
+  # scrape topology is complete and ready.
+  - job_name: postgres
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+
+  - job_name: kafka
+    static_configs:
+      - targets: ["kafka:9404"]   # JMX exporter agent port
+
+  - job_name: airflow
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["airflow:8080"]
+
+  - job_name: api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8000"]

@@ -1,0 +1,105 @@
+# ============================================================================
+# Storage Stack — PostgreSQL, MinIO, Iceberg REST catalog
+# Extends docker-compose.yml. Foundation stack; start FIRST.
+#   docker compose -f docker-compose.yml -f docker-compose.storage.yml up -d
+#
+# NOTE: YAML anchors are file-scoped in Docker Compose, so the shared anchors
+# from docker-compose.yml are re-declared here. Networks/volumes are inherited
+# from the base file at merge time.
+# ============================================================================
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-resource-small: &resource-small
+  mem_limit: 512m
+  mem_reservation: 256m
+  cpus: 0.50
+
+x-defaults: &service-defaults
+  restart: unless-stopped
+  logging: *default-logging
+
+services:
+  postgres:
+    <<: *service-defaults
+    image: postgres:16-alpine
+    container_name: postgres
+    profiles: ["storage", "core", "ai", "obs", "all"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Schema/role bootstrap SQL (idempotent) mounted read-only
+      - ../configs/postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - data-net
+      - ops-net
+    mem_limit: 1g
+    mem_reservation: 512m
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    <<: [*service-defaults, *resource-small]
+    image: minio/minio:latest
+    container_name: minio
+    profiles: ["storage", "core", "ai", "all"]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_PROMETHEUS_AUTH_TYPE: public
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - data-net
+      - ops-net
+      - edge-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  iceberg-rest:
+    <<: [*service-defaults, *resource-small]
+    image: tabulario/iceberg-rest:latest
+    container_name: iceberg-rest
+    profiles: ["storage", "core", "all"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      CATALOG_WAREHOUSE: s3://warehouse/
+      CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO
+      CATALOG_S3_ENDPOINT: http://minio:9000
+      CATALOG_S3_PATH__STYLE__ACCESS: "true"
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      CATALOG_CATALOG__IMPL: org.apache.iceberg.jdbc.JdbcCatalog
+      CATALOG_URI: jdbc:postgresql://postgres:5432/${POSTGRES_DB}?currentSchema=iceberg_catalog
+      CATALOG_JDBC_USER: ${POSTGRES_USER}
+      CATALOG_JDBC_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - data-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8181/v1/config"]
+      interval: 20s
+      timeout: 5s
+      retries: 5

@@ -1,0 +1,87 @@
+# ============================================================================
+# Space Mission Data & AI Platform — Base Compose
+# Phase 4 Infrastructure Blueprint (local, Docker Compose only, 16 GB laptop)
+#
+# This BASE file declares shared networks, named volumes, and reusable YAML
+# anchors (resource classes, logging, restart policy). Stack files extend it:
+#   docker-compose.storage.yml | .ingestion.yml | .processing.yml
+#   docker-compose.ai.yml      | .observability.yml
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.storage.yml up -d
+# See ../../docs/infrastructure/10-deployment-runbook.md
+# ============================================================================
+
+name: space-platform
+
+# --- Reusable anchors (referenced by stack files via <<: *anchor) -----------
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-restart: &default-restart
+  restart: unless-stopped
+
+# Resource classes (mem_limit / cpus) — see 04-resource-management.md
+x-resource-small: &resource-small
+  mem_limit: 512m
+  mem_reservation: 256m
+  cpus: 0.50
+
+x-resource-medium: &resource-medium
+  mem_limit: 1g
+  mem_reservation: 512m
+  cpus: 1.0
+
+x-resource-large: &resource-large
+  mem_limit: 2g
+  mem_reservation: 1g
+  cpus: 2.0
+
+# Common service defaults: logging + restart policy
+x-defaults: &service-defaults
+  <<: *default-restart
+  logging: *default-logging
+
+# --- Segmented bridge networks (least-privilege zoning) ---------------------
+networks:
+  edge-net:
+    name: space-edge-net
+    driver: bridge
+  data-net:
+    name: space-data-net
+    driver: bridge
+  stream-net:
+    name: space-stream-net
+    driver: bridge
+  compute-net:
+    name: space-compute-net
+    driver: bridge
+  ai-net:
+    name: space-ai-net
+    driver: bridge
+  ops-net:
+    name: space-ops-net
+    driver: bridge
+
+# --- Named volumes (durable state; containers are disposable) ---------------
+volumes:
+  postgres-data:
+  minio-data:
+  kafka-data:
+  spark-work:
+  airflow-dags:
+  airflow-logs:
+  dbt-project:
+  jupyter-work:
+  qdrant-data:
+  ollama-models:
+  openwebui-data:
+  prometheus-data:
+  grafana-data:
+  superset-home:
+
+# No services are declared in the base file. Services live in stack overrides.
+services: {}
