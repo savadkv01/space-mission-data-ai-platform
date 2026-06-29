@@ -26,13 +26,10 @@ This layer converts:
 
 # Critical Rules
 
-* Do NOT write code
-* Do NOT implement Spark/dbt jobs
-* Do NOT configure infrastructure
-* Focus ONLY on transformation design
+* This is an IMPLEMENTATION phase: write working, tested Spark/dbt code + orchestration DAGs
+* Use open-source tools (PySpark, dbt, Airflow); container-first; fit 16 GB RAM
 * Must align with ingestion (Phase 8) and modeling (Phase 6)
-* Must be feasible on **16 GB Docker-based local system**
-* Must use open-source tools only
+* Provide seeds + one-command run; no secrets in code
 
 ---
 

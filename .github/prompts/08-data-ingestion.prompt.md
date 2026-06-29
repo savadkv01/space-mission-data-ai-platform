@@ -32,13 +32,10 @@ This phase defines **how data actually flows into the platform**.
 
 # Critical Rules
 
-* Do NOT write code
-* Do NOT implement pipelines
-* Do NOT configure actual Kafka/Airflow jobs
+* This is an IMPLEMENTATION phase: build working Kafka producers/consumers, Airflow DAGs, API connectors, MinIO loaders, and a synthetic telemetry generator
 * Do NOT design transformations (that is Phase 9+)
-* Focus ONLY on ingestion design
-* Must be feasible on **16 GB RAM Docker environment**
-* Must align with infrastructure from Phase 7
+* Must run on the Phase 7 infra; open-source only; fit 16 GB RAM
+* Provide tests, seeds, and one-command run; no secrets in code
 
 ---
 
