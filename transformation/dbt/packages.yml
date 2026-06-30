@@ -1,0 +1,5 @@
+# dbt package dependencies. dbt_utils provides accepted_range / unique
+# combination tests used by the Gold model contracts.
+packages:
+  - package: dbt-labs/dbt_utils
+    version: [">=1.1.0", "<2.0.0"]

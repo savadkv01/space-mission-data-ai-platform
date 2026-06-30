@@ -1,0 +1,33 @@
+version: 2
+
+# Gold model contracts + tests (Task 12). dbt tests run in CI and in the Airflow
+# DAG's dbt_test step, enforcing the Gold grain and KPI bounds.
+models:
+  - name: fact_sat_health
+    description: "Daily satellite health rollup (1 row per satellite per day)."
+    columns:
+      - name: sat_key
+        tests: [not_null]
+      - name: date_key
+        tests: [not_null]
+      - name: health_score
+        description: "0 (failed) .. 1 (nominal)."
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [sat_key, date_key]
+
+  - name: fact_weather_impact
+    description: "Daily geomagnetic activity vs telemetry anomaly rate."
+    columns:
+      - name: date_key
+        tests: [not_null, unique]
+      - name: anomaly_rate
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1

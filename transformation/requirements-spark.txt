@@ -1,0 +1,10 @@
+# Cluster / engine dependencies — install only when infrastructure is available.
+# PySpark needs a JDK (Java 11/17). dbt-duckdb is the laptop-friendly warehouse.
+pyspark==3.5.1
+dbt-core>=1.7,<1.9
+dbt-duckdb>=1.7,<1.9
+duckdb>=0.10
+# Orchestration (optional; pin to your platform Airflow version)
+apache-airflow>=2.8,<3.0
+# Optional geospatial acceleration for cluster geospatial joins
+# apache-sedona>=1.5

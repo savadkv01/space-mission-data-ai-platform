@@ -1,0 +1,32 @@
+name: 'space_transform'
+version: '1.0.0'
+config-version: 2
+
+# Analytics-engineering layer (Task 2): dbt owns SQL-based Gold marts on top of
+# Silver tables that Spark produces. DuckDB is the laptop-friendly warehouse
+# engine (zero-server, reads Parquet directly). Swap the profile target to
+# Trino/Spark-SQL in production without changing model SQL.
+profile: 'space_transform'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  space_transform:
+    staging:
+      +materialized: view
+      +schema: staging
+    gold:
+      +materialized: table
+      +schema: gold
+
+seeds:
+  space_transform:
+    +schema: seed

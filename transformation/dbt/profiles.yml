@@ -1,0 +1,19 @@
+# dbt connection profile (Task 2). DuckDB is chosen for the 16 GB laptop target:
+# it is in-process, reads Silver Parquet directly, and needs no running server.
+# Copy to ~/.dbt/profiles.yml or set DBT_PROFILES_DIR to this folder.
+# No secrets are stored here.
+space_transform:
+  target: local
+  outputs:
+    local:
+      type: duckdb
+      path: "{{ env_var('DBT_DUCKDB_PATH', 'transformation/dbt/space.duckdb') }}"
+      threads: 4
+      extensions:
+        - httpfs
+        - parquet
+    # Production target placeholder — point at the lakehouse SQL engine.
+    prod:
+      type: duckdb
+      path: "{{ env_var('DBT_DUCKDB_PATH', 'transformation/dbt/space.duckdb') }}"
+      threads: 4

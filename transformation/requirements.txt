@@ -1,0 +1,4 @@
+# Offline transformation dependencies — pure-Python core, runs on a 16 GB laptop
+# with no Java/Spark. This is all that is needed for `make test` and `make demo`.
+python-dotenv>=1.0.0
+pytest>=7.4.0

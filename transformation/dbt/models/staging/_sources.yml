@@ -1,0 +1,15 @@
+version: 2
+
+# Staging models read Silver Parquet produced by the Spark Bronze->Silver jobs.
+# Sources are declared so dbt lineage links Gold back to Silver (Task 13).
+sources:
+  - name: silver
+    schema: silver
+    description: "Conformed Silver tables written by Spark (Parquet on the lakehouse)."
+    tables:
+      - name: silver_telemetry
+        description: "Flattened, deduplicated satellite telemetry."
+      - name: silver_orbit
+        description: "Normalized orbit ground-track positions (WGS84 + geo_key)."
+      - name: silver_space_weather
+        description: "Cleaned Kp-index / solar-flare events."
