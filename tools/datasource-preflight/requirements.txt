@@ -1,0 +1,4 @@
+# Data source pre-flight verification tool
+# Minimal, open-source dependencies only.
+requests==2.32.3
+python-dotenv==1.0.1

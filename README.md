@@ -14,7 +14,7 @@ An enterprise-grade, production-simulated **Space Mission Data & AI Platform** c
 | 04 | Infrastructure Design & Container Architecture | ✅ Complete |
 | 05 | Source Data Analysis | ✅ Complete |
 | 06 | Data Modeling & Lakehouse Design | ✅ Complete |
-| 07 | Data Ingestion Engineering | 🔜 Upcoming |
+| 07 | Data Ingestion Engineering | ✅ Complete |
 | 08 | Data Processing & Transformation | 🔜 Upcoming |
 | 09 | AI/ML Pipelines | 🔜 Upcoming |
 | 10 | LLM + RAG Systems | 🔜 Upcoming |
@@ -32,7 +32,10 @@ An enterprise-grade, production-simulated **Space Mission Data & AI Platform** c
 | `docs/domain-research/` | Ecosystem overview, 30-source dataset catalog, data flows, quality, prioritization |
 | `docs/source-data-analysis/` | 45-dataset inventory, profiling, structure, quality, use-case mapping, prioritization |
 | `docs/data-modeling/` | Medallion design, Bronze/Silver/Gold models, star schemas, time-series, geospatial, feature store, vector model, governance, ADRs |
+| `docs/ingestion/` | Ingestion design (streaming, batch, API/file, simulation, landing zone, quality, observability, ADRs) |
 | `infrastructure/` | Docker Compose stacks, configs (Kafka, MinIO, Spark, Postgres, Prometheus, Grafana, OpenTelemetry) |
+| `ingestion/` | Ingestion layer implementation — Kafka producers/consumers, Airflow DAGs, API/file connectors, synthetic data generators, quality/quarantine |
+| `tools/` | Developer utilities (e.g. `datasource-preflight` data-source connectivity checks) |
 
 ---
 
@@ -62,6 +65,17 @@ An enterprise-grade, production-simulated **Space Mission Data & AI Platform** c
 - Vector data model (RAG knowledge base, telemetry semantic embeddings)
 - Data relationships, granularity, partitioning, lifecycle, performance, governance
 - 6 ADRs, trade-off analysis, and glossary
+
+### Phase 7 — Data Ingestion
+`docs/ingestion/` (17 design docs) + `ingestion/` (implementation):
+- Streaming ingestion (Kafka producers/consumers, topic architecture, at-least-once delivery, DLQ)
+- Batch ingestion (Airflow DAGs, scheduling, retry/backoff, idempotent re-runs)
+- API connectors (NASA FIRMS/POWER, NOAA SWPC, CelesTrak) with retry, rate-limiting and backoff
+- File ingestion + MinIO landing-zone layout (Hive-style `ingest_date` partitions)
+- Synthetic data generators (satellite telemetry, orbit via SGP4, space weather)
+- Bronze envelope (provenance + checksum), ingestion-time validation and quarantine
+- Observability, latency, scalability, security, trade-offs, ADRs and glossary
+- Offline-validated: 14 unit tests pass and an end-to-end in-memory demo runs without infrastructure. See [ingestion/README.md](ingestion/README.md).
 
 ---
 

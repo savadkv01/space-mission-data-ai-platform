@@ -1,0 +1,7 @@
+# Never commit real credentials or local artifacts
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+output/

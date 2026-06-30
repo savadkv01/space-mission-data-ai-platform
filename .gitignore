@@ -1,0 +1,55 @@
+# ============================================================================
+# Root .gitignore — Space Mission Data & AI Platform
+# Subfolders (ingestion/, tools/datasource-preflight/, infrastructure/) also
+# carry their own .gitignore; this provides repo-wide protection.
+# ============================================================================
+
+# --- Secrets / local environment (NEVER commit) ---
+.env
+*.env
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+credentials/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.Python
+*.egg-info/
+.eggs/
+build/
+dist/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Local data / outputs / artifacts ---
+output/
+outputs/
+data/
+*.parquet
+*.duckdb
+backups/
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+logs/
