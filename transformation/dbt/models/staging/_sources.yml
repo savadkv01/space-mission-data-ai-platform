@@ -6,6 +6,11 @@ sources:
   - name: silver
     schema: silver
     description: "Conformed Silver tables written by Spark (Parquet on the lakehouse)."
+    # dbt-duckdb reads each Silver table directly from the MinIO Parquet that the
+    # Spark Bronze->Silver jobs write. {name} templates the table name, so each
+    # source resolves to s3://silver/<table>/*.parquet via the httpfs extension.
+    meta:
+      external_location: "s3://silver/{name}/*.parquet"
     tables:
       - name: silver_telemetry
         description: "Flattened, deduplicated satellite telemetry."

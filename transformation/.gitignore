@@ -12,3 +12,6 @@ dbt/logs/
 # spark
 spark-warehouse/
 metastore_db/
+# full-infra run temp artifacts
+.bronze_seed/
+scripts/stream_messages.ndjson

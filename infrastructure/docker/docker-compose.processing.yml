@@ -20,7 +20,12 @@ x-defaults: &service-defaults
 services:
   spark-master:
     <<: *service-defaults
-    image: apache/spark:3.5.1
+    # Custom image = stock Spark + dbt-duckdb (built once, cached). Lets the same
+    # container run Bronze->Silver (Spark) AND Silver->Gold (dbt) reproducibly.
+    build:
+      context: .
+      dockerfile: spark-transform.Dockerfile
+    image: space-platform/spark-transform:3.5.1
     profiles: ["processing", "core", "all"]
     command: >
       /opt/spark/bin/spark-class
@@ -28,16 +33,36 @@ services:
     environment:
       SPARK_MODE: master
       SPARK_MASTER_HOST: spark-master
+      # Transformation runtime wiring so exec'd jobs need no extra -e flags and
+      # build_spark_session / dbt resolve MinIO + Kafka by service DNS.
+      HOME: /tmp
+      PYTHONPATH: /opt/spark/work-dir
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      KAFKA_BOOTSTRAP: kafka:9092
+      DUCKDB_S3_ENDPOINT: minio:9000
+      DBT_PROFILES_DIR: /opt/spark/work-dir/transformation/dbt
+      DBT_DUCKDB_PATH: /opt/spark/work-dir/transformation/dbt/space.duckdb
     ports:
       - "${SPARK_MASTER_UI_PORT:-8080}:8080"   # master UI
     volumes:
       - ../configs/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      # Live code mount (no docker cp) — edits are picked up without rebuilds.
+      - ../../transformation:/opt/spark/work-dir/transformation
+      - ../../ingestion:/opt/spark/work-dir/ingestion:ro
+      # Persist the Ivy jar cache so hadoop-aws / kafka connectors download once.
+      - spark-ivy:/tmp/.ivy2
     networks:
       - compute-net
       - data-net
-    mem_limit: 512m
-    mem_reservation: 256m
-    cpus: 0.5
+      - stream-net   # reach Kafka (telemetry.satellite.cleaned) for streaming
+    # Runs Spark batch + dbt in local[*] mode inside this container; needs more
+    # head-room than a bare master (driver.memory 1g from spark-defaults).
+    mem_limit: 2g
+    mem_reservation: 1g
+    cpus: 2.0
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080"]
       interval: 20s

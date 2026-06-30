@@ -23,7 +23,8 @@ hands-on operator guide.
 8. [Viewing & querying Bronze / Silver / Gold](#8-viewing--querying-bronze--silver--gold)
 9. [Kafka operations](#9-kafka-operations)
 10. [Running the ingestion layer](#10-running-the-ingestion-layer)
-11. [Phase status & changelog](#phase-status--changelog)
+11. [Running the transformation layer](#11-running-the-transformation-layer)
+12. [Phase status & changelog](#phase-status--changelog)
 
 ---
 
@@ -366,7 +367,7 @@ SELECT * FROM lakehouse.gold.<table> LIMIT 20;
 > The base `apache/spark:3.5.1` image does not bundle the Iceberg/S3 jars, so the
 > first run downloads them via `--packages` (needs internet). The **transformation
 > phase** ships preconfigured Spark jobs and `make` targets so you won't pass
-> `--packages` by hand — this section will be updated then.
+> `--packages` by hand for the medallion pipeline — see [§11](#11-running-the-transformation-layer).
 
 ### DuckDB (lightweight, 16 GB-friendly)
 
@@ -375,10 +376,12 @@ analysis. It is introduced as part of the transformation phase; a ready example
 (`duckdb` + `httpfs`/`iceberg` extensions pointed at `http://localhost:9000`) will be
 added here once that phase lands.
 
-> **Current state (Phase 8):** the **Bronze** layer now holds real landed data —
-> raw telemetry plus API-sourced objects under `bronze/<SOURCE>/ingest_date=…/` (run it
-> yourself via §10). **Silver/Gold** Iceberg tables still appear after the transformation
-> phase; the Spark/DuckDB commands above are the mechanisms you'll use then.
+> **Current state (Phase 9):** the full medallion flow is runnable end-to-end. **Bronze**
+> holds real landed data (raw telemetry + API objects under `bronze/<SOURCE>/ingest_date=…/`,
+> §10). **Silver** Parquet (`silver/silver_telemetry|orbit|space_weather`, plus the
+> streaming `silver/stream_sat_health_1m`) and the **Gold** dbt marts are produced by the
+> one-command transformation pipeline in §11. The Iceberg/Spark-SQL commands above remain
+> the mechanism for ad-hoc lakehouse querying.
 
 ---
 
@@ -538,6 +541,117 @@ docker rm -f space-ingest-runner
 
 ---
 
+## 11. Running the transformation layer
+
+The transformation code lives in [transformation/](transformation/README.md) (Spark
+Bronze→Silver jobs, dbt Gold marts, and a Kafka→Silver streaming job). Unlike Phase 8,
+this layer runs **inside the `spark-master` container itself** — that service is now a
+**hardened image** (`space-platform/spark-transform:3.5.1` = `apache/spark:3.5.1` +
+`dbt-duckdb`) with the repo bind-mounted and MinIO/Kafka wiring baked into its
+environment. A cold `up` therefore needs **no** `docker cp`, runtime `pip install`, or
+manual `docker network connect`.
+
+> Offline development (no infra) still works from the host: `make -C transformation test`
+> and `make -C transformation demo` run the full logical flow in-memory — see
+> [transformation/README.md](transformation/README.md).
+
+### Why it runs *inside* `spark-master`
+
+The driver executes in `local[*]` mode inside `spark-master`, which is attached to
+`compute-net` + `data-net` (S3A → MinIO) **and** `stream-net` (Kafka). Jobs are exec'd
+with `-u root` because they write the DuckDB warehouse and the Ivy jar cache. All the
+required env (`MINIO_ENDPOINT`, `MINIO_ROOT_USER/PASSWORD`, `KAFKA_BOOTSTRAP`,
+`DUCKDB_S3_ENDPOINT`, `DBT_PROFILES_DIR`, `DBT_DUCKDB_PATH`) is set by the compose file.
+
+> **First `up` builds the image** (installs dbt, ~6 min) then caches it; the Ivy jar
+> cache (`spark-ivy` volume) means the S3A/Kafka connectors download only once.
+
+### Step 0 — seed Bronze (only after a fresh start or `down -v`)
+
+Silver reads enveloped Bronze NDJSON from `s3://bronze/{satellite_telemetry,orbit_position,space_weather}/`.
+Bronze survives stop/start and `down`/`up`, so seed only when the MinIO volume is empty
+(first boot or after a reset). Generate the records inside `spark-master` (it has the
+ingestion code), then upload with a one-off `mc` client:
+
+```powershell
+$REPO = "c:\D Drive\Projects\DE\Projects\space-data-ai-platform"
+
+# 1. Generate enveloped Bronze NDJSON into the bind-mounted transformation dir
+docker compose @ALL exec -u root spark-master `
+  python3 -m transformation.scripts.seed_bronze_lake `
+  --records 120 --out /opt/spark/work-dir/transformation/.bronze_seed
+
+# 2. Upload each dataset to s3://bronze/<dataset>/ (reuse $u/$p from §7)
+foreach ($d in 'satellite_telemetry','orbit_position','space_weather') {
+  docker run --rm --network space-data-net -v "${REPO}:/work" `
+    -e MC_HOST_local="http://${u}:${p}@minio:9000" minio/mc `
+    cp "/work/transformation/.bronze_seed/$d.json" "local/bronze/$d/$d.json"
+}
+```
+
+### A) Batch pipeline — Bronze → Silver → Gold (one command)
+
+```powershell
+# Runs all three Silver jobs (one at a time) then dbt deps/run/test for Gold
+docker compose @ALL exec -u root spark-master `
+  bash /opt/spark/work-dir/transformation/scripts/run_pipeline.sh
+```
+
+Equivalent `make` targets (from the repo root; needs `make` on PATH):
+
+```powershell
+make -C transformation pipeline-infra              # full Bronze→Silver→Gold
+make -C transformation silver-infra ENTITY=orbit   # a single Silver entity
+make -C transformation gold-infra                  # just the dbt Gold marts
+```
+
+Expected: `silver_telemetry/orbit/space_weather` each land `_SUCCESS` + Parquet in
+`s3://silver/`; dbt reports `run PASS=3` (`stg_telemetry`, `fact_sat_health`,
+`fact_weather_impact`) and `test PASS=8`. The Gold DuckDB warehouse persists in the
+mount at `transformation/dbt/space.duckdb`.
+
+### B) Streaming job — Kafka → Silver windows
+
+Reads `telemetry.satellite.cleaned` (produced in §10), computes 1-minute sliding health
+windows, and writes Parquet to `s3://silver/stream_sat_health_1m/`. It runs continuously
+(`awaitTermination`), so launch it detached and stop it when done:
+
+```powershell
+# Launch the streaming query (long-running — runs until stopped)
+make -C transformation stream-infra
+# …or directly:
+docker compose @ALL exec -u root spark-master /opt/spark/bin/spark-submit `
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.hadoop:hadoop-aws:3.3.4 `
+  --conf spark.jars.ivy=/tmp/.ivy2 --conf spark.sql.extensions= `
+  --conf spark.driver.host=localhost --conf spark.driver.bindAddress=127.0.0.1 `
+  /opt/spark/work-dir/transformation/scripts/run_stream.py
+```
+
+> Append-mode windows only flush once the watermark passes a window's end, so the first
+> Parquet file is empty and real rows appear after 2–3 triggers. Produce a second wave of
+> (later-timestamped) telemetry to advance the watermark, then re-list `s3://silver/stream_sat_health_1m/`.
+
+### Verify the run
+
+```powershell
+# Silver/Gold object listing
+docker @MC ls --recursive local/silver
+
+# Query the Gold DuckDB warehouse (root-owned; query as root)
+docker compose @ALL exec -u root spark-master `
+  python3 -c "import duckdb; c=duckdb.connect('/opt/spark/work-dir/transformation/dbt/space.duckdb'); print(c.execute('select * from gold.fact_sat_health').fetchall())"
+```
+
+| Symptom | Likely cause / fix |
+| --- | --- |
+| Silver job fails with `Path does not exist: s3a://bronze/…` | Bronze not seeded. Run Step 0 (only needed after a fresh start / `down -v`). |
+| Streaming raises `No resolvable bootstrap urls` / DNS for `kafka` | `spark-master` not on `stream-net`. The hardened compose attaches it automatically — pull latest and `up -d --force-recreate spark-master`. |
+| dbt / DuckDB `Permission denied` writing `space.duckdb` | Run the job with `-u root` (the warehouse + Ivy cache are root-owned). |
+| `BlockManager` NullPointerException during Silver | Two Spark drivers ran concurrently. `run_pipeline.sh` runs entities one at a time — don't launch parallel jobs. |
+| First batch job is slow (~minutes) | First-ever run downloads `hadoop-aws`/Kafka jars into the `spark-ivy` cache; later runs are fast. |
+
+---
+
 ## Phase Status & Changelog
 
 What is operationally available today, and what each future phase will add to this runbook.
@@ -546,7 +660,7 @@ What is operationally available today, and what each future phase will add to th
 | --- | --- | --- |
 | 04 / 07 — Infrastructure | Start/stop, status, URLs, PostgreSQL & MinIO access, Kafka basics, lakehouse query *mechanisms* | ✅ Available |
 | 08 — Ingestion | §10 runner pattern; live Kafka topics + offset checks; synthetic streaming pipeline; API connectors → Bronze; Bronze object inspection | ✅ Available |
-| Transformation | Preconfigured Spark/DuckDB query helpers (no manual `--packages`); Silver/Gold Iceberg tables to query | 🔜 Update §8 |
+| 09 — Transformation | §11 one-command Bronze→Silver→Gold pipeline (hardened `spark-master` image with dbt baked in); Kafka→Silver structured streaming; Silver Parquet + Gold dbt marts to query | ✅ Available |
 | AI/ML | MLflow experiment/run queries; Feast feature retrieval; model registry commands | 🔜 Add MLflow section |
 | RAG / LLM | Qdrant collection queries; Ollama model pull/run; Open WebUI usage | 🔜 Add LLM section |
 | Serving (API) | FastAPI endpoints, auth, example requests | 🔜 Add API section |

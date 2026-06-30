@@ -12,6 +12,15 @@ space_transform:
       extensions:
         - httpfs
         - parquet
+      # MinIO (S3A) read access for Silver Parquet. Endpoint/creds come from the
+      # environment so no secrets live in this file; defaults target local infra.
+      settings:
+        s3_region: "{{ env_var('AWS_REGION', 'us-east-1') }}"
+        s3_endpoint: "{{ env_var('DUCKDB_S3_ENDPOINT', 'minio:9000') }}"
+        s3_access_key_id: "{{ env_var('MINIO_ROOT_USER', 'platform_minio') }}"
+        s3_secret_access_key: "{{ env_var('MINIO_ROOT_PASSWORD', '') }}"
+        s3_use_ssl: false
+        s3_url_style: "path"
     # Production target placeholder — point at the lakehouse SQL engine.
     prod:
       type: duckdb

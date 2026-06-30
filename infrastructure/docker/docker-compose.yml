@@ -72,6 +72,7 @@ volumes:
   minio-data:
   kafka-data:
   spark-work:
+  spark-ivy:        # Ivy jar cache (hadoop-aws, spark-sql-kafka) — download once
   airflow-dags:
   airflow-logs:
   dbt-project:
