@@ -10,13 +10,14 @@ The full design rationale lives in [../docs/infrastructure/](../docs/infrastruct
 
 ```text
 infrastructure/
-├── docker/                          # Docker Compose (base + 5 stack overrides)
+├── docker/                          # Docker Compose (base + 6 stack overrides)
 │   ├── docker-compose.yml           # networks, volumes, shared anchors
 │   ├── docker-compose.storage.yml   # postgres, minio, iceberg-rest
 │   ├── docker-compose.ingestion.yml # kafka (KRaft), kafka-ui
 │   ├── docker-compose.processing.yml# spark, airflow, dbt
 │   ├── docker-compose.ai.yml        # mlflow, jupyter, qdrant, ollama, open-webui
-│   └── docker-compose.observability.yml # prometheus, grafana, otel, superset
+│   ├── docker-compose.observability.yml # prometheus, grafana, otel
+│   └── docker-compose.bi.yml        # superset
 ├── env/
 │   └── .env.example                 # documented environment template (copy to .env)
 ├── scripts/
@@ -30,8 +31,7 @@ infrastructure/
     ├── postgres/init/01-schemas.sql # schema + role bootstrap
     ├── minio/README.md              # bucket + policy strategy
     ├── prometheus/prometheus.yml    # scrape targets
-    ├── otel/otel-collector-config.yaml
-    └── grafana/provisioning/        # datasource + dashboards
+    ├── otel/otel-collector-config.yaml    ├── airflow/                      # executor/db config reference + providers    └── grafana/provisioning/        # datasource + dashboards
 ```
 
 ## Quick Start

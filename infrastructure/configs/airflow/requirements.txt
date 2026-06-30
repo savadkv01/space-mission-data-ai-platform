@@ -1,0 +1,14 @@
+# Airflow provider packages (REFERENCE — not auto-installed in Phase 7).
+#
+# The base image apache/airflow:2.9.2 already bundles common providers.
+# These are the additional providers the platform's DAGs will require in
+# later phases (ingestion / transformation / serving). To use them, either:
+#   - build a custom Airflow image (recommended), or
+#   - set _PIP_ADDITIONAL_REQUIREMENTS on the airflow service (slower boots).
+#
+# Pin versions when promoting beyond local development.
+
+apache-airflow-providers-amazon        # S3A / MinIO interactions
+apache-airflow-providers-postgres      # PostgreSQL gold/metadata access
+apache-airflow-providers-apache-spark  # SparkSubmitOperator -> spark-master
+apache-airflow-providers-docker        # run containerized tasks (dbt, jobs)

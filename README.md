@@ -23,6 +23,14 @@ An enterprise-grade, production-simulated **Space Mission Data & AI Platform** c
 
 ---
 
+## Operations
+
+Day-to-day operator commands — start/stop, status & health, service URLs and login,
+querying PostgreSQL, browsing MinIO, and viewing Bronze/Silver/Gold — live in the
+[Operations Runbook](OPERATIONS.md). It is a living document, extended each phase.
+
+---
+
 ## Repository Structure
 
 | Folder | Purpose |

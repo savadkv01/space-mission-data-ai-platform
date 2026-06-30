@@ -26,7 +26,6 @@ services:
   mlflow:
     <<: [*service-defaults, *resource-small]
     image: ghcr.io/mlflow/mlflow:v2.13.0
-    container_name: mlflow
     profiles: ["ai", "all"]
     depends_on:
       postgres:
@@ -54,11 +53,11 @@ services:
       interval: 30s
       timeout: 5s
       retries: 5
+      start_period: 60s
 
   jupyter:
     <<: *service-defaults
     image: jupyter/pyspark-notebook:latest
-    container_name: jupyter
     profiles: ["ai", "all"]
     environment:
       JUPYTER_ENABLE_LAB: "yes"
@@ -82,7 +81,6 @@ services:
   qdrant:
     <<: [*service-defaults, *resource-small]
     image: qdrant/qdrant:latest
-    container_name: qdrant
     profiles: ["ai", "all"]
     ports:
       - "${QDRANT_REST_PORT:-6333}:6333"
@@ -101,7 +99,6 @@ services:
   ollama:
     <<: *service-defaults
     image: ollama/ollama:latest
-    container_name: ollama
     profiles: ["ai", "all"]
     restart: on-failure:3
     environment:
@@ -125,7 +122,6 @@ services:
   open-webui:
     <<: [*service-defaults, *resource-small]
     image: ghcr.io/open-webui/open-webui:main
-    container_name: open-webui
     profiles: ["ai", "all"]
     depends_on:
       ollama:

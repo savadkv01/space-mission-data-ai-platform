@@ -82,5 +82,17 @@ class HttpClient:
         resp.raise_for_status()
         return resp.json()
 
+    def post(self, url: str, *, data: dict | None = None, json: dict | None = None,
+             headers: dict | None = None, timeout: int = DEFAULT_TIMEOUT) -> requests.Response:
+        if self.rate_limit:
+            self.rate_limit.acquire()
+        log.debug("POST %s", url)
+        return self.session.post(url, data=data, json=json, headers=headers, timeout=timeout)
+
+    def post_json(self, url: str, **kwargs):
+        resp = self.post(url, **kwargs)
+        resp.raise_for_status()
+        return resp.json()
+
     def close(self) -> None:
         self.session.close()

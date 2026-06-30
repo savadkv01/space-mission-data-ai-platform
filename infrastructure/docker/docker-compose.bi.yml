@@ -1,0 +1,61 @@
+# ============================================================================
+# BI Stack — Apache Superset
+# Extends docker-compose.yml. Start AFTER storage (needs PostgreSQL metadata DB).
+#   docker compose -f docker-compose.yml -f docker-compose.bi.yml up -d
+#
+# NOTE: YAML anchors are file-scoped in Docker Compose, so the shared anchors
+# from docker-compose.yml are re-declared here. Networks/volumes are inherited
+# from the base file at merge time.
+#
+# Superset is split into its own stack file (Phase 7) so BI can be started,
+# stopped, and scaled independently of the observability stack.
+# ============================================================================
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-defaults: &service-defaults
+  restart: unless-stopped
+  logging: *default-logging
+
+services:
+  superset:
+    <<: *service-defaults
+    image: apache/superset:latest
+    profiles: ["bi", "obs", "all"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+      SUPERSET_LOAD_EXAMPLES: "no"
+      DATABASE_DIALECT: postgresql
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_DB: ${POSTGRES_DB}
+      DATABASE_USER: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      ADMIN_USERNAME: ${SUPERSET_ADMIN_USER}
+      ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+    # Superset metadata DB uses the 'superset' schema; first run requires
+    # `superset db upgrade && superset init` (handled by bootstrap.sh).
+    ports:
+      - "${SUPERSET_PORT:-8089}:8088"
+    volumes:
+      - superset-home:/app/superset_home
+    networks:
+      - edge-net
+      - data-net
+    mem_limit: 1g
+    mem_reservation: 512m
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      # Superset runs db upgrade + init on first boot; allow a grace window.
+      start_period: 120s

@@ -29,7 +29,7 @@ def _key_serializer(key: Any) -> bytes | None:
 
 
 def create_producer(**overrides):
-    """Return a configured ``KafkaProducer`` (idempotent, acks=all)."""
+    """Return a configured ``KafkaProducer`` (acks=all, retried for at-least-once)."""
     from kafka import KafkaProducer  # lazy import
 
     config = dict(
@@ -38,7 +38,6 @@ def create_producer(**overrides):
         value_serializer=_json_serializer,
         key_serializer=_key_serializer,
         acks="all",
-        enable_idempotence=True,
         retries=5,
         linger_ms=50,
         compression_type="gzip",

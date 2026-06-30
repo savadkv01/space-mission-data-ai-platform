@@ -25,7 +25,6 @@ services:
   kafka:
     <<: *service-defaults
     image: apache/kafka:3.7.0
-    container_name: kafka
     profiles: ["ingestion", "core", "all"]
     environment:
       # --- KRaft combined broker+controller (single node) ---
@@ -61,7 +60,6 @@ services:
   kafka-ui:
     <<: [*service-defaults, *resource-small]
     image: provectuslabs/kafka-ui:latest
-    container_name: kafka-ui
     profiles: ["ingestion", "core", "all"]
     depends_on:
       kafka:

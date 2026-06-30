@@ -21,7 +21,6 @@ services:
   spark-master:
     <<: *service-defaults
     image: apache/spark:3.5.1
-    container_name: spark-master
     profiles: ["processing", "core", "all"]
     command: >
       /opt/spark/bin/spark-class
@@ -48,7 +47,6 @@ services:
   spark-worker:
     <<: *service-defaults
     image: apache/spark:3.5.1
-    container_name: spark-worker
     profiles: ["processing", "core", "all"]
     restart: on-failure:3
     depends_on:
@@ -78,7 +76,6 @@ services:
   airflow:
     <<: *service-defaults
     image: apache/airflow:2.9.2
-    container_name: airflow
     profiles: ["processing", "core", "all"]
     depends_on:
       postgres:
@@ -109,6 +106,9 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+      # Airflow standalone runs db migrate + RBAC bootstrap on first boot;
+      # give it a grace window before failures count against the retry budget.
+      start_period: 120s
 
   # dbt runs as an ephemeral, on-demand transformation runner (no long-running
   # process). It is typically invoked by Airflow. Profile 'tools' keeps it out
@@ -116,7 +116,6 @@ services:
   dbt:
     <<: *service-defaults
     image: ghcr.io/dbt-labs/dbt-postgres:1.7.latest
-    container_name: dbt
     profiles: ["tools"]
     restart: "no"
     depends_on:

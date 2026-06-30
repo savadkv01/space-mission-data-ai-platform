@@ -14,6 +14,8 @@ Design ingestion from external REST APIs: pagination, rate limiting, retry/backo
 | `PowerConnector` | NASA POWER | anonymous | ✅ |
 | `SwpcConnector` | NOAA SWPC | anonymous | ✅ |
 | `CelestrakConnector` | CelesTrak GP/TLE | anonymous | ✅ |
+| `GfwConnector` | Global Fishing Watch (vessel identity) | `GFW_API_TOKEN` | ✅ live |
+| `SentinelHubConnector` | Sentinel Hub Catalog (STAC scene metadata) | OAuth2 (`SENTINELHUB_CLIENT_ID`/`SECRET`) | ⚠️ implemented; OAuth host read-timeout from current network |
 
 All credentials are resolved from settings — never hard-coded. Access prerequisites are catalogued in [docs/source-data-analysis/14-references.md](../source-data-analysis/14-references.md) and verified by [tools/datasource-preflight](../../tools/datasource-preflight/).
 

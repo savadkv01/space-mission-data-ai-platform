@@ -21,6 +21,18 @@ cd "$DOCKER_DIR"
 # shellcheck disable=SC1090
 set -a; source "$ENV_FILE"; set +a
 
+# Full compose context (used for ps / exec / down).
+COMPOSE_CTX=(
+  -f docker-compose.yml
+  -f docker-compose.storage.yml
+  -f docker-compose.ingestion.yml
+  -f docker-compose.processing.yml
+  -f docker-compose.ai.yml
+  -f docker-compose.observability.yml
+  -f docker-compose.bi.yml
+  --env-file "$ENV_FILE"
+)
+
 # --- Confirmation guard -----------------------------------------------------
 echo "WARNING: this DESTROYS all platform data (PostgreSQL, MinIO, vectors, etc.)."
 read -r -p "Type 'RESET' to continue: " CONFIRM
@@ -30,34 +42,23 @@ read -r -p "Type 'RESET' to continue: " CONFIRM
 mkdir -p "$BACKUP_DIR/postgres" "$BACKUP_DIR/minio"
 TS="$(date +%Y%m%d-%H%M%S)"
 
-if docker ps --format '{{.Names}}' | grep -q '^postgres$'; then
+if [[ -n "$(docker compose "${COMPOSE_CTX[@]}" ps -q postgres 2>/dev/null)" ]]; then
   echo "==> Backing up PostgreSQL -> $BACKUP_DIR/postgres/pre-reset-$TS.sql"
-  docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" postgres \
+  docker compose "${COMPOSE_CTX[@]}" exec -T -e PGPASSWORD="$POSTGRES_PASSWORD" postgres \
     pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > "$BACKUP_DIR/postgres/pre-reset-$TS.sql" || \
     echo "    (postgres backup skipped)"
 fi
 
-if docker ps --format '{{.Names}}' | grep -q '^minio$'; then
+if [[ -n "$(docker compose "${COMPOSE_CTX[@]}" ps -q minio 2>/dev/null)" ]]; then
   echo "==> Mirroring critical MinIO buckets -> $BACKUP_DIR/minio/"
-  docker exec minio mc alias set local http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1 || true
-  for b in gold mlflow-artifacts; do
-    docker exec minio mc mirror --overwrite "local/$b" "/data-backup/$b" 2>/dev/null || \
-      echo "    (mirror of $b skipped)"
-  done
+  docker run --rm --network space-data-net --entrypoint sh \
+    -e MC_HOST_local="http://${MINIO_ROOT_USER}:${MINIO_ROOT_PASSWORD}@minio:9000" \
+    -v "$BACKUP_DIR/minio:/backup" \
+    minio/mc -c 'for b in gold mlflow-artifacts; do mc mirror --overwrite "local/$b" "/backup/$b" 2>/dev/null || echo "    (mirror of $b skipped)"; done'
 fi
 
 # --- Tear down with volumes -------------------------------------------------
-ALL_FILES=(
-  -f docker-compose.yml
-  -f docker-compose.storage.yml
-  -f docker-compose.ingestion.yml
-  -f docker-compose.processing.yml
-  -f docker-compose.ai.yml
-  -f docker-compose.observability.yml
-  --env-file "$ENV_FILE"
-)
-
 echo "==> Removing containers, networks, and VOLUMES"
-docker compose "${ALL_FILES[@]}" --profile all down -v
+docker compose "${COMPOSE_CTX[@]}" --profile all down -v
 
 echo "Reset complete. Re-initialize with: bash scripts/bootstrap.sh"

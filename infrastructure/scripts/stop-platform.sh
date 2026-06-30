@@ -21,6 +21,7 @@ ALL_FILES=(
   -f docker-compose.processing.yml
   -f docker-compose.ai.yml
   -f docker-compose.observability.yml
+  -f docker-compose.bi.yml
   --env-file "$ENV_FILE"
 )
 

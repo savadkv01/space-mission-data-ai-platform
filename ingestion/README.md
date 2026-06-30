@@ -48,25 +48,43 @@ python -m ingestion.scripts.run_local_demo    # end-to-end pipeline in-memory
 The demo generates telemetry → Bronze envelopes → validation → cleaned/quarantine
 and writes samples to `ingestion/output/`.
 
-### With infrastructure (Phase 7 stacks up)
+### With infrastructure (platform stacks up)
+
+Kafka is **not published to the host** (it advertises only `kafka:9092`), so run these
+modules from a container attached to the platform's `space-ops-net` — which reaches both
+`kafka:9092` and `minio:9000` by DNS. The step-by-step operator runbook (start a reusable
+runner, stream, run API connectors, verify offsets/Bronze, clean up) is in
+[OPERATIONS.md §10](../OPERATIONS.md#10-running-the-ingestion-layer).
 
 ```powershell
-# 1. storage + ingestion + processing stacks (see infrastructure/)
-# 2. create topics
-python -m ingestion.scripts.create_topics
-# 3. produce synthetic telemetry
-python -m ingestion.streaming.producers.telemetry_producer --max 1000 --rate 50
-# 4. land raw telemetry in Bronze (MinIO)
-python -m ingestion.streaming.consumers.raw_ingest_consumer
-# 5. validate -> cleaned / DLQ
-python -m ingestion.streaming.consumers.validation_consumer
+# Start a throwaway runner (repo bind-mounted; reads infrastructure/env/.env)
+$REPO = (Resolve-Path ..).Path
+docker run -d --name space-ingest-runner --network space-ops-net `
+  -v "${REPO}:/work" -w /work `
+  -e KAFKA_BOOTSTRAP=kafka:9092 -e MINIO_ENDPOINT=http://minio:9000 `
+  python:3.11-slim sleep infinity
+docker exec space-ingest-runner pip install -q -r ingestion/requirements.txt
+
+# Then run each stage inside the runner:
+docker exec space-ingest-runner python -m ingestion.scripts.create_topics
+docker exec space-ingest-runner python -m ingestion.streaming.producers.telemetry_producer --max 300 --rate 200
+docker exec space-ingest-runner python -m ingestion.streaming.consumers.raw_ingest_consumer --batch-size 100 --max-batches 3
+docker exec space-ingest-runner python -m ingestion.streaming.consumers.validation_consumer --max 300
 ```
+
+> Consumers have no idle timeout — bound them with `--max-batches`/`--max` so they exit
+> once the produced records are drained.
 
 Batch DAGs in [batch/dags/](batch/dags/) mount into the Airflow `dags` volume.
 
-A `Makefile` wraps these (`make test`, `make demo`, `make topics`, `make produce`, …).
+A `Makefile` wraps the offline targets (`make test`, `make demo`, `make topics`, `make produce`, …).
 
 ## Status
 
 - ✅ Code implemented and offline-validated (pytest + demo).
-- ⏳ Running against live Kafka/MinIO/Airflow is deferred (infra not started).
+- ✅ Live-verified against the running platform: synthetic streaming pipeline
+  (telemetry → Bronze → cleaned/DLQ) and API connectors → Bronze for NASA POWER,
+  NOAA SWPC, CelesTrak, NASA FIRMS, and Global Fishing Watch.
+- ⚠️ Sentinel Hub connector is implemented and unit-tested but its OAuth host was
+  unreachable (read-timeout) from the test environment — retry from a network with
+  egress to `services.sentinel-hub.com`.

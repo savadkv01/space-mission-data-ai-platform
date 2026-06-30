@@ -1,9 +1,10 @@
 # ============================================================================
-# Observability + BI Stack — Prometheus, Grafana, OTel Collector, Superset
+# Observability Stack — Prometheus, Grafana, OTel Collector
 # Extends docker-compose.yml. Cross-cutting; start AFTER storage.
 #   docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
 #
 # NOTE: YAML anchors are file-scoped; shared anchors are re-declared here.
+# BI (Apache Superset) was split into docker-compose.bi.yml in Phase 7.
 # ============================================================================
 
 x-logging: &default-logging
@@ -25,7 +26,6 @@ services:
   prometheus:
     <<: [*service-defaults, *resource-small]
     image: prom/prometheus:latest
-    container_name: prometheus
     profiles: ["obs", "all"]
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -47,7 +47,6 @@ services:
   grafana:
     <<: *service-defaults
     image: grafana/grafana:latest
-    container_name: grafana
     profiles: ["obs", "all"]
     depends_on:
       prometheus:
@@ -73,11 +72,11 @@ services:
       interval: 30s
       timeout: 5s
       retries: 5
+      start_period: 60s
 
   otel-collector:
     <<: *service-defaults
     image: otel/opentelemetry-collector-contrib:latest
-    container_name: otel-collector
     profiles: ["obs", "all"]
     command: ["--config=/etc/otel/otel-collector-config.yaml"]
     volumes:
@@ -90,40 +89,3 @@ services:
     mem_limit: 256m
     mem_reservation: 128m
     cpus: 0.25
-
-  superset:
-    <<: *service-defaults
-    image: apache/superset:latest
-    container_name: superset
-    profiles: ["obs", "bi", "all"]
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
-      SUPERSET_LOAD_EXAMPLES: "no"
-      DATABASE_DIALECT: postgresql
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_DB: ${POSTGRES_DB}
-      DATABASE_USER: ${POSTGRES_USER}
-      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
-      ADMIN_USERNAME: ${SUPERSET_ADMIN_USER}
-      ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
-    # Superset metadata DB uses the 'superset' schema; first run requires
-    # `superset db upgrade && superset init` (handled by bootstrap.sh).
-    ports:
-      - "${SUPERSET_PORT:-8089}:8088"
-    volumes:
-      - superset-home:/app/superset_home
-    networks:
-      - edge-net
-      - data-net
-    mem_limit: 1g
-    mem_reservation: 512m
-    cpus: 1.0
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
