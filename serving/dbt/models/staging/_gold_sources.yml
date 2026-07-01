@@ -1,0 +1,35 @@
+version: 2
+
+# Gold marts are the ONLY serving source (ADR-SV-01). dbt-duckdb reads each Gold
+# table directly from the MinIO Parquet the transformation Spark/dbt jobs write.
+# {name} templates the table name, so each source resolves to
+# s3://gold/<table>/*.parquet via the httpfs extension.
+sources:
+  - name: gold
+    schema: gold
+    description: "Business-ready Gold marts (Parquet on the lakehouse)."
+    meta:
+      external_location: "s3://gold/{name}/*.parquet"
+    tables:
+      # --- MVP Earth-observation marts ---
+      - name: kpi_wildfire_aoi_daily
+        description: "Daily wildfire KPIs per AOI (UC-15)."
+      - name: kpi_flood_aoi_daily
+        description: "Daily flood NDWI KPIs per AOI (UC-16)."
+      - name: fact_vessel_activity
+        description: "Daily vessel activity per vessel (UC-18)."
+      - name: fact_scene_catalog
+        description: "Per-scene imagery catalog + searchability (UC-25)."
+      - name: kpi_eo_daily
+        description: "Daily fire-detection KPIs per grid cell (UC-14)."
+      - name: kpi_aoi_validation
+        description: "EMS ground-truth corroboration per AOI (UC-27)."
+      - name: ref_aoi
+        description: "Copernicus-EMS AOI footprints (AOI dimension source)."
+      # --- Simulation-Track marts (post-MVP demonstrator, ADR-09) ---
+      - name: fact_sat_health
+        description: "Daily satellite health (sim track)."
+      - name: kpi_launch_monthly
+        description: "Monthly launch performance (sim track)."
+      - name: fact_weather_impact
+        description: "Daily space-weather impact (sim track)."

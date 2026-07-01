@@ -1,0 +1,35 @@
+name: 'space_serving'
+version: '1.0.0'
+config-version: 2
+
+# Serving-layer analytics-engineering project (Phase 11, Task 4). Sits on top of
+# the Gold marts that the transformation project (Spark + dbt) produces and shapes
+# them into business-ready **data products**: wide serving tables, aggregated
+# materialized views, and semantic marts. DuckDB is the laptop-friendly engine;
+# swap the profile target to Trino/Spark-SQL in production without model changes.
+profile: 'space_serving'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  space_serving:
+    semantic:
+      # Semantic marts are lightweight views over Gold — business names only.
+      +materialized: view
+      +schema: semantic
+    serving:
+      # Data products are materialized tables (BI/API read path, no runtime joins).
+      +materialized: table
+      +schema: serving
+    marts_agg:
+      # Pre-computed cross-product KPI rollups — the "materialized view" tier.
+      +materialized: table
+      +schema: serving_agg

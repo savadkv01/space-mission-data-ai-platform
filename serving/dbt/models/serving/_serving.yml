@@ -1,0 +1,67 @@
+version: 2
+
+# Serving data-product contracts + tests (Task 4). These run in CI and in the
+# Airflow serving-refresh DAG, enforcing grain, KPI bounds, and enumerated bands.
+models:
+  - name: serving_wildfire_daily
+    description: "Wildfire Activity data product (UC-15), 1 row per AOI per day."
+    columns:
+      - name: aoi_key
+        tests: [not_null]
+      - name: date_key
+        tests: [not_null]
+      - name: severity
+        tests:
+          - accepted_values:
+              values: ['extreme', 'high', 'moderate', 'low', 'unknown']
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [aoi_key, date_key]
+
+  - name: serving_flood_daily
+    description: "Flood Extent data product (UC-16), 1 row per AOI per day."
+    columns:
+      - name: aoi_key
+        tests: [not_null]
+      - name: date_key
+        tests: [not_null]
+      - name: valid_pixel_fraction
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 1 }
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [aoi_key, date_key]
+
+  - name: serving_vessel_activity
+    description: "Maritime Vessel Activity data product (UC-18)."
+    columns:
+      - name: vessel_key
+        tests: [not_null]
+      - name: review_priority
+        tests:
+          - accepted_values: { values: ['high', 'normal'] }
+
+  - name: serving_scene_catalog
+    description: "Imagery Catalog data product (UC-25), 1 row per scene."
+    columns:
+      - name: scene_key
+        tests: [not_null, unique]
+      - name: quality_band
+        tests:
+          - accepted_values:
+              values: ['gold', 'silver', 'bronze', 'listed', 'unlisted']
+
+  - name: serving_aoi_validation
+    description: "Detection Validation data product (UC-27)."
+    columns:
+      - name: aoi_key
+        tests: [not_null, unique]
+      - name: trust
+        tests:
+          - accepted_values: { values: ['corroborated', 'unconfirmed'] }
+
+  - name: mv_kpi_platform_daily
+    description: "Materialized platform-wide daily KPI rollup (executive view)."
+    columns:
+      - name: date_key
+        tests: [not_null, unique]
