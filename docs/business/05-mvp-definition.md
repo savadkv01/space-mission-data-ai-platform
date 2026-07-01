@@ -36,6 +36,28 @@ The recommended Minimum Viable Product is an Earth Observation Operations Intell
 | Human spaceflight monitoring | Highly sensitive domain with limited public datasets |
 | Satcom SLA assurance | Commercially valuable but often requires proprietary customer and network data |
 
+## Simulation Track (Retained, Post-MVP)
+
+The platform additionally ships a **Spacecraft Operations Simulation Track** —
+telemetry health scoring (UC-01/02), anomaly detection (UC-03), orbit trajectory,
+and space-weather impact pipelines — built on **synthetic** data from the
+ingestion simulation generators.
+
+This track is **excluded from the MVP** because public telemetry realism is weak
+(Data Availability scored 1/5 in [04-use-case-ranking.md](./04-use-case-ranking.md))
+and business validation would rely on fabricated labels. It is **retained, not
+removed**, as a deliberately-scoped technical demonstrator of streaming and
+time-series anomaly ML that the batch EO path does not exercise as strongly.
+
+| Aspect | MVP (Earth Observation) | Simulation Track (Spacecraft Ops) |
+| --- | --- | --- |
+| Data source | Real open data (FIRMS, Sentinel, GFW, EMS) | Synthetic generators |
+| KPI validation | Cross-source ground truth (e.g. Copernicus EMS) | Injected labels only |
+| Status | In scope, primary | Post-MVP demonstrator |
+| Rationale | Ranked top-7 use cases | Ranked 25–27 of 30; excluded |
+
+See ADR-09 in [17-adr.md](../data-modeling/17-adr.md) for the decision record.
+
 ## Business Goals
 
 1. Reduce time to detect and prioritize high-impact Earth observation events.

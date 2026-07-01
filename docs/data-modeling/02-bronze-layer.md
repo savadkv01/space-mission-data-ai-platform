@@ -30,7 +30,7 @@ Model the raw landing zone: immutable, append-only, source-shaped storage that g
 
 ## Storage Format
 
-- Structured/semi-structured: **Parquet under Iceberg** tables.
+- Structured/semi-structured: **Parquet on MinIO** for the MVP tier; promoted to **Parquet under Iceberg** tables at the scale tier (ADR-10).
 - Large rasters (Sentinel, Landsat): stored on MinIO object store; Bronze holds metadata + object key, not pixels.
 
 ## Partitioning
@@ -39,6 +39,7 @@ Model the raw landing zone: immutable, append-only, source-shaped storage that g
 | --- | --- |
 | NRT alerts (FIRMS/VIIRS) | `_event_ts` day, region |
 | Imagery metadata | acquisition_date, mission |
+| Maritime identity (GFW) | transmission_date, flag |
 | Weather (POWER) | date, grid_cell |
 | Future telemetry | mission_id, hour |
 

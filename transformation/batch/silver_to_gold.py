@@ -10,6 +10,11 @@ Gold marts produced here:
 2. Launch Performance Analytics -> ``kpi_launch_monthly`` (1 row / provider / month)
 3. Space Weather Impact         -> ``fact_weather_impact`` (1 row / day)
 4. Earth Observation Analytics  -> ``kpi_eo_daily`` (1 row / geo_key / day)
+5. Maritime Domain Awareness    -> ``fact_vessel_activity`` (1 row / vessel / day)
+6. Catalog Quality Analytics    -> ``fact_scene_catalog`` (1 row / scene)
+7. Wildfire per-AOI Analytics   -> ``kpi_wildfire_aoi_daily`` (1 row / aoi / day)
+8. Flood per-AOI Analytics      -> ``kpi_flood_aoi_daily`` (1 row / aoi / day)
+9. AOI Detection Validation     -> ``kpi_aoi_validation`` (1 row / EMS AOI)
 """
 
 from __future__ import annotations
@@ -18,6 +23,7 @@ from collections import defaultdict
 from typing import Any
 
 from transformation.cleaning.cleaning_rules import median
+from transformation.geospatial.spatial_transform import assign_aoi
 from transformation.timeseries.time_series import parse_ts
 
 _HEALTH_WEIGHT = {"NOMINAL": 1.0, "UNKNOWN": 0.5, "ANOMALY": 0.0}
@@ -174,5 +180,207 @@ def gold_earth_observation(silver_fire: list[dict[str, Any]]) -> list[dict[str, 
             "mean_frp": round(sum(frps) / len(frps), 3) if frps else None,
             "median_frp": median(frps),
             "max_frp": round(max(frps), 3) if frps else None,
+        })
+    return out
+
+
+# --- 5. Maritime Domain Awareness ------------------------------------------
+
+def gold_vessel_activity(silver_vessel: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Daily vessel-activity rollup per vessel (``fact_vessel_activity``).
+
+    Expects Silver ``obs_vessel`` rows. Because the GFW identity endpoint ships
+    registry metadata rather than per-ping fishing effort, the mart derives what
+    is available: transmission count, active span, and a ``suspicious_flag``
+    heuristic (missing flag state or missing IMO obscures vessel identity).
+    """
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for r in silver_vessel:
+        day = _day(r.get("event_ts"))
+        vessel = r.get("vessel_key")
+        if day and vessel:
+            groups[(vessel, day)].append(r)
+
+    out = []
+    for (vessel, day), rows in sorted(groups.items()):
+        flags = sorted({r["flag"] for r in rows if r.get("flag")})
+        types = sorted({r["vessel_type"] for r in rows if r.get("vessel_type")})
+        suspicious = any(not r.get("flag") or not r.get("imo") for r in rows)
+        spans = []
+        for r in rows:
+            first = parse_ts(r.get("first_transmission_ts"))
+            last = parse_ts(r.get("last_transmission_ts"))
+            if first and last:
+                spans.append((last - first).days)
+        out.append({
+            "vessel_key": vessel,
+            "date_key": day,
+            "transmissions": len(rows),
+            "flag": flags[0] if flags else None,
+            "vessel_type": types[0] if types else None,
+            "suspicious_flag": suspicious,
+            "active_span_days": max(spans) if spans else None,
+        })
+    return out
+
+
+# --- 6. Catalog Quality Analytics ------------------------------------------
+
+def gold_scene_catalog(silver_scene: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Curated per-scene catalog mart (``fact_scene_catalog``).
+
+    Expects Silver ``obs_scene`` rows (1 row / scene). Adds ``is_searchable`` for
+    the UC-25 metadata-quality use case: a scene is searchable when it carries a
+    grid location, an acquisition time, and a collection.
+    """
+    latest: dict[str, dict[str, Any]] = {}
+    for r in silver_scene:
+        key = r.get("scene_key")
+        if not key:
+            continue
+        cur = latest.get(key)
+        if cur is None or str(r.get("event_ts", "")) >= str(cur.get("event_ts", "")):
+            latest[key] = r
+
+    out = []
+    for key, r in sorted(latest.items()):
+        is_searchable = bool(r.get("geo_key") and r.get("event_ts") and r.get("collection"))
+        out.append({
+            "scene_key": key,
+            "date_key": _day(r.get("event_ts")),
+            "collection": r.get("collection"),
+            "provider": r.get("provider"),
+            "platform": r.get("platform"),
+            "geo_key": r.get("geo_key"),
+            "cloud_cover": r.get("cloud_cover"),
+            "completeness_score": r.get("completeness_score"),
+            "is_searchable": is_searchable,
+        })
+    return out
+
+
+# --- 7. Wildfire per-AOI Analytics -----------------------------------------
+
+def gold_wildfire_aoi(silver_fire: list[dict[str, Any]],
+                      aois: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Daily wildfire KPIs per AOI (``kpi_wildfire_aoi_daily``).
+
+    Point-in-polygon attributes each FIRMS/VIIRS detection to every AOI whose
+    footprint contains it, then rolls up detections and fire radiative power by
+    AOI and day. A detection may count toward multiple overlapping AOIs.
+    """
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for r in silver_fire:
+        day = _day(r.get("event_ts"))
+        if not day:
+            continue
+        for aoi_key in assign_aoi(r.get("latitude"), r.get("longitude"), aois):
+            groups[(aoi_key, day)].append(r)
+
+    out = []
+    for (aoi_key, day), rows in sorted(groups.items()):
+        frps = [float(r["frp"]) for r in rows if r.get("frp") is not None]
+        out.append({
+            "aoi_key": aoi_key,
+            "date_key": day,
+            "detections": len(rows),
+            "mean_frp": round(sum(frps) / len(frps), 3) if frps else None,
+            "max_frp": round(max(frps), 3) if frps else None,
+        })
+    return out
+
+
+# --- 8. Flood per-AOI Analytics --------------------------------------------
+
+def _bbox_centroid(bbox: Any) -> tuple[float | None, float | None]:
+    """Return ``(lat, lon)`` centroid of a ``minx,miny,maxx,maxy`` bbox string."""
+    if not isinstance(bbox, str):
+        return None, None
+    parts = bbox.split(",")
+    if len(parts) != 4:
+        return None, None
+    try:
+        minx, miny, maxx, maxy = (float(p) for p in parts)
+    except ValueError:
+        return None, None
+    return (miny + maxy) / 2.0, (minx + maxx) / 2.0
+
+
+def gold_flood_aoi(silver_index: list[dict[str, Any]],
+                   aois: list[dict[str, Any]],
+                   water_threshold: float = 0.0) -> list[dict[str, Any]]:
+    """Daily flood KPIs per AOI from NDWI statistics (``kpi_flood_aoi_daily``).
+
+    NDWI (``> water_threshold`` indicates open water) index rows are attributed
+    to AOIs via their bbox centroid, then averaged per AOI and day. ``flood_flag``
+    fires when the mean NDWI clears the threshold.
+    """
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for r in silver_index:
+        if str(r.get("index_name", "")).upper() != "NDWI":
+            continue
+        day = _day(r.get("event_ts"))
+        lat, lon = _bbox_centroid(r.get("bbox"))
+        if not day or lat is None:
+            continue
+        for aoi_key in assign_aoi(lat, lon, aois):
+            groups[(aoi_key, day)].append(r)
+
+    out = []
+    for (aoi_key, day), rows in sorted(groups.items()):
+        means = [float(r["mean"]) for r in rows if r.get("mean") is not None]
+        valid = [float(r["valid_pixel_fraction"]) for r in rows
+                 if r.get("valid_pixel_fraction") is not None]
+        ndwi_mean = round(sum(means) / len(means), 4) if means else None
+        out.append({
+            "aoi_key": aoi_key,
+            "date_key": day,
+            "ndwi_mean": ndwi_mean,
+            "ndwi_max": round(max(means), 4) if means else None,
+            "valid_pixel_fraction": round(sum(valid) / len(valid), 4) if valid else None,
+            "flood_flag": bool(ndwi_mean is not None and ndwi_mean > water_threshold),
+        })
+    return out
+
+
+# --- 9. AOI Detection Validation (Copernicus EMS ground truth) --------------
+
+def gold_aoi_validation(ems_aois: list[dict[str, Any]],
+                        wildfire_aoi_rows: list[dict[str, Any]],
+                        flood_aoi_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Cross-source corroboration of EMS footprints (``kpi_aoi_validation``).
+
+    Each EMS activation AOI is ground truth mapped by imagery analysts. This mart
+    checks whether *independent* detection sources agree: FIRMS thermal fires for
+    fire AOIs, Sentinel-2 NDWI water for flood AOIs. ``corroborated`` is a recall
+    signal for the mapped event.
+    """
+    fire_by_aoi: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for r in wildfire_aoi_rows:
+        fire_by_aoi[r["aoi_key"]].append(r)
+    flood_by_aoi: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for r in flood_aoi_rows:
+        flood_by_aoi[r["aoi_key"]].append(r)
+
+    out = []
+    for aoi in sorted(ems_aois, key=lambda a: a.get("aoi_key", "")):
+        key = aoi.get("aoi_key")
+        event_type = aoi.get("event_type", "other")
+        if event_type == "fire":
+            evidence = fire_by_aoi.get(key, [])
+            corroborated = any(r.get("detections", 0) > 0 for r in evidence)
+        elif event_type == "flood":
+            evidence = flood_by_aoi.get(key, [])
+            corroborated = any(r.get("flood_flag") for r in evidence)
+        else:
+            evidence = []
+            corroborated = False
+        out.append({
+            "aoi_key": key,
+            "event_type": event_type,
+            "event_date": _day(aoi.get("event_date")),
+            "area_km2": aoi.get("area_km2"),
+            "evidence_days": len(evidence),
+            "corroborated": corroborated,
         })
     return out

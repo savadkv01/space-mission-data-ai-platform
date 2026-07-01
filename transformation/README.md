@@ -6,6 +6,12 @@ The **pure-Python transformation rules** (cleaning, Silver conformance, Gold agg
 
 > Status: design + reference implementation complete. Infrastructure not yet provisioned — `make test` and `make demo` work today; Spark/dbt/Airflow jobs activate when infra lands.
 
+> **Scope boundary.** The **MVP** covers the six Earth-observation / maritime use
+> cases on real open data (`obs_fire`, `obs_vessel`, `obs_scene`, `obs_index`,
+> `ref_aoi` and their Gold marts). The telemetry / orbit / space-weather
+> transforms are a **post-MVP Simulation Track** on synthetic data — a streaming
+> and anomaly-ML demonstrator, excluded from MVP (see ADR-09).
+
 ## Quick Start (offline, no infra)
 
 ```bash

@@ -403,12 +403,91 @@ def check_sentinelhub(session: requests.Session) -> CheckResult:
     return result
 
 
+_NDVI_EVALSCRIPT = (
+    "//VERSION=3\n"
+    'function setup() { return { input: [{ bands: ["B04", "B08", "dataMask"] }],'
+    ' output: [{ id: "index", bands: 1 }, { id: "dataMask", bands: 1 }] }; }\n'
+    "function evaluatePixel(s) { let v = (s.B08 - s.B04) / (s.B08 + s.B04);"
+    " return { index: [v], dataMask: [s.dataMask] }; }\n"
+)
+
+
+def check_sentinelhub_statistical(session: requests.Session) -> CheckResult:
+    """Sentinel Hub Statistical API — aggregated NDVI/NDWI/NBR (UC-14/15/16)."""
+    result = CheckResult("Sentinel Hub Statistical", "Earth Observation", "Free account + token")
+    client_id = env("SENTINELHUB_CLIENT_ID")
+    client_secret = env("SENTINELHUB_CLIENT_SECRET")
+    if not (client_id and client_secret):
+        result.status = SKIP
+        result.message = "SENTINELHUB_CLIENT_ID/SECRET not set"
+        return result
+
+    try:
+        token_resp = session.post(
+            "https://services.sentinel-hub.com/oauth/token",
+            data={
+                "grant_type": "client_credentials",
+                "client_id": client_id,
+                "client_secret": client_secret,
+            },
+            timeout=DEFAULT_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        return _net_fail(result, exc)
+
+    if token_resp.status_code != 200 or "access_token" not in token_resp.json():
+        result.status = FAIL
+        result.message = "client credentials rejected (no token)"
+        return result
+
+    token = token_resp.json()["access_token"]
+    body = {
+        "input": {
+            "bounds": {
+                "bbox": [54.8, 24.8, 55.6, 25.5],  # Dubai-ish AOI
+                "properties": {"crs": "http://www.opengis.net/def/crs/EPSG/0/4326"},
+            },
+            "data": [{"type": "sentinel-2-l2a"}],
+        },
+        "aggregation": {
+            "timeRange": {"from": "2024-06-01T00:00:00Z", "to": "2024-06-10T23:59:59Z"},
+            "aggregationInterval": {"of": "P1D"},
+            "evalscript": _NDVI_EVALSCRIPT,
+            "resx": 0.0001,
+            "resy": 0.0001,
+        },
+    }
+    try:
+        resp = session.post(
+            "https://services.sentinel-hub.com/api/v1/statistics",
+            json=body,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=DEFAULT_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        return _net_fail(result, exc)
+
+    if resp.status_code == 200 and isinstance(resp.json().get("data"), list):
+        buckets = resp.json()["data"]
+        result.sample_path = save_json_sample("sentinelhub_statistical_ndvi.json", buckets[:3])
+        result.status = PASS
+        result.message = f"NDVI statistics retrieved ({len(buckets)} time buckets)"
+    elif resp.status_code in (400, 401, 403):
+        result.status = FAIL
+        result.message = f"statistical request rejected (HTTP {resp.status_code})"
+    else:
+        result.status = WARN
+        result.message = f"unexpected response (HTTP {resp.status_code})"
+    return result
+
+
 # Ordered registry of all checks the runner executes.
 ALL_CHECKS = [
     check_nasa_power,
     check_firms,
     check_copernicus_dataspace,
     check_sentinelhub,
+    check_sentinelhub_statistical,
     check_landsat_stac,
     check_earthdata_cmr,
     check_copernicus_ems,

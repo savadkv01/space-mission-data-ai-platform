@@ -11,6 +11,8 @@
 | Launch ↔ Satellite | one-to-many |
 | Space weather ↔ Telemetry anomalies | one-to-many |
 | Earth observation ↔ Climate events | many-to-many |
+| Vessel ↔ AOI (geo) | many-to-many |
+| Scene ↔ Provider | many-to-one |
 
 ## ER Diagram
 
@@ -23,6 +25,10 @@ erDiagram
     dim_satellite ||--o{ fact_weather_impact : affected
     fact_fire_detection }o--o{ dim_geo : observes
     dim_geo ||--o{ fact_flood_extent : covers
+    dim_vessel ||--o{ fact_vessel_activity : reports
+    dim_geo ||--o{ fact_vessel_activity : locates
+    dim_provider ||--o{ fact_scene_catalog : supplies
+    dim_geo ||--o{ fact_scene_catalog : frames
 ```
 
 ## Cross References

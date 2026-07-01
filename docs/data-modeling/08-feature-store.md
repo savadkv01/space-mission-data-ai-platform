@@ -14,12 +14,13 @@ Conceptual feature store sourcing from Silver/Gold; Feast-style offline+online s
 | Orbit stability | alt_drift, vel_var, decay_rate |
 | Weather impact | kp_lag, flux_max, exposure_hr |
 | EO fire risk | ndvi, dryness, frp_trend, weather_idx |
+| EO spectral index | ndvi_mean, ndwi_mean, nbr_mean, valid_pixel_fraction (from Silver `obs_index`) |
 
 ## Online vs Offline
 
 | Store | Source | Latency | Use |
 | --- | --- | --- | --- |
-| Offline | Iceberg Gold | minutes | training, backfill |
+| Offline | Parquet/DuckDB Gold (Iceberg at scale) | minutes | training, backfill |
 | Online | PostgreSQL/Redis | ms | inference serving |
 
 ## Reuse Strategy

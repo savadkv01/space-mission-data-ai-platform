@@ -48,6 +48,28 @@ erDiagram
     fact_fire_detection }o--|| dim_satellite : sat_key
 ```
 
+## 5. Illegal Fishing (Maritime Domain Awareness)
+
+Fact `fact_vessel_activity` — grain: 1 row per vessel per day. Keys: `vessel_key`, `geo_key`, `date_key`. Measures: fishing_hours, transmission_count, suspicious_flag.
+
+```mermaid
+erDiagram
+    fact_vessel_activity }o--|| dim_vessel : vessel_key
+    fact_vessel_activity }o--|| dim_geo : geo_key
+    fact_vessel_activity }o--|| dim_date : date_key
+```
+
+## 6. Catalog Quality (Scene Metadata)
+
+Fact `fact_scene_catalog` — grain: 1 row per scene. Keys: `scene_key`, `provider_key`, `geo_key`, `date_key`. Measures: cloud_cover, completeness_score, is_searchable.
+
+```mermaid
+erDiagram
+    fact_scene_catalog }o--|| dim_provider : provider_key
+    fact_scene_catalog }o--|| dim_geo : geo_key
+    fact_scene_catalog }o--|| dim_date : date_key
+```
+
 ## Cross References
 
 - [04-gold-layer.md](04-gold-layer.md) · [10-data-relationships.md](10-data-relationships.md)

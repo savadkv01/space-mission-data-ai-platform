@@ -6,6 +6,13 @@ generation system, ingestion-time data quality, and the Bronze landing zone.
 
 > Open-source only · fits a 16 GB laptop · no secrets in code.
 
+> **Scope boundary.** Real-data MVP connectors (`api/nasa_firms`, `api/gfw`,
+> `api/sentinelhub`, `api/sentinelhub_stats`, `api/earthdata`, `api/landsat`,
+> `file/` EMS) power the Earth-observation / maritime use cases. The
+> `simulation/` telemetry/orbit/space-weather generators feed the **post-MVP
+> Simulation Track** (synthetic data), excluded from MVP — see ADR-09 in
+> [docs/data-modeling/17-adr.md](../docs/data-modeling/17-adr.md).
+
 ## Layout
 
 ```

@@ -30,6 +30,17 @@ flowchart LR
 
 Point-in-polygon and tile-overlap joins driven by precomputed H3 cells avoid runtime spatial scans.
 
+## AOI Join Implementation
+
+| Path | Engine | Method |
+| --- | --- | --- |
+| Cluster | Spark + Sedona / H3 | precomputed H3 cell join |
+| Offline / tests | pure-Python `spatial_transform` | ray-casting point-in-polygon + bbox pre-filter |
+
+Both paths attribute FIRMS fire points and NDWI index cells to Copernicus EMS
+`ref_aoi` footprints, feeding `kpi_wildfire_aoi_daily`, `kpi_flood_aoi_daily`,
+and the cross-source `kpi_aoi_validation` mart.
+
 ## Cross References
 
 - [03-silver-layer.md](03-silver-layer.md) · [05-star-schemas.md](05-star-schemas.md)

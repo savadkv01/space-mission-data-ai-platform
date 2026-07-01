@@ -12,7 +12,7 @@ This document records the formal Architecture Decision Records (ADRs) for the pl
 | ID | Decision | Status |
 | --- | --- | --- |
 | ADR-001 | Use Kafka as the streaming backbone | Accepted |
-| ADR-002 | Use Iceberg as the lakehouse table format | Accepted |
+| ADR-002 | Use Iceberg as the lakehouse table format | Accepted (scale tier) |
 | ADR-003 | Use MinIO for object storage | Accepted |
 | ADR-004 | Adopt a local-first architecture | Accepted |
 | ADR-005 | Adopt medallion (Bronze/Silver/Gold) architecture | Accepted |
@@ -47,6 +47,8 @@ This document records the formal Architecture Decision Records (ADRs) for the pl
 **Alternatives considered:** Delta Lake, Hive tables, plain parquet.
 
 **Trade-offs:** slightly more setup complexity, accepted for engine neutrality and portability.
+
+**Tiering (refined by data-modeling ADR-10):** the MVP / local tier uses plain Parquet on MinIO + DuckDB (matching the current Spark code, which writes Parquet, and avoiding an extra JVM catalog service on a 16 GB laptop). Iceberg is promoted at the scale tier when concurrent writers, row-level deletes, time-travel/audit, or managed compaction are required.
 
 ---
 

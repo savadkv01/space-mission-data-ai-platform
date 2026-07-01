@@ -40,6 +40,7 @@ This document analyzes the major technology trade-offs that shaped the architect
 
 **Decision:** Iceberg, for engine neutrality and portability.
 **When to prefer alternative:** a Spark/Databricks-centric stack favors Delta.
+**MVP tiering:** the MVP / local tier uses plain **Parquet on MinIO + DuckDB** (matches the code, no extra catalog service on a 16 GB laptop); Iceberg is the **scale-tier** target (see data-modeling ADR-10).
 
 ## PostgreSQL vs Distributed Warehouse
 

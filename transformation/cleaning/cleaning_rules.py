@@ -14,6 +14,7 @@ Design choices:
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Iterable
@@ -84,6 +85,17 @@ def require_fields(record: dict[str, Any], fields: Iterable[str]) -> list[str]:
 
 def natural_key(record: dict[str, Any], key_fields: Iterable[str]) -> tuple:
     return tuple(record.get(f) for f in key_fields)
+
+
+def stable_key(*parts: Any) -> str:
+    """Deterministic short surrogate key from the given parts.
+
+    Used to synthesise natural keys (e.g. ``fire_key``) for sources that do not
+    ship a stable identifier of their own. Same inputs always hash to the same
+    16-hex-character key so re-processing Bronze is idempotent.
+    """
+    joined = "|".join("" if p is None else str(p) for p in parts)
+    return hashlib.sha1(joined.encode("utf-8")).hexdigest()[:16]
 
 
 def deduplicate(records: list[dict[str, Any]], key_fields: Iterable[str],

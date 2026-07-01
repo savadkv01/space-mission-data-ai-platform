@@ -15,7 +15,7 @@ This document maps every architecture layer to a concrete open-source tool and j
 | Batch processing | Apache Spark | Large transformations and reprocessing |
 | Lightweight analytics | DuckDB | Local analytical queries and prototyping |
 | Object storage | MinIO | S3-compatible raw and curated storage |
-| Table format | Apache Iceberg | Lakehouse tables with schema evolution |
+| Table format | Parquet (MVP) / Apache Iceberg (scale tier) | Parquet on MinIO for the local MVP; Iceberg adds schema evolution + time-travel at scale (ADR-10) |
 | Orchestration | Apache Airflow | Scheduled batch workflows |
 | Metadata + warehouse | PostgreSQL | Catalog, metadata, and Gold serving |
 | Feature store | Feast (or internal feature tables) | Reusable feature management |
