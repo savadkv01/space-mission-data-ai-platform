@@ -82,7 +82,11 @@ docker exec space-ingest-runner python -m ingestion.streaming.consumers.validati
 > Consumers have no idle timeout — bound them with `--max-batches`/`--max` so they exit
 > once the produced records are drained.
 
-Batch DAGs in [batch/dags/](batch/dags/) mount into the Airflow `dags` volume.
+Batch DAGs in [batch/dags/](batch/dags/) are bind-mounted into the Airflow container
+(`/opt/airflow/dags/ingestion`) by the **processing** stack and appear in the UI at
+`http://localhost:8082`. The custom Airflow image installs the ingestion deps and puts
+the repo on `PYTHONPATH`, so each DAG runs its connector in-process and lands Bronze in
+MinIO. Unpause/trigger them from the UI — see [OPERATIONS.md §5](../OPERATIONS.md).
 
 A `Makefile` wraps the offline targets (`make test`, `make demo`, `make topics`, `make produce`, …).
 

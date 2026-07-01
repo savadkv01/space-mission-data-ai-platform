@@ -100,7 +100,12 @@ services:
 
   airflow:
     <<: *service-defaults
-    image: apache/airflow:2.9.2
+    # Custom image = stock Airflow + docker CLI + ingestion runtime deps, so the
+    # scheduler can actually RUN the platform DAGs (see airflow.Dockerfile).
+    build:
+      context: .
+      dockerfile: airflow.Dockerfile
+    image: space-platform/airflow:2.9.2
     profiles: ["processing", "core", "all"]
     depends_on:
       postgres:
@@ -114,10 +119,29 @@ services:
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "false"
       AIRFLOW__METRICS__STATSD_ON: "false"
+      # --- Platform DAG runtime wiring ---
+      # Repo mount on PYTHONPATH -> `ingestion` / `transformation` importable.
+      # ingestion.config.settings auto-loads the mounted infrastructure/env/.env,
+      # so API keys (FIRMS_MAP_KEY, NASA_API_KEY, …) resolve without env_file.
+      PYTHONPATH: /opt/airflow/repo
+      # Ingestion connectors land Bronze in MinIO (in-process PythonOperator).
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      KAFKA_BOOTSTRAP: kafka:9092
+      # Transformation tasks are dispatched into this container via docker exec.
+      SPARK_CONTAINER: ${SPARK_CONTAINER:-space-platform-spark-master-1}
     ports:
       - "${AIRFLOW_PORT:-8082}:8080"
     volumes:
-      - airflow-dags:/opt/airflow/dags
+      # DAG definitions (read-only) — these are what appear in the UI at :8082.
+      - ../../ingestion/batch/dags:/opt/airflow/dags/ingestion:ro
+      - ../../transformation/orchestration/dags:/opt/airflow/dags/transformation:ro
+      # Repo code (read-only) so DAGs import the platform packages live.
+      - ../../:/opt/airflow/repo:ro
+      # Docker socket so the transformation DAG can exec into spark-master.
+      - /var/run/docker.sock:/var/run/docker.sock
       - airflow-logs:/opt/airflow/logs
     networks:
       - compute-net

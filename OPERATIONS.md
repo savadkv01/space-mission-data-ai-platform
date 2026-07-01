@@ -249,6 +249,29 @@ docker compose @ALL exec airflow cat /opt/airflow/standalone_admin_password.txt
 docker compose @ALL logs airflow | Select-String "Password for user 'admin'"
 ```
 
+### Trigger ingestion & transformation jobs from the UI
+
+The **processing** stack builds a custom Airflow image (`airflow.Dockerfile`) that mounts
+the repo, installs the ingestion deps, and mounts the Docker socket. The DAGs appear at
+`http://localhost:8082`:
+
+| DAG | What it does | Runs |
+| --- | --- | --- |
+| `ingest_nasa_power` / `ingest_nasa_firms` / `ingest_noaa_swpc` / `ingest_celestrak_tle` | API connector → Bronze/MinIO | **in-process** in the Airflow container |
+| `transformation_medallion_batch` | 3× Bronze→Silver (Spark) → Gold (dbt) | **dispatched into `spark-master`** via `docker exec` |
+
+Steps:
+
+1. Open `http://localhost:8082`, log in as `admin` (password above).
+2. Toggle a DAG **On** (unpause) to let it run on schedule, or click **▶ Trigger DAG** for an immediate run.
+3. Watch progress in **Grid/Graph**; task logs are in the UI (and the `airflow-logs` volume).
+
+> **Prerequisites.** Transformation needs Bronze seeded and `spark-master` healthy (see
+> §11). The transformation DAG shells into the container named `space-platform-spark-master-1`
+> (compose default); if your project name differs, set `SPARK_CONTAINER` on the `airflow`
+> service. On Linux-native Docker (not Docker Desktop) the `airflow` user may need the host
+> Docker group — add `group_add: ["<docker-gid>"]` to the service.
+
 ---
 
 ## 6. Querying PostgreSQL yourself
