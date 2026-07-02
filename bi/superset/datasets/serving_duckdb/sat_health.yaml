@@ -1,0 +1,49 @@
+table_name: sat_health
+main_dttm_col: health_date
+description: "Certified (sim): satellite health per day. Reads Gold Parquet via httpfs."
+cache_timeout: 3600
+schema: null
+sql: |
+  select
+      sat_key, cast(date_key as date) as health_date,
+      samples, health_score, anomaly_samples, labelled_anomalies,
+      anomaly_density, battery_voltage_drift,
+      case when health_score is null then 'unknown'
+           when health_score >= 0.8 then 'nominal'
+           when health_score >= 0.5 then 'degraded'
+           else 'critical' end as status
+  from read_parquet('s3://gold/fact_sat_health/*.parquet')
+filter_select_enabled: true
+extra:
+  certification:
+    certified_by: "Platform Lead"
+    details: "Simulation-Track demonstrator (ADR-09). Labelled sim."
+uuid: d1000000-0000-4000-8000-000000000008
+metrics:
+  - metric_name: mean_health
+    verbose_name: Mean Satellite Health (sim)
+    expression: AVG(health_score)
+columns:
+  - column_name: sat_key
+    type: VARCHAR
+    groupby: true
+  - column_name: health_date
+    type: DATE
+    is_dttm: true
+  - column_name: samples
+    type: BIGINT
+  - column_name: health_score
+    type: DOUBLE
+  - column_name: anomaly_samples
+    type: BIGINT
+  - column_name: labelled_anomalies
+    type: BIGINT
+  - column_name: anomaly_density
+    type: DOUBLE
+  - column_name: battery_voltage_drift
+    type: DOUBLE
+  - column_name: status
+    type: VARCHAR
+    groupby: true
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

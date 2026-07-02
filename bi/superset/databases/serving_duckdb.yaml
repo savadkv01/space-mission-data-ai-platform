@@ -1,0 +1,30 @@
+database_name: serving_duckdb
+# Read-only DuckDB serving database. The serving.duckdb file is built by the
+# serving dbt project and mounted read-only into the Superset container as
+# `serving_products.duckdb` (basename differs from the `serving` schema so the
+# DuckDB catalog name does not collide with it).
+# Secrets are NOT stored here — MinIO/S3 creds for the sim `httpfs` datasets are
+# injected from environment variables at import time.
+sqlalchemy_uri: duckdb:////opt/serving/serving_products.duckdb
+cache_timeout: null
+expose_in_sqllab: true
+allow_ctas: false
+allow_cvas: false
+allow_dml: false
+allow_run_async: true
+extra:
+  metadata_params: {}
+  engine_params:
+    connect_args:
+      read_only: true
+      config:
+        # httpfs settings for the `sim` datasets that read s3://gold/*.parquet.
+        # Values are environment placeholders resolved during import.
+        s3_endpoint: "${DUCKDB_S3_ENDPOINT}"
+        s3_access_key_id: "${MINIO_ROOT_USER}"
+        s3_secret_access_key: "${MINIO_ROOT_PASSWORD}"
+        s3_use_ssl: false
+        s3_url_style: path
+  schemas_allowed_for_file_upload: []
+version: 1.0.0
+uuid: b1000000-0000-4000-8000-000000000001

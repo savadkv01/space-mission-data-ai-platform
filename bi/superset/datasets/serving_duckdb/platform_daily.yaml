@@ -1,0 +1,50 @@
+table_name: platform_daily
+main_dttm_col: kpi_date
+description: "Certified materialized aggregate: platform-wide daily KPIs (executive)."
+cache_timeout: 900
+schema: null
+sql: |
+  select
+      cast(date_key as date) as kpi_date,
+      fire_detections, peak_frp, fire_aois,
+      flood_aoi_days, flood_aois, vessel_days, suspicious_vessels
+  from serving_agg.mv_kpi_platform_daily
+filter_select_enabled: true
+extra:
+  certification:
+    certified_by: "Platform Lead"
+    details: "Pre-computed rollup — executive latency SLA depends on it."
+uuid: d1000000-0000-4000-8000-000000000006
+metrics:
+  - metric_name: fire_detections
+    verbose_name: Total Fire Detections
+    expression: SUM(fire_detections)
+  - metric_name: flood_aoi_days
+    verbose_name: Flood AOI-days
+    expression: SUM(flood_aoi_days)
+  - metric_name: suspicious_vessels
+    verbose_name: Suspicious Vessels
+    expression: SUM(suspicious_vessels)
+  - metric_name: peak_frp
+    verbose_name: Peak FRP
+    expression: MAX(peak_frp)
+columns:
+  - column_name: kpi_date
+    type: DATE
+    is_dttm: true
+  - column_name: fire_detections
+    type: BIGINT
+  - column_name: peak_frp
+    type: DOUBLE
+  - column_name: fire_aois
+    type: BIGINT
+  - column_name: flood_aoi_days
+    type: BIGINT
+  - column_name: flood_aois
+    type: BIGINT
+  - column_name: vessel_days
+    type: BIGINT
+  - column_name: suspicious_vessels
+    type: BIGINT
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

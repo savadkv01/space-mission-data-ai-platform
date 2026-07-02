@@ -24,7 +24,10 @@ x-defaults: &service-defaults
 services:
   superset:
     <<: *service-defaults
-    image: apache/superset:latest
+    image: space-platform/superset:latest
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/superset.Dockerfile
     profiles: ["bi", "obs", "all"]
     depends_on:
       postgres:
@@ -32,20 +35,33 @@ services:
     environment:
       SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
       SUPERSET_LOAD_EXAMPLES: "no"
-      DATABASE_DIALECT: postgresql
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_DB: ${POSTGRES_DB}
-      DATABASE_USER: ${POSTGRES_USER}
-      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      # Stock apache/superset config.py hardcodes SQLite and only honors the
+      # SUPERSET__SQLALCHEMY_DATABASE_URI env override, so point the metadata
+      # store at the dedicated 'superset' PostgreSQL database.
+      SUPERSET__SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/superset
       ADMIN_USERNAME: ${SUPERSET_ADMIN_USER}
       ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
-    # Superset metadata DB uses the 'superset' schema; first run requires
-    # `superset db upgrade && superset init` (handled by bootstrap.sh).
+    # First boot runs migrations + admin bootstrap, then hands off to the server.
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        superset db upgrade &&
+        superset fab create-admin
+        --username "$${ADMIN_USERNAME}"
+        --firstname Admin --lastname User
+        --email admin@space-platform.local
+        --password "$${ADMIN_PASSWORD}" || true;
+        superset init &&
+        exec /app/docker/entrypoints/run-server.sh
     ports:
       - "${SUPERSET_PORT:-8089}:8088"
     volumes:
       - superset-home:/app/superset_home
+      # Serving DuckDB data products (built by the serving dbt project) mounted
+      # read-only. Container basename is `serving_products` (NOT `serving`) so
+      # the DuckDB catalog name does not collide with the `serving` schema.
+      - ../../serving/dbt/serving.duckdb:/opt/serving/serving_products.duckdb:ro
     networks:
       - edge-net
       - data-net

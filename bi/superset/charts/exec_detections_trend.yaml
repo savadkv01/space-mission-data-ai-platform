@@ -1,0 +1,20 @@
+slice_name: "Detections & Flood AOI-days (trend)"
+viz_type: echarts_timeseries_bar
+description: "Executive trend — daily fire detections and flood AOI-days."
+certified_by: "Platform Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-000000000006__table"
+  viz_type: echarts_timeseries_bar
+  x_axis: kpi_date
+  metrics:
+    - fire_detections
+    - flood_aoi_days
+  groupby: []
+  adhoc_filters: []
+  time_range: "Last 30 days"
+  time_grain_sqla: P1D
+query_context: null
+cache_timeout: 900
+uuid: c1000000-0000-4000-8000-000000000004
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-000000000006

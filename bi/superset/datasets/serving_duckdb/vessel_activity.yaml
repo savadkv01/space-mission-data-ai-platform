@@ -1,0 +1,49 @@
+table_name: vessel_activity
+main_dttm_col: activity_date
+description: "Certified: Maritime Vessel Activity (UC-18), 1 row per vessel per day."
+cache_timeout: 3600
+schema: null
+sql: |
+  select
+      vessel_key, cast(date_key as date) as activity_date,
+      transmissions, flag, vessel_type, active_span_days,
+      suspicious_flag, review_priority
+  from serving.serving_vessel_activity
+filter_select_enabled: true
+extra:
+  certification:
+    certified_by: "Maritime Intelligence Lead"
+  rls: "restricted to ops_maritime and exec roles"
+uuid: d1000000-0000-4000-8000-000000000003
+metrics:
+  - metric_name: suspicious_rate
+    verbose_name: Suspicious Vessel Rate
+    expression: AVG(CASE WHEN suspicious_flag THEN 1.0 ELSE 0.0 END)
+  - metric_name: suspicious_count
+    verbose_name: Suspicious Vessels
+    expression: SUM(CASE WHEN suspicious_flag THEN 1 ELSE 0 END)
+columns:
+  - column_name: vessel_key
+    type: VARCHAR
+    groupby: true
+  - column_name: activity_date
+    type: DATE
+    is_dttm: true
+  - column_name: transmissions
+    type: BIGINT
+  - column_name: flag
+    type: VARCHAR
+    groupby: true
+  - column_name: vessel_type
+    type: VARCHAR
+    groupby: true
+  - column_name: active_span_days
+    type: BIGINT
+  - column_name: suspicious_flag
+    type: BOOLEAN
+    groupby: true
+  - column_name: review_priority
+    type: VARCHAR
+    groupby: true
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

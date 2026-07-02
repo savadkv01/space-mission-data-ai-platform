@@ -1,0 +1,26 @@
+slice_name: "Suspicious Vessel Queue"
+viz_type: table
+description: "EO/Maritime — triage queue of suspicious vessels (RLS: ops_maritime)."
+certified_by: "Maritime Intelligence Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-000000000003__table"
+  viz_type: table
+  query_mode: raw
+  all_columns:
+    - vessel_key
+    - flag
+    - vessel_type
+    - transmissions
+    - review_priority
+    - activity_date
+  adhoc_filters:
+    - clause: WHERE
+      expressionType: SQL
+      sqlExpression: "suspicious_flag = true"
+  time_range: "Last 30 days"
+  order_by_cols: []
+query_context: null
+cache_timeout: 3600
+uuid: c1000000-0000-4000-8000-000000000008
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-000000000003

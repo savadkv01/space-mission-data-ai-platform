@@ -1,0 +1,60 @@
+dashboard_title: "Executive — Space Mission Platform"
+description: "Executive decision-support: mission value, trust, and SLA at a glance."
+slug: executive
+certified_by: "Platform Lead"
+css: ""
+published: true
+uuid: e1000000-0000-4000-8000-000000000001
+version: 1.0.0
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 900
+  default_filters: "{}"
+  # RBAC: this dashboard is granted to the `exec` role only (applied post-import).
+  native_filter_configuration:
+    - id: NF_time
+      name: "Time range"
+      filterType: filter_time
+      targets: []
+      defaultDataMask:
+        filterState:
+          value: "Last 30 days"
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children: [GRID_ID]
+  GRID_ID:
+    type: GRID
+    id: GRID_ID
+    children: [ROW_TILES, ROW_TREND, ROW_DETAIL]
+  ROW_TILES:
+    type: ROW
+    id: ROW_TILES
+    children: [CH_FIRE, CH_CORR, CH_VESSEL]
+    meta: { background: BACKGROUND_TRANSPARENT }
+  ROW_TREND:
+    type: ROW
+    id: ROW_TREND
+    children: [CH_TREND]
+  ROW_DETAIL:
+    type: ROW
+    id: ROW_DETAIL
+    children: []
+  CH_FIRE:
+    type: CHART
+    id: CH_FIRE
+    meta: { uuid: c1000000-0000-4000-8000-000000000001, chartId: 7, width: 4, height: 30, sliceName: "Total Fire Detections" }
+  CH_CORR:
+    type: CHART
+    id: CH_CORR
+    meta: { uuid: c1000000-0000-4000-8000-000000000002, chartId: 2, width: 4, height: 30, sliceName: "EMS Corroboration Rate" }
+  CH_VESSEL:
+    type: CHART
+    id: CH_VESSEL
+    meta: { uuid: c1000000-0000-4000-8000-000000000003, chartId: 3, width: 4, height: 30, sliceName: "Suspicious Vessels" }
+  CH_TREND:
+    type: CHART
+    id: CH_TREND
+    meta: { uuid: c1000000-0000-4000-8000-000000000004, chartId: 5, width: 12, height: 50, sliceName: "Detections & Flood AOI-days (trend)" }

@@ -1,0 +1,56 @@
+table_name: wildfire_daily
+main_dttm_col: event_date
+description: "Certified: Wildfire Activity (UC-15), 1 row per AOI per day."
+default_endpoint: null
+offset: 0
+cache_timeout: 3600
+schema: null
+sql: |
+  select
+      aoi_key, aoi_name, cast(date_key as date) as event_date,
+      detections, mean_frp, max_frp, area_km2, severity, ems_corroborated
+  from serving.serving_wildfire_daily
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra:
+  certification:
+    certified_by: "EO Operations Lead"
+    details: "Certified serving product; no ad-hoc SQL in charts."
+uuid: d1000000-0000-4000-8000-000000000001
+metrics:
+  - metric_name: total_detections
+    verbose_name: Total Fire Detections
+    expression: SUM(detections)
+  - metric_name: mean_frp
+    verbose_name: Mean Fire Radiative Power
+    expression: AVG(mean_frp)
+  - metric_name: corroboration_rate
+    verbose_name: EMS Corroboration Rate
+    expression: AVG(CASE WHEN ems_corroborated THEN 1.0 ELSE 0.0 END)
+columns:
+  - column_name: aoi_key
+    type: VARCHAR
+  - column_name: aoi_name
+    type: VARCHAR
+    groupby: true
+  - column_name: event_date
+    type: DATE
+    is_dttm: true
+  - column_name: detections
+    type: BIGINT
+  - column_name: mean_frp
+    type: DOUBLE
+  - column_name: max_frp
+    type: DOUBLE
+  - column_name: area_km2
+    type: DOUBLE
+  - column_name: severity
+    type: VARCHAR
+    groupby: true
+  - column_name: ems_corroborated
+    type: BOOLEAN
+    groupby: true
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

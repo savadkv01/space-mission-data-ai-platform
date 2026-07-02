@@ -1,0 +1,42 @@
+table_name: launch_monthly
+main_dttm_col: null
+description: "Certified (sim): monthly launch performance. Reads Gold Parquet via httpfs."
+cache_timeout: 3600
+schema: null
+sql: |
+  select
+      provider_key, month_key, launches, successes,
+      success_rate, cadence_per_month, mean_delay_days
+  from read_parquet('s3://gold/kpi_launch_monthly/*.parquet')
+filter_select_enabled: true
+extra:
+  certification:
+    certified_by: "Platform Lead"
+    details: "Simulation-Track demonstrator (ADR-09). Labelled sim."
+uuid: d1000000-0000-4000-8000-000000000009
+metrics:
+  - metric_name: mean_success_rate
+    verbose_name: Launch Success Rate (sim)
+    expression: AVG(success_rate)
+  - metric_name: total_launches
+    verbose_name: Launches (sim)
+    expression: SUM(launches)
+columns:
+  - column_name: provider_key
+    type: VARCHAR
+    groupby: true
+  - column_name: month_key
+    type: VARCHAR
+    groupby: true
+  - column_name: launches
+    type: BIGINT
+  - column_name: successes
+    type: BIGINT
+  - column_name: success_rate
+    type: DOUBLE
+  - column_name: cadence_per_month
+    type: BIGINT
+  - column_name: mean_delay_days
+    type: DOUBLE
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

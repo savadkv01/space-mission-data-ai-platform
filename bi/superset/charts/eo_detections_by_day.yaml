@@ -1,0 +1,19 @@
+slice_name: "Wildfire Detections by Day"
+viz_type: echarts_timeseries_bar
+description: "EO — daily fire detections."
+certified_by: "EO Operations Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-000000000001__table"
+  viz_type: echarts_timeseries_bar
+  x_axis: event_date
+  metrics:
+    - total_detections
+  groupby: []
+  adhoc_filters: []
+  time_range: "Last 30 days"
+  time_grain_sqla: P1D
+query_context: null
+cache_timeout: 3600
+uuid: c1000000-0000-4000-8000-000000000006
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-000000000001

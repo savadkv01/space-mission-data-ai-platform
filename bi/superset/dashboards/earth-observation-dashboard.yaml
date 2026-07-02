@@ -1,0 +1,65 @@
+dashboard_title: "Earth Observation — Operations"
+description: "MVP operational surface: wildfire, flood, imagery coverage, maritime."
+slug: earth-observation
+certified_by: "EO Operations Lead"
+css: ""
+published: true
+uuid: e1000000-0000-4000-8000-000000000002
+version: 1.0.0
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 3600
+  default_filters: "{}"
+  # RBAC: granted to `ops_eo` and `ops_maritime`; RLS scopes maritime rows.
+  native_filter_configuration:
+    - id: NF_time
+      name: "Time range"
+      filterType: filter_time
+      targets: []
+      defaultDataMask:
+        filterState:
+          value: "Last 30 days"
+    - id: NF_aoi
+      name: "AOI"
+      filterType: filter_select
+      targets:
+        - datasetUuid: d1000000-0000-4000-8000-000000000001
+          column: { name: aoi_name }
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children: [GRID_ID]
+  GRID_ID:
+    type: GRID
+    id: GRID_ID
+    children: [ROW_TOP, ROW_MID, ROW_MARITIME]
+  ROW_TOP:
+    type: ROW
+    id: ROW_TOP
+    children: [CH_SEVERITY, CH_BYDAY]
+  ROW_MID:
+    type: ROW
+    id: ROW_MID
+    children: [CH_FRP_TABLE]
+  ROW_MARITIME:
+    type: ROW
+    id: ROW_MARITIME
+    children: [CH_VESSEL_QUEUE]
+  CH_SEVERITY:
+    type: CHART
+    id: CH_SEVERITY
+    meta: { uuid: c1000000-0000-4000-8000-000000000005, chartId: 6, width: 4, height: 50, sliceName: "Wildfire Severity Distribution" }
+  CH_BYDAY:
+    type: CHART
+    id: CH_BYDAY
+    meta: { uuid: c1000000-0000-4000-8000-000000000006, chartId: 8, width: 8, height: 50, sliceName: "Wildfire Detections by Day" }
+  CH_FRP_TABLE:
+    type: CHART
+    id: CH_FRP_TABLE
+    meta: { uuid: c1000000-0000-4000-8000-000000000007, chartId: 4, width: 12, height: 50, sliceName: "Peak FRP by AOI" }
+  CH_VESSEL_QUEUE:
+    type: CHART
+    id: CH_VESSEL_QUEUE
+    meta: { uuid: c1000000-0000-4000-8000-000000000008, chartId: 1, width: 12, height: 50, sliceName: "Suspicious Vessel Queue" }

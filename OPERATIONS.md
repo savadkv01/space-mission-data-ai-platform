@@ -113,8 +113,8 @@ docker compose @ALL --profile core up -d
 # Observability stack
 docker compose @ALL --profile obs up -d
 
-# BI (Superset)
-docker compose @ALL --profile bi up -d
+# BI (Superset) — needs storage too (Superset depends on postgres)
+docker compose @ALL --profile storage --profile bi up -d
 
 # Everything
 docker compose @ALL --profile all up -d

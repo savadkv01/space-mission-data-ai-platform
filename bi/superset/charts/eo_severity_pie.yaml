@@ -1,0 +1,17 @@
+slice_name: "Wildfire Severity Distribution"
+viz_type: pie
+description: "EO — distribution of wildfire severity bands (pre-computed upstream)."
+certified_by: "EO Operations Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-000000000001__table"
+  viz_type: pie
+  metric: total_detections
+  groupby:
+    - severity
+  adhoc_filters: []
+  time_range: "Last 30 days"
+query_context: null
+cache_timeout: 3600
+uuid: c1000000-0000-4000-8000-000000000005
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-000000000001

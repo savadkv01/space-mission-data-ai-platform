@@ -1,0 +1,52 @@
+table_name: catalog_quality
+main_dttm_col: null
+description: "Certified BI aggregate: catalog quality per collection (engineering)."
+cache_timeout: 3600
+schema: null
+sql: |
+  select
+      collection, provider,
+      count(*) as scenes,
+      sum(case when is_searchable then 1 else 0 end) as searchable_scenes,
+      round(avg(case when is_searchable then 1.0 else 0.0 end), 4) as searchable_rate,
+      round(avg(completeness_score), 4) as mean_completeness,
+      round(avg(cloud_cover), 4) as mean_cloud_cover,
+      sum(case when quality_band = 'gold'   then 1 else 0 end) as gold_scenes,
+      sum(case when quality_band = 'silver' then 1 else 0 end) as silver_scenes,
+      sum(case when quality_band = 'bronze' then 1 else 0 end) as bronze_scenes
+  from serving.serving_scene_catalog
+  group by collection, provider
+filter_select_enabled: true
+extra:
+  certification:
+    certified_by: "Data Steward"
+uuid: d1000000-0000-4000-8000-000000000007
+metrics:
+  - metric_name: mean_searchable_rate
+    verbose_name: Searchable Rate
+    expression: AVG(searchable_rate)
+columns:
+  - column_name: collection
+    type: VARCHAR
+    groupby: true
+  - column_name: provider
+    type: VARCHAR
+    groupby: true
+  - column_name: scenes
+    type: BIGINT
+  - column_name: searchable_scenes
+    type: BIGINT
+  - column_name: searchable_rate
+    type: DOUBLE
+  - column_name: mean_completeness
+    type: DOUBLE
+  - column_name: mean_cloud_cover
+    type: DOUBLE
+  - column_name: gold_scenes
+    type: BIGINT
+  - column_name: silver_scenes
+    type: BIGINT
+  - column_name: bronze_scenes
+    type: BIGINT
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

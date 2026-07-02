@@ -1,0 +1,53 @@
+table_name: scene_catalog
+main_dttm_col: capture_date
+description: "Certified: Imagery Catalog (UC-25), 1 row per scene."
+cache_timeout: 3600
+schema: null
+sql: |
+  select
+      scene_key, cast(date_key as date) as capture_date,
+      collection, provider, platform, geo_key,
+      cloud_cover, completeness_score, is_searchable, quality_band
+  from serving.serving_scene_catalog
+filter_select_enabled: true
+extra:
+  certification:
+    certified_by: "Data Steward"
+uuid: d1000000-0000-4000-8000-000000000004
+metrics:
+  - metric_name: scenes
+    verbose_name: Scenes
+    expression: COUNT(*)
+  - metric_name: searchable_rate
+    verbose_name: Searchable Scene Rate
+    expression: AVG(CASE WHEN is_searchable THEN 1.0 ELSE 0.0 END)
+columns:
+  - column_name: scene_key
+    type: VARCHAR
+  - column_name: capture_date
+    type: DATE
+    is_dttm: true
+  - column_name: collection
+    type: VARCHAR
+    groupby: true
+  - column_name: provider
+    type: VARCHAR
+    groupby: true
+  - column_name: platform
+    type: VARCHAR
+    groupby: true
+  - column_name: geo_key
+    type: VARCHAR
+    groupby: true
+  - column_name: cloud_cover
+    type: DOUBLE
+  - column_name: completeness_score
+    type: DOUBLE
+  - column_name: is_searchable
+    type: BOOLEAN
+    groupby: true
+  - column_name: quality_band
+    type: VARCHAR
+    groupby: true
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

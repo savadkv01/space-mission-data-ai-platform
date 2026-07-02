@@ -1,0 +1,40 @@
+table_name: aoi_validation
+main_dttm_col: event_date
+description: "Certified: Detection Validation (UC-27), EMS corroboration per AOI."
+cache_timeout: 3600
+schema: null
+sql: |
+  select
+      aoi_key, event_type, cast(event_date as date) as event_date,
+      area_km2, evidence_days, corroborated, trust
+  from serving.serving_aoi_validation
+filter_select_enabled: true
+extra:
+  certification:
+    certified_by: "EO Operations Lead"
+uuid: d1000000-0000-4000-8000-000000000005
+metrics:
+  - metric_name: corroboration_rate
+    verbose_name: EMS Corroboration Rate
+    expression: AVG(CASE WHEN corroborated THEN 1.0 ELSE 0.0 END)
+columns:
+  - column_name: aoi_key
+    type: VARCHAR
+  - column_name: event_type
+    type: VARCHAR
+    groupby: true
+  - column_name: event_date
+    type: DATE
+    is_dttm: true
+  - column_name: area_km2
+    type: DOUBLE
+  - column_name: evidence_days
+    type: BIGINT
+  - column_name: corroborated
+    type: BOOLEAN
+    groupby: true
+  - column_name: trust
+    type: VARCHAR
+    groupby: true
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

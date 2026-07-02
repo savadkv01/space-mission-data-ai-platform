@@ -1,0 +1,46 @@
+table_name: weather_impact
+main_dttm_col: weather_date
+description: "Certified (sim): daily space-weather impact. Reads Gold Parquet via httpfs."
+cache_timeout: 3600
+schema: null
+sql: |
+  select
+      cast(date_key as date) as weather_date,
+      max_kp_index, mean_kp_index, storm_events,
+      telemetry_samples, anomaly_samples, anomaly_rate,
+      (max_kp_index >= 5) as storm_day
+  from read_parquet('s3://gold/fact_weather_impact/*.parquet')
+filter_select_enabled: true
+extra:
+  certification:
+    certified_by: "Platform Lead"
+    details: "Simulation-Track demonstrator (ADR-09). Kp real (SWPC), impact join sim."
+uuid: d1000000-0000-4000-8000-00000000000a
+metrics:
+  - metric_name: max_kp
+    verbose_name: Max Kp Index
+    expression: MAX(max_kp_index)
+  - metric_name: storm_days
+    verbose_name: Storm Days (sim)
+    expression: SUM(CASE WHEN max_kp_index >= 5 THEN 1 ELSE 0 END)
+columns:
+  - column_name: weather_date
+    type: DATE
+    is_dttm: true
+  - column_name: max_kp_index
+    type: DOUBLE
+  - column_name: mean_kp_index
+    type: DOUBLE
+  - column_name: storm_events
+    type: BIGINT
+  - column_name: telemetry_samples
+    type: BIGINT
+  - column_name: anomaly_samples
+    type: BIGINT
+  - column_name: anomaly_rate
+    type: DOUBLE
+  - column_name: storm_day
+    type: BOOLEAN
+    groupby: true
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

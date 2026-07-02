@@ -1,0 +1,47 @@
+table_name: flood_daily
+main_dttm_col: event_date
+description: "Certified: Flood Extent (UC-16), 1 row per AOI per day."
+cache_timeout: 3600
+schema: null
+sql: |
+  select
+      aoi_key, aoi_name, cast(date_key as date) as event_date,
+      ndwi_mean, ndwi_max, valid_pixel_fraction, flood_flag, area_km2, ems_corroborated
+  from serving.serving_flood_daily
+filter_select_enabled: true
+extra:
+  certification:
+    certified_by: "EO Operations Lead"
+uuid: d1000000-0000-4000-8000-000000000002
+metrics:
+  - metric_name: flood_day_rate
+    verbose_name: Flood Day Rate
+    expression: AVG(CASE WHEN flood_flag THEN 1.0 ELSE 0.0 END)
+  - metric_name: mean_ndwi
+    verbose_name: Mean NDWI
+    expression: AVG(ndwi_mean)
+columns:
+  - column_name: aoi_key
+    type: VARCHAR
+  - column_name: aoi_name
+    type: VARCHAR
+    groupby: true
+  - column_name: event_date
+    type: DATE
+    is_dttm: true
+  - column_name: ndwi_mean
+    type: DOUBLE
+  - column_name: ndwi_max
+    type: DOUBLE
+  - column_name: valid_pixel_fraction
+    type: DOUBLE
+  - column_name: flood_flag
+    type: BOOLEAN
+    groupby: true
+  - column_name: area_km2
+    type: DOUBLE
+  - column_name: ems_corroborated
+    type: BOOLEAN
+    groupby: true
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

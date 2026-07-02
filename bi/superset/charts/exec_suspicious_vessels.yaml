@@ -1,0 +1,15 @@
+slice_name: "Suspicious Vessels"
+viz_type: big_number_total
+description: "Executive KPI tile — Σ suspicious vessel-days."
+certified_by: "Maritime Intelligence Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-000000000006__table"
+  viz_type: big_number_total
+  metric: suspicious_vessels
+  adhoc_filters: []
+  time_range: "No filter"
+query_context: null
+cache_timeout: 900
+uuid: c1000000-0000-4000-8000-000000000003
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-000000000006

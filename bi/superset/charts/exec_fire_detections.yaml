@@ -1,0 +1,18 @@
+slice_name: "Total Fire Detections"
+viz_type: big_number_total
+description: "Executive KPI tile — Σ fire detections in window."
+certified_by: "EO Operations Lead"
+certification_details: "Certified metric from serving product."
+params:
+  datasource: "d1000000-0000-4000-8000-000000000006__table"
+  viz_type: big_number_total
+  metric: fire_detections
+  adhoc_filters: []
+  time_range: "No filter"
+  header_font_size: 0.4
+  subheader_font_size: 0.15
+query_context: null
+cache_timeout: 900
+uuid: c1000000-0000-4000-8000-000000000001
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-000000000006

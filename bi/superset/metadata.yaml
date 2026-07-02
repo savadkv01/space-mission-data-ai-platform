@@ -1,0 +1,5 @@
+version: 1.0.0
+type: assets
+timestamp: "2026-07-02T00:00:00+00:00"
+# Superset assets-as-code bundle for the Space Mission Data & AI Platform BI layer.
+# Import order: databases -> datasets -> charts -> dashboards.

@@ -1,0 +1,16 @@
+slice_name: "EMS Corroboration Rate"
+viz_type: big_number_total
+description: "Executive KPI tile — Mission Success proxy (EMS ground-truth trust)."
+certified_by: "EO Operations Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-000000000005__table"
+  viz_type: big_number_total
+  metric: corroboration_rate
+  adhoc_filters: []
+  time_range: "No filter"
+  number_format: ".0%"
+query_context: null
+cache_timeout: 3600
+uuid: c1000000-0000-4000-8000-000000000002
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-000000000005
