@@ -28,16 +28,28 @@ SPARK_SUBMIT=(
 cd "$WORKDIR"
 
 echo "==================== Bronze -> Silver (Spark + S3A) ===================="
-for entity in telemetry orbit space_weather; do
+# Simulation-track entities (fully typed) + MVP Earth-observation entities.
+# Run one entity per spark-submit: a single local JVM handles them serially and
+# an absent Bronze source is skipped inside run_spark rather than aborting.
+for entity in telemetry orbit space_weather fire vessel scene index; do
   echo "--> silver: $entity"
   "${SPARK_SUBMIT[@]}" transformation/scripts/run_silver.py "$entity"
 done
 
-echo "==================== Silver -> Gold (dbt-duckdb) ======================="
+echo "==================== Silver -> Gold (Spark -> s3://gold) ==============="
+# Materialises every business-ready mart (sim + MVP EO) to s3://gold/<table>/
+# Parquet — the serving layer's only source. Reuses the tested pure-Python Gold
+# rules (point-in-polygon AOI attribution can't be expressed in dbt SQL).
+"${SPARK_SUBMIT[@]}" transformation/scripts/run_gold.py
+
+echo "==================== Silver -> Gold (dbt-duckdb demonstrator) =========="
+# Analytics-engineering demonstrator: the sim-track Gold also materialises to a
+# local DuckDB warehouse for interactive querying (post-MVP, not serving input).
 cd "$WORKDIR/transformation/dbt"
 dbt deps
 dbt run
 dbt test
 
 echo "==================== DONE ==============================================="
+echo "Gold lakehouse: s3://gold/<table>/*.parquet (serving source)"
 echo "Gold warehouse: ${DBT_DUCKDB_PATH:-$WORKDIR/transformation/dbt/space.duckdb}"

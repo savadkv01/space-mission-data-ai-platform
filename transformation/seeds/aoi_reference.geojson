@@ -1,0 +1,60 @@
+{
+  "type": "FeatureCollection",
+  "name": "copernicus_ems_aoi_reference",
+  "description": "Curated Copernicus-EMS-style Area-of-Interest footprints used as reference/master data (ref_aoi) and independent validation ground truth. Footprints intentionally cover the live ingest bounding boxes: the FIRMS active-fire request area (California) and the Sentinel Hub NDWI statistics AOI (Dubai). Shipped in-repo because Copernicus EMS rapid-mapping products are portal downloads, not an automated API (see ADR-09 / data-modeling ref_aoi).",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "EMSR-CA-FIRE-2025",
+        "name": "California Statewide Fire Monitoring",
+        "aoiName": "California Statewide Fire Monitoring",
+        "eventType": "Wildfire",
+        "hazard": "fire",
+        "category": "Wildfire",
+        "eventDate": "2025-08-01T00:00:00+00:00",
+        "country": "United States",
+        "activation": "EMSR-CA-FIRE-2025"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-124.5, 32.5],
+            [-114.5, 32.5],
+            [-114.5, 42.0],
+            [-124.5, 42.0],
+            [-124.5, 32.5]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "EMSR-AE-FLOOD-2024",
+        "name": "Dubai Coastal Flood Monitoring",
+        "aoiName": "Dubai Coastal Flood Monitoring",
+        "eventType": "Flood",
+        "hazard": "flood",
+        "category": "Flood",
+        "eventDate": "2024-04-16T00:00:00+00:00",
+        "country": "United Arab Emirates",
+        "activation": "EMSR-AE-FLOOD-2024"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [54.80, 24.80],
+            [55.60, 24.80],
+            [55.60, 25.50],
+            [54.80, 25.50],
+            [54.80, 24.80]
+          ]
+        ]
+      }
+    }
+  ]
+}

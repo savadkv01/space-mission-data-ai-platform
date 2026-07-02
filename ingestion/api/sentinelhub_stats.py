@@ -70,6 +70,13 @@ class SentinelHubStatsConnector(SentinelHubConnector):
             )
         aoi = bbox or [54.8, 24.8, 55.6, 25.5]  # Dubai-ish AOI
         time_from, _, time_to = datetime_range.partition("/")
+        time_from = self._rfc3339(time_from, end=False)
+        time_to = self._rfc3339(time_to or time_from, end=True)
+        # The Statistical API caps the output raster at ~2500 px per side; for a
+        # geographic (EPSG:4326) request the resolution is in degrees, so a wide
+        # AOI at native 10 m spacing would exceed the cap and return HTTP 400.
+        # Auto-coarsen resx/resy to keep each dimension within the budget.
+        resx, resy = self._safe_resolution(aoi, resolution)
         token = self._access_token()
         body = {
             "input": {
@@ -85,8 +92,8 @@ class SentinelHubStatsConnector(SentinelHubConnector):
                 "timeRange": {"from": time_from, "to": time_to or time_from},
                 "aggregationInterval": {"of": aggregation_interval},
                 "evalscript": self.EVALSCRIPTS[index_name],
-                "resx": resolution,
-                "resy": resolution,
+                "resx": resx,
+                "resy": resy,
             },
         }
         headers = {"Authorization": f"Bearer {token}"}
@@ -109,3 +116,30 @@ class SentinelHubStatsConnector(SentinelHubConnector):
         if isinstance(interval, dict):
             return interval.get("from")
         return None
+
+    #: Statistical API output raster limit (pixels per side) with headroom.
+    MAX_DIM_PX = 2500
+
+    @staticmethod
+    def _rfc3339(value: str, *, end: bool) -> str:
+        """Coerce a date or timestamp to a full RFC3339 instant with ``Z``.
+
+        The Statistical API rejects date-only bounds (HTTP 400); a bare
+        ``YYYY-MM-DD`` is expanded to the start/end of that day.
+        """
+        text = (value or "").strip()
+        if not text:
+            return text
+        if "T" not in text:
+            text += "T23:59:59Z" if end else "T00:00:00Z"
+        elif not text.endswith("Z") and "+" not in text:
+            text += "Z"
+        return text
+
+    def _safe_resolution(self, bbox: list[float], resolution: float) -> tuple[float, float]:
+        """Return ``(resx, resy)`` degrees that keep the raster within the cap."""
+        width = abs(bbox[2] - bbox[0])
+        height = abs(bbox[3] - bbox[1])
+        resx = max(resolution, width / self.MAX_DIM_PX) if width else resolution
+        resy = max(resolution, height / self.MAX_DIM_PX) if height else resolution
+        return resx, resy

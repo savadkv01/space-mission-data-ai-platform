@@ -53,3 +53,8 @@ Thumbs.db
 # --- Logs ---
 *.log
 logs/
+
+# --- dbt build artifacts ---
+dbt_packages/
+target/
+.user.yml

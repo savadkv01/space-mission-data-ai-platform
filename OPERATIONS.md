@@ -258,7 +258,7 @@ the repo, installs the ingestion deps, and mounts the Docker socket. The DAGs ap
 | DAG | What it does | Runs |
 | --- | --- | --- |
 | `ingest_nasa_power` / `ingest_nasa_firms` / `ingest_noaa_swpc` / `ingest_celestrak_tle` | API connector → Bronze/MinIO | **in-process** in the Airflow container |
-| `transformation_medallion_batch` | 3× Bronze→Silver (Spark) → Gold (dbt) | **dispatched into `spark-master`** via `docker exec` |
+| `transformation_medallion_batch` | 7× Bronze→Silver (sim + MVP EO, Spark) → Gold lakehouse (Spark → `s3://gold`) → Gold dbt demonstrator | **dispatched into `spark-master`** via `docker exec` |
 
 Steps:
 
@@ -615,7 +615,8 @@ foreach ($d in 'satellite_telemetry','orbit_position','space_weather') {
 ### A) Batch pipeline — Bronze → Silver → Gold (one command)
 
 ```powershell
-# Runs all three Silver jobs (one at a time) then dbt deps/run/test for Gold
+# Runs every Silver job (sim + MVP EO, one at a time), then the Spark Gold
+# lakehouse writer (all marts -> s3://gold), then dbt deps/run/test (demonstrator)
 docker compose @ALL exec -u root spark-master `
   bash /opt/spark/work-dir/transformation/scripts/run_pipeline.sh
 ```
@@ -628,10 +629,29 @@ make -C transformation silver-infra ENTITY=orbit   # a single Silver entity
 make -C transformation gold-infra                  # just the dbt Gold marts
 ```
 
-Expected: `silver_telemetry/orbit/space_weather` each land `_SUCCESS` + Parquet in
-`s3://silver/`; dbt reports `run PASS=3` (`stg_telemetry`, `fact_sat_health`,
-`fact_weather_impact`) and `test PASS=8`. The Gold DuckDB warehouse persists in the
-mount at `transformation/dbt/space.duckdb`.
+**Silver entities** (`run_silver.py <entity>`): simulation track `telemetry`,
+`orbit`, `space_weather`; MVP Earth-observation `fire` (FIRMS), `vessel` (GFW),
+`scene` (Sentinel Hub / Landsat / Earthdata), `index` (Sentinel Hub NDVI/NDWI/NBR).
+An absent Bronze source is skipped inside `run_spark`, so a partial ingest still
+produces Silver. EO Silver rows carry all-null columns; explicit Spark schemas
+(`_silver_spark_schema`) + `coerce_rows_to_schema` make the Parquet write
+deterministic.
+
+**Gold lakehouse** (`run_gold.py`): materialises all ten business-ready marts to
+`s3://gold/<table>/*.parquet` — the **only** serving source. It reuses the tested
+pure-Python `silver_to_gold` rules (point-in-polygon AOI attribution can't be
+expressed in dbt SQL, ADR-SV-01) and loads the Copernicus-EMS AOI reference seed
+(`transformation/seeds/aoi_reference.geojson`) as `ref_aoi` + validation ground
+truth. Marts: `kpi_wildfire_aoi_daily`, `kpi_flood_aoi_daily`,
+`fact_vessel_activity`, `fact_scene_catalog`, `kpi_eo_daily`, `kpi_aoi_validation`,
+`ref_aoi` (MVP EO) + `fact_sat_health`, `kpi_launch_monthly`, `fact_weather_impact`
+(sim). Marts with no source data land an empty (0-row) Parquet so the serving
+contract stays stable.
+
+Expected: each `silver_*` lands `_SUCCESS` + Parquet in `s3://silver/`; the Gold
+writer logs `wrote gold/<table>: N row(s)` for all ten marts to `s3://gold/`; the
+dbt demonstrator reports `run PASS` + `test PASS`. The Gold DuckDB warehouse (sim
+demonstrator) persists at `transformation/dbt/space.duckdb`.
 
 ### B) Streaming job — Kafka → Silver windows
 
@@ -654,11 +674,37 @@ docker compose @ALL exec -u root spark-master /opt/spark/bin/spark-submit `
 > Parquet file is empty and real rows appear after 2–3 triggers. Produce a second wave of
 > (later-timestamped) telemetry to advance the watermark, then re-list `s3://silver/stream_sat_health_1m/`.
 
+### C) Serving data products — Gold → dbt products
+
+Builds the business-facing serving products (wildfire/flood/vessel/scene/AOI-validation +
+the platform-KPI materialised view) by reading the Gold Parquet directly from MinIO with
+DuckDB + `httpfs` — no serving database server. Runs as a one-off container from the
+`spark-transform` image (which carries dbt-duckdb), on `space-data-net`:
+
+```powershell
+$p = (Get-Content infrastructure/env/.env | Select-String '^MINIO_ROOT_PASSWORD=' |
+      ForEach-Object { ($_ -split '=',2)[1] })
+docker run --rm --network space-data-net --user root --entrypoint bash `
+  -v "${PWD}:/work" `
+  -e DBT_PROFILES_DIR=/work/serving/dbt -e SERVING_DUCKDB_PATH=/tmp/serving.duckdb `
+  -e DUCKDB_S3_ENDPOINT=minio:9000 `
+  -e MINIO_ROOT_USER=platform_minio -e MINIO_ROOT_PASSWORD=$p `
+  space-platform/spark-transform:3.5.1 `
+  -lc "cd /work/serving/dbt && dbt deps && dbt run && dbt test"
+```
+
+Expected: `dbt run` builds every `serving_*` model + `mv_kpi_platform_daily`; `dbt test`
+reports `PASS=18`. Serving reads **only** `s3://gold/<table>/*.parquet`, so run the batch
+pipeline (A) first.
+
 ### Verify the run
 
 ```powershell
 # Silver/Gold object listing
 docker @MC ls --recursive local/silver
+
+# Gold lakehouse marts (serving source)
+docker @MC ls local/gold
 
 # Query the Gold DuckDB warehouse (root-owned; query as root)
 docker compose @ALL exec -u root spark-master `
@@ -683,7 +729,8 @@ What is operationally available today, and what each future phase will add to th
 | --- | --- | --- |
 | 04 / 07 — Infrastructure | Start/stop, status, URLs, PostgreSQL & MinIO access, Kafka basics, lakehouse query *mechanisms* | ✅ Available |
 | 08 — Ingestion | §10 runner pattern; live Kafka topics + offset checks; synthetic streaming pipeline; API connectors → Bronze; Bronze object inspection | ✅ Available |
-| 09 — Transformation | §11 one-command Bronze→Silver→Gold pipeline (hardened `spark-master` image with dbt baked in); Kafka→Silver structured streaming; Silver Parquet + Gold dbt marts to query | ✅ Available |
+| 09 — Transformation | §11 one-command Bronze→Silver→Gold pipeline (hardened `spark-master` image with dbt baked in); sim + MVP Earth-observation Silver entities; Spark Gold-lakehouse writer materialising all ten marts to `s3://gold` (the serving source, with the Copernicus-EMS AOI seed); Kafka→Silver structured streaming | ✅ Available |
+| 11 — Serving | Serving dbt data products (wildfire/flood/vessel/scene/AOI-validation + platform KPI MV) built from `s3://gold` Parquet via DuckDB+httpfs; `dbt run` + 18 contract tests | ✅ Data products available (FastAPI 🔜) |
 | AI/ML | MLflow experiment/run queries; Feast feature retrieval; model registry commands | 🔜 Add MLflow section |
 | RAG / LLM | Qdrant collection queries; Ollama model pull/run; Open WebUI usage | 🔜 Add LLM section |
 | Serving (API) | FastAPI endpoints, auth, example requests | 🔜 Add API section |

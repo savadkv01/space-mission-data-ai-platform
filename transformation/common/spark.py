@@ -51,3 +51,32 @@ def build_spark_session(app_suffix: str = "") -> "SparkSession":
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
     )
     return builder.getOrCreate()
+
+
+def coerce_rows_to_schema(rows, schema):  # pragma: no cover - needs Spark
+    """Coerce each row's values to the Python types an explicit schema expects.
+
+    ``createDataFrame(rows, schema)`` verifies types strictly: a ``DoubleType``
+    column rejects a Python ``int`` (e.g. ``cloud_cover=0``), and an all-string
+    column rejects a stray number. Cleaners produce mixed int/float for numeric
+    fields, so this normalises every value to the declared type (``None`` stays
+    ``None``), keeping the Spark write deterministic across sim + EO entities.
+    """
+    from pyspark.sql.types import (
+        BooleanType, DoubleType, FloatType, IntegerType, LongType, StringType,
+    )
+
+    def _make(dtype):
+        if isinstance(dtype, (DoubleType, FloatType)):
+            return lambda v: None if v is None else float(v)
+        if isinstance(dtype, (IntegerType, LongType)):
+            return lambda v: None if v is None else int(v)
+        if isinstance(dtype, BooleanType):
+            return lambda v: None if v is None else bool(v)
+        if isinstance(dtype, StringType):
+            return lambda v: None if v is None else (v if isinstance(v, str) else str(v))
+        return lambda v: v
+
+    coercers = {f.name: _make(f.dataType) for f in schema.fields}
+    names = list(coercers)
+    return [{n: coercers[n](row.get(n)) for n in names} for row in rows]

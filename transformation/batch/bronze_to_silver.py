@@ -581,6 +581,58 @@ def _apply(records: list[dict[str, Any]], cleaner: Callable[[dict[str, Any]], Cl
 
 # --- Spark entrypoint (requires infrastructure) -----------------------------
 
+def _silver_spark_schema(entity: str):  # pragma: no cover - needs Spark
+    """Return an explicit Spark ``StructType`` for an Earth-observation entity.
+
+    Earth-observation Silver rows routinely carry all-null columns (e.g. an EO
+    scene with no cloud cover, a GFW vessel with no IMO). ``createDataFrame``
+    cannot infer a type from an all-null column and raises
+    ``CANNOT_DETERMINE_TYPE``. Declaring the contract explicitly makes the write
+    deterministic and also lets us persist an *empty* partition when a source
+    yielded no rows, so downstream Gold/serving always find a readable Parquet.
+    Simulation entities keep schema inference (they are fully typed).
+    """
+    from pyspark.sql.types import (
+        DoubleType, IntegerType, LongType, StringType, StructField, StructType,
+    )
+
+    def _s(name: str) -> StructField:
+        return StructField(name, StringType(), True)
+
+    def _d(name: str) -> StructField:
+        return StructField(name, DoubleType(), True)
+
+    schemas = {
+        "fire": StructType([
+            _s("fire_key"), _s("event_ts"), _d("latitude"), _d("longitude"),
+            _s("geo_key"), _d("brightness"), _d("frp"),
+            StructField("confidence", IntegerType(), True),
+            _s("satellite"), _s("daynight"), _s("source"),
+            _s("_ingest_id"), _s("_batch_id"),
+        ]),
+        "vessel": StructType([
+            _s("vessel_key"), _s("mmsi"), _s("imo"), _s("shipname"), _s("flag"),
+            _s("vessel_type"), _s("first_transmission_ts"),
+            _s("last_transmission_ts"), _s("event_ts"), _s("source"),
+            _s("_ingest_id"), _s("_batch_id"),
+        ]),
+        "scene": StructType([
+            _s("scene_key"), _s("event_ts"), _s("collection"), _s("platform"),
+            _s("bbox"), _s("geo_key"), _d("cloud_cover"), _s("provider"),
+            _s("source"), _s("_ingest_id"), _s("_batch_id"),
+            _d("completeness_score"),
+        ]),
+        "index": StructType([
+            _s("index_key"), _s("index_name"), _s("stat_date"), _s("event_ts"),
+            _s("geo_key"), _s("bbox"), _d("mean"), _d("min"), _d("max"),
+            _d("stddev"), _d("valid_pixel_fraction"), _s("collection"),
+            _s("source"), _s("_ingest_id"), _s("_batch_id"),
+        ]),
+    }
+    _ = LongType  # reserved for future numeric contracts
+    return schemas.get(entity)
+
+
 def run_spark(entity: str) -> None:  # pragma: no cover - needs Spark/MinIO
     """Read Bronze, apply the matching Silver transform, write Silver Parquet.
 
@@ -589,8 +641,9 @@ def run_spark(entity: str) -> None:  # pragma: no cover - needs Spark/MinIO
     runs when Spark + the object store are available.
     """
     from pyspark.sql import functions as F  # noqa: F401
+    from pyspark.sql.utils import AnalysisException
 
-    from transformation.common.spark import build_spark_session
+    from transformation.common.spark import build_spark_session, coerce_rows_to_schema
     from transformation.config.settings import settings
 
     transforms = {
@@ -615,11 +668,27 @@ def run_spark(entity: str) -> None:  # pragma: no cover - needs Spark/MinIO
 
     from transformation.common.io import unwrap_bronze
 
+    # A Silver entity may union several Bronze sources (e.g. scene reads Sentinel
+    # Hub + Landsat + Earthdata). Any absent source is skipped so partial ingests
+    # still produce Silver rather than aborting the whole entity.
     records: list[dict[str, Any]] = []
     for dataset in datasets:
-        bronze = spark.read.json(settings.lake.path("bronze", dataset))
+        try:
+            bronze = spark.read.json(settings.lake.path("bronze", dataset))
+        except AnalysisException:
+            print(f"[run_silver] bronze source not found, skipping: {dataset}")
+            continue
         records.extend(r.asDict(recursive=True) for r in bronze.collect())
 
     result = fn([unwrap_bronze(r) for r in records])
-    spark.createDataFrame(result.rows).write.mode("overwrite").parquet(silver_path)
+    schema = _silver_spark_schema(entity)
+    if not result.rows and schema is None:
+        print(f"[run_silver] no rows for entity={entity}; nothing written")
+        spark.stop()
+        return
+    if schema is not None:
+        frame = spark.createDataFrame(coerce_rows_to_schema(result.rows, schema), schema=schema)
+    else:
+        frame = spark.createDataFrame(result.rows)
+    frame.write.mode("overwrite").parquet(silver_path)
     spark.stop()

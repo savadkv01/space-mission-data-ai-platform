@@ -2,8 +2,10 @@
 
 Dependency chain (see docs/transformation/06-batch-processing.md):
 
-    silver_{telemetry,orbit,space_weather}   (Spark Bronze->Silver, S3A->MinIO)
-        -> gold_dbt                          (dbt-duckdb Silver->Gold marts + tests)
+    silver_{telemetry,orbit,space_weather,fire,vessel,scene,index}
+        (Spark Bronze->Silver, S3A->MinIO)
+        -> gold_lakehouse   (Spark Silver->Gold marts -> s3://gold, serving source)
+        -> gold_dbt         (dbt-duckdb sim-track demonstrator warehouse)
 
 The heavy engine (Spark + dbt) runs INSIDE the hardened ``spark-master``
 container — which already carries the code mount, cached Ivy jars and the
@@ -38,8 +40,13 @@ DEFAULT_ARGS = {
     "depends_on_past": False,
 }
 
-# Entity -> Bronze->Silver Spark job.
-SILVER_ENTITIES = ["telemetry", "orbit", "space_weather"]
+# Entity -> Bronze->Silver Spark job. Simulation-track entities (telemetry,
+# orbit, space_weather) plus MVP Earth-observation entities (fire, vessel,
+# scene, index). An absent Bronze source is skipped inside run_spark.
+SILVER_ENTITIES = [
+    "telemetry", "orbit", "space_weather",
+    "fire", "vessel", "scene", "index",
+]
 
 # Hardened Spark/dbt runner (compose default container name; override via env).
 SPARK_CONTAINER = os.environ.get("SPARK_CONTAINER", "space-platform-spark-master-1")
@@ -81,13 +88,21 @@ def build_dag() -> "DAG | None":
             for entity in SILVER_ENTITIES
         ]
 
+        # Primary Gold: every mart (sim + MVP EO) materialised to s3://gold
+        # Parquet — the serving layer's only source.
+        gold_lakehouse = BashOperator(
+            task_id="gold_lakehouse",
+            bash_command=_in_spark(f"{_SUBMIT} transformation/scripts/run_gold.py"),
+        )
+
+        # Secondary Gold: dbt-duckdb sim-track demonstrator warehouse.
         gold_dbt = BashOperator(
             task_id="gold_dbt",
             bash_command=_in_spark("cd transformation/dbt && dbt deps && dbt run && dbt test"),
         )
 
         # All Silver jobs must succeed before the Gold marts are (re)built.
-        silver_tasks >> gold_dbt
+        silver_tasks >> gold_lakehouse >> gold_dbt
 
     return dag
 
