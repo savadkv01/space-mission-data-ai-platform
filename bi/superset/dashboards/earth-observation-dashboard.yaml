@@ -31,35 +31,54 @@ position:
     type: ROOT
     id: ROOT_ID
     children: [GRID_ID]
+  HEADER_ID:
+    type: HEADER
+    id: HEADER_ID
+    meta: { text: "Earth Observation — Operations" }
   GRID_ID:
     type: GRID
     id: GRID_ID
     children: [ROW_TOP, ROW_MID, ROW_MARITIME]
+    parents: [ROOT_ID]
   ROW_TOP:
     type: ROW
     id: ROW_TOP
     children: [CH_SEVERITY, CH_BYDAY]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID]
   ROW_MID:
     type: ROW
     id: ROW_MID
     children: [CH_FRP_TABLE]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID]
   ROW_MARITIME:
     type: ROW
     id: ROW_MARITIME
     children: [CH_VESSEL_QUEUE]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID]
   CH_SEVERITY:
     type: CHART
     id: CH_SEVERITY
+    children: []
     meta: { uuid: c1000000-0000-4000-8000-000000000005, chartId: 6, width: 4, height: 50, sliceName: "Wildfire Severity Distribution" }
+    parents: [ROOT_ID, GRID_ID, ROW_TOP]
   CH_BYDAY:
     type: CHART
     id: CH_BYDAY
+    children: []
     meta: { uuid: c1000000-0000-4000-8000-000000000006, chartId: 8, width: 8, height: 50, sliceName: "Wildfire Detections by Day" }
+    parents: [ROOT_ID, GRID_ID, ROW_TOP]
   CH_FRP_TABLE:
     type: CHART
     id: CH_FRP_TABLE
+    children: []
     meta: { uuid: c1000000-0000-4000-8000-000000000007, chartId: 4, width: 12, height: 50, sliceName: "Peak FRP by AOI" }
+    parents: [ROOT_ID, GRID_ID, ROW_MID]
   CH_VESSEL_QUEUE:
     type: CHART
     id: CH_VESSEL_QUEUE
+    children: []
     meta: { uuid: c1000000-0000-4000-8000-000000000008, chartId: 1, width: 12, height: 50, sliceName: "Suspicious Vessel Queue" }
+    parents: [ROOT_ID, GRID_ID, ROW_MARITIME]

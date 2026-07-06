@@ -25,36 +25,48 @@ position:
     type: ROOT
     id: ROOT_ID
     children: [GRID_ID]
+  HEADER_ID:
+    type: HEADER
+    id: HEADER_ID
+    meta: { text: "Executive — Space Mission Platform" }
   GRID_ID:
     type: GRID
     id: GRID_ID
-    children: [ROW_TILES, ROW_TREND, ROW_DETAIL]
+    children: [ROW_TILES, ROW_TREND]
+    parents: [ROOT_ID]
   ROW_TILES:
     type: ROW
     id: ROW_TILES
     children: [CH_FIRE, CH_CORR, CH_VESSEL]
     meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID]
   ROW_TREND:
     type: ROW
     id: ROW_TREND
     children: [CH_TREND]
-  ROW_DETAIL:
-    type: ROW
-    id: ROW_DETAIL
-    children: []
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID]
   CH_FIRE:
     type: CHART
     id: CH_FIRE
+    children: []
     meta: { uuid: c1000000-0000-4000-8000-000000000001, chartId: 7, width: 4, height: 30, sliceName: "Total Fire Detections" }
+    parents: [ROOT_ID, GRID_ID, ROW_TILES]
   CH_CORR:
     type: CHART
     id: CH_CORR
+    children: []
     meta: { uuid: c1000000-0000-4000-8000-000000000002, chartId: 2, width: 4, height: 30, sliceName: "EMS Corroboration Rate" }
+    parents: [ROOT_ID, GRID_ID, ROW_TILES]
   CH_VESSEL:
     type: CHART
     id: CH_VESSEL
+    children: []
     meta: { uuid: c1000000-0000-4000-8000-000000000003, chartId: 3, width: 4, height: 30, sliceName: "Suspicious Vessels" }
+    parents: [ROOT_ID, GRID_ID, ROW_TILES]
   CH_TREND:
     type: CHART
     id: CH_TREND
+    children: []
     meta: { uuid: c1000000-0000-4000-8000-000000000004, chartId: 5, width: 12, height: 50, sliceName: "Detections & Flood AOI-days (trend)" }
+    parents: [ROOT_ID, GRID_ID, ROW_TREND]
