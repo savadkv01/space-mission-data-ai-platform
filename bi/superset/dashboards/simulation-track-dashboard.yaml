@@ -1,0 +1,113 @@
+dashboard_title: "Simulation Track — Satellite, Launch & Weather"
+description: "Simulation-Track demonstrator (ADR-09): satellite health, launch cadence, space weather."
+slug: simulation-track
+certified_by: "Platform Lead"
+css: ""
+published: true
+uuid: e1000000-0000-4000-8000-000000000004
+version: 1.0.0
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 3600
+  default_filters: "{}"
+  native_filter_configuration:
+    - id: NF_time
+      name: "Time range"
+      filterType: filter_time
+      targets: []
+      defaultDataMask:
+        filterState:
+          value: "No filter"
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children: [GRID_ID]
+  HEADER_ID:
+    type: HEADER
+    id: HEADER_ID
+    meta: { text: "Simulation Track — Satellite, Launch & Weather" }
+  GRID_ID:
+    type: GRID
+    id: GRID_ID
+    children: [TABS_ID]
+    parents: [ROOT_ID]
+  TABS_ID:
+    type: TABS
+    id: TABS_ID
+    children: [TAB_SAT, TAB_LAUNCH, TAB_WEATHER]
+    meta: {}
+    parents: [ROOT_ID, GRID_ID]
+  TAB_SAT:
+    type: TAB
+    id: TAB_SAT
+    children: [ROW_SAT]
+    meta: { text: "Satellite" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
+  TAB_LAUNCH:
+    type: TAB
+    id: TAB_LAUNCH
+    children: [ROW_LAUNCH]
+    meta: { text: "Launch" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
+  TAB_WEATHER:
+    type: TAB
+    id: TAB_WEATHER
+    children: [ROW_WEATHER_TREND, ROW_WEATHER_DETAIL]
+    meta: { text: "Weather" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
+  ROW_SAT:
+    type: ROW
+    id: ROW_SAT
+    children: [CH_SAT_STATUS_PIE, CH_SAT_HEALTH_TREND]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_SAT]
+  ROW_LAUNCH:
+    type: ROW
+    id: ROW_LAUNCH
+    children: [CH_LAUNCH_TABLE]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_LAUNCH]
+  ROW_WEATHER_TREND:
+    type: ROW
+    id: ROW_WEATHER_TREND
+    children: [CH_MAX_KP_TREND]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_WEATHER]
+  ROW_WEATHER_DETAIL:
+    type: ROW
+    id: ROW_WEATHER_DETAIL
+    children: [CH_WEATHER_DETAIL]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_WEATHER]
+  CH_SAT_STATUS_PIE:
+    type: CHART
+    id: CH_SAT_STATUS_PIE
+    children: []
+    meta: { uuid: c1000000-0000-4000-8000-000000000011, chartId: 0, width: 4, height: 50, sliceName: "Satellite Health Status (sim)" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_SAT, ROW_SAT]
+  CH_SAT_HEALTH_TREND:
+    type: CHART
+    id: CH_SAT_HEALTH_TREND
+    children: []
+    meta: { uuid: c1000000-0000-4000-8000-000000000012, chartId: 0, width: 8, height: 50, sliceName: "Mean Satellite Health Trend (sim)" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_SAT, ROW_SAT]
+  CH_LAUNCH_TABLE:
+    type: CHART
+    id: CH_LAUNCH_TABLE
+    children: []
+    meta: { uuid: c1000000-0000-4000-8000-000000000013, chartId: 0, width: 12, height: 50, sliceName: "Launch Success Rate by Provider (sim)" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_LAUNCH, ROW_LAUNCH]
+  CH_MAX_KP_TREND:
+    type: CHART
+    id: CH_MAX_KP_TREND
+    children: []
+    meta: { uuid: c1000000-0000-4000-8000-000000000015, chartId: 0, width: 12, height: 50, sliceName: "Max Kp Index by Day (sim)" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_WEATHER, ROW_WEATHER_TREND]
+  CH_WEATHER_DETAIL:
+    type: CHART
+    id: CH_WEATHER_DETAIL
+    children: []
+    meta: { uuid: c1000000-0000-4000-8000-000000000014, chartId: 0, width: 12, height: 50, sliceName: "Weather Impact Detail (sim)" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_WEATHER, ROW_WEATHER_DETAIL]

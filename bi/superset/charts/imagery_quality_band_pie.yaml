@@ -1,0 +1,17 @@
+slice_name: "Scene Quality Band Distribution"
+viz_type: pie
+description: "Imagery — distribution of scenes across gold/silver/bronze quality bands."
+certified_by: "Data Steward"
+params:
+  datasource: "d1000000-0000-4000-8000-000000000004__table"
+  viz_type: pie
+  metric: scenes
+  groupby:
+    - quality_band
+  adhoc_filters: []
+  time_range: "No filter"
+query_context: null
+cache_timeout: 3600
+uuid: c1000000-0000-4000-8000-00000000000e
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-000000000004

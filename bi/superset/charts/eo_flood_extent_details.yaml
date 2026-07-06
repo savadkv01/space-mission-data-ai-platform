@@ -1,0 +1,28 @@
+slice_name: "Flood Extent Details"
+viz_type: table
+description: "EO — raw per-AOI-per-day flood detection records for drill-down (flagged flood days)."
+certified_by: "EO Operations Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-000000000002__table"
+  viz_type: table
+  query_mode: raw
+  all_columns:
+    - aoi_name
+    - event_date
+    - ndwi_mean
+    - ndwi_max
+    - valid_pixel_fraction
+    - area_km2
+    - flood_flag
+    - ems_corroborated
+  adhoc_filters:
+    - clause: WHERE
+      expressionType: SQL
+      sqlExpression: "flood_flag = true"
+  time_range: "No filter"
+  order_by_cols: []
+query_context: null
+cache_timeout: 3600
+uuid: c1000000-0000-4000-8000-00000000000a
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-000000000002

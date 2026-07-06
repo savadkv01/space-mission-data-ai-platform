@@ -1,0 +1,25 @@
+slice_name: "Weather Impact Detail (sim)"
+viz_type: table
+description: "Simulation-Track — raw daily space-weather impact records."
+certified_by: "Platform Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000a__table"
+  viz_type: table
+  query_mode: raw
+  all_columns:
+    - weather_date
+    - max_kp_index
+    - mean_kp_index
+    - storm_events
+    - telemetry_samples
+    - anomaly_samples
+    - anomaly_rate
+    - storm_day
+  adhoc_filters: []
+  time_range: "No filter"
+  order_by_cols: []
+query_context: null
+cache_timeout: 3600
+uuid: c1000000-0000-4000-8000-000000000014
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000a

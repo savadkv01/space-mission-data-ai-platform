@@ -38,47 +38,95 @@ position:
   GRID_ID:
     type: GRID
     id: GRID_ID
-    children: [ROW_TOP, ROW_MID, ROW_MARITIME]
+    children: [TABS_ID]
     parents: [ROOT_ID]
+  TABS_ID:
+    type: TABS
+    id: TABS_ID
+    children: [TAB_OVERVIEW, TAB_DETAILS]
+    meta: {}
+    parents: [ROOT_ID, GRID_ID]
+  TAB_OVERVIEW:
+    type: TAB
+    id: TAB_OVERVIEW
+    children: [ROW_TOP, ROW_MID, ROW_MARITIME]
+    meta: { text: "Overview" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
+  TAB_DETAILS:
+    type: TAB
+    id: TAB_DETAILS
+    children: [ROW_DETAIL_FIRE, ROW_DETAIL_FLOOD_VESSEL]
+    meta: { text: "Details" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
   ROW_TOP:
     type: ROW
     id: ROW_TOP
     children: [CH_SEVERITY, CH_BYDAY]
     meta: { background: BACKGROUND_TRANSPARENT }
-    parents: [ROOT_ID, GRID_ID]
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW]
   ROW_MID:
     type: ROW
     id: ROW_MID
     children: [CH_FRP_TABLE]
     meta: { background: BACKGROUND_TRANSPARENT }
-    parents: [ROOT_ID, GRID_ID]
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW]
   ROW_MARITIME:
     type: ROW
     id: ROW_MARITIME
     children: [CH_VESSEL_QUEUE]
     meta: { background: BACKGROUND_TRANSPARENT }
-    parents: [ROOT_ID, GRID_ID]
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW]
+  ROW_DETAIL_FIRE:
+    type: ROW
+    id: ROW_DETAIL_FIRE
+    children: [CH_FIRE_DETAIL]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DETAILS]
+  ROW_DETAIL_FLOOD_VESSEL:
+    type: ROW
+    id: ROW_DETAIL_FLOOD_VESSEL
+    children: [CH_FLOOD_DETAIL, CH_VESSEL_DETAIL]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DETAILS]
   CH_SEVERITY:
     type: CHART
     id: CH_SEVERITY
     children: []
     meta: { uuid: c1000000-0000-4000-8000-000000000005, chartId: 6, width: 4, height: 50, sliceName: "Wildfire Severity Distribution" }
-    parents: [ROOT_ID, GRID_ID, ROW_TOP]
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW, ROW_TOP]
   CH_BYDAY:
     type: CHART
     id: CH_BYDAY
     children: []
     meta: { uuid: c1000000-0000-4000-8000-000000000006, chartId: 8, width: 8, height: 50, sliceName: "Wildfire Detections by Day" }
-    parents: [ROOT_ID, GRID_ID, ROW_TOP]
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW, ROW_TOP]
   CH_FRP_TABLE:
     type: CHART
     id: CH_FRP_TABLE
     children: []
     meta: { uuid: c1000000-0000-4000-8000-000000000007, chartId: 4, width: 12, height: 50, sliceName: "Peak FRP by AOI" }
-    parents: [ROOT_ID, GRID_ID, ROW_MID]
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW, ROW_MID]
   CH_VESSEL_QUEUE:
     type: CHART
     id: CH_VESSEL_QUEUE
     children: []
     meta: { uuid: c1000000-0000-4000-8000-000000000008, chartId: 1, width: 12, height: 50, sliceName: "Suspicious Vessel Queue" }
-    parents: [ROOT_ID, GRID_ID, ROW_MARITIME]
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW, ROW_MARITIME]
+  CH_FIRE_DETAIL:
+    type: CHART
+    id: CH_FIRE_DETAIL
+    children: []
+    meta: { uuid: c1000000-0000-4000-8000-000000000009, chartId: 0, width: 12, height: 50, sliceName: "Fire Detection Details" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DETAILS, ROW_DETAIL_FIRE]
+  CH_FLOOD_DETAIL:
+    type: CHART
+    id: CH_FLOOD_DETAIL
+    children: []
+    meta: { uuid: c1000000-0000-4000-8000-00000000000a, chartId: 0, width: 6, height: 50, sliceName: "Flood Extent Details" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DETAILS, ROW_DETAIL_FLOOD_VESSEL]
+  CH_VESSEL_DETAIL:
+    type: CHART
+    id: CH_VESSEL_DETAIL
+    children: []
+    meta: { uuid: c1000000-0000-4000-8000-00000000000b, chartId: 0, width: 6, height: 50, sliceName: "Suspicious Vessel Details" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DETAILS, ROW_DETAIL_FLOOD_VESSEL]

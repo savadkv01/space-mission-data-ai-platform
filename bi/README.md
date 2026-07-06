@@ -44,8 +44,12 @@ Governance narrative lives in [`../docs/bi/`](../docs/bi/) (14 documents).
 
 ## Dashboards
 
-Executive · Earth Observation (MVP-primary) · Platform Operations · Satellite `sim`
-· Launch `sim` · Space Weather `sim`. See [`docs/bi/02-dashboard-catalog.md`](../docs/bi/02-dashboard-catalog.md).
+Executive · Earth Observation (MVP-primary) · Imagery & Catalog Quality · Simulation
+Track (Satellite/Launch/Weather `sim`, tabbed). Executive and Earth Observation each
+have an **Overview** tab and a **Details** tab with raw drill-down tables (fire
+detections, flood extent, suspicious vessels). Platform Operations remains a
+markdown-only spec (Prometheus/Airflow metrics aren't queryable via the Superset
+DuckDB connection). See [`docs/bi/02-dashboard-catalog.md`](../docs/bi/02-dashboard-catalog.md).
 
 ## Run It
 

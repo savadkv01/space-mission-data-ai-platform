@@ -1,0 +1,25 @@
+slice_name: "Fire Detection Details"
+viz_type: table
+description: "EO — raw per-AOI-per-day wildfire detection records for drill-down."
+certified_by: "EO Operations Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-000000000001__table"
+  viz_type: table
+  query_mode: raw
+  all_columns:
+    - aoi_name
+    - event_date
+    - detections
+    - mean_frp
+    - max_frp
+    - area_km2
+    - severity
+    - ems_corroborated
+  adhoc_filters: []
+  time_range: "No filter"
+  order_by_cols: []
+query_context: null
+cache_timeout: 3600
+uuid: c1000000-0000-4000-8000-000000000009
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-000000000001

@@ -1,0 +1,27 @@
+slice_name: "Catalog Quality by Collection"
+viz_type: table
+description: "Imagery — per-collection/provider catalog quality summary (engineering)."
+certified_by: "Data Steward"
+params:
+  datasource: "d1000000-0000-4000-8000-000000000007__table"
+  viz_type: table
+  query_mode: raw
+  all_columns:
+    - collection
+    - provider
+    - scenes
+    - searchable_scenes
+    - searchable_rate
+    - mean_completeness
+    - mean_cloud_cover
+    - gold_scenes
+    - silver_scenes
+    - bronze_scenes
+  adhoc_filters: []
+  time_range: "No filter"
+  order_by_cols: []
+query_context: null
+cache_timeout: 3600
+uuid: c1000000-0000-4000-8000-000000000010
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-000000000007

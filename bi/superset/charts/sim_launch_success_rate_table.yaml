@@ -1,0 +1,22 @@
+slice_name: "Launch Success Rate by Provider (sim)"
+viz_type: table
+description: "Simulation-Track — monthly launch cadence and success rate by provider."
+certified_by: "Platform Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-000000000009__table"
+  viz_type: table
+  query_mode: aggregate
+  groupby:
+    - provider_key
+    - month_key
+  metrics:
+    - total_launches
+    - mean_success_rate
+  adhoc_filters: []
+  time_range: "No filter"
+  order_desc: true
+query_context: null
+cache_timeout: 3600
+uuid: c1000000-0000-4000-8000-000000000013
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-000000000009

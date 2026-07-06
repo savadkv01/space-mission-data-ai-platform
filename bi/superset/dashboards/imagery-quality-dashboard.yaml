@@ -1,0 +1,89 @@
+dashboard_title: "Imagery & Catalog Quality"
+description: "Scene catalog coverage and quality bands (UC-25) — previously uncharted certified data."
+slug: imagery-quality
+certified_by: "Data Steward"
+css: ""
+published: true
+uuid: e1000000-0000-4000-8000-000000000003
+version: 1.0.0
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 3600
+  default_filters: "{}"
+  native_filter_configuration:
+    - id: NF_time
+      name: "Time range"
+      filterType: filter_time
+      targets: []
+      defaultDataMask:
+        filterState:
+          value: "No filter"
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children: [GRID_ID]
+  HEADER_ID:
+    type: HEADER
+    id: HEADER_ID
+    meta: { text: "Imagery & Catalog Quality" }
+  GRID_ID:
+    type: GRID
+    id: GRID_ID
+    children: [ROW_TOP, ROW_TREND, ROW_TABLE, ROW_DETAIL]
+    parents: [ROOT_ID]
+  ROW_TOP:
+    type: ROW
+    id: ROW_TOP
+    children: [CH_SEARCHABLE, CH_QUALITY_PIE]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID]
+  ROW_TREND:
+    type: ROW
+    id: ROW_TREND
+    children: [CH_SCENES_BYDAY]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID]
+  ROW_TABLE:
+    type: ROW
+    id: ROW_TABLE
+    children: [CH_CATALOG_QUALITY_TABLE]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID]
+  ROW_DETAIL:
+    type: ROW
+    id: ROW_DETAIL
+    children: [CH_SCENE_DETAIL]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID]
+  CH_SEARCHABLE:
+    type: CHART
+    id: CH_SEARCHABLE
+    children: []
+    meta: { uuid: c1000000-0000-4000-8000-00000000000f, chartId: 0, width: 4, height: 30, sliceName: "Searchable Scene Rate" }
+    parents: [ROOT_ID, GRID_ID, ROW_TOP]
+  CH_QUALITY_PIE:
+    type: CHART
+    id: CH_QUALITY_PIE
+    children: []
+    meta: { uuid: c1000000-0000-4000-8000-00000000000e, chartId: 0, width: 8, height: 30, sliceName: "Scene Quality Band Distribution" }
+    parents: [ROOT_ID, GRID_ID, ROW_TOP]
+  CH_SCENES_BYDAY:
+    type: CHART
+    id: CH_SCENES_BYDAY
+    children: []
+    meta: { uuid: c1000000-0000-4000-8000-00000000000d, chartId: 0, width: 12, height: 50, sliceName: "Scenes Captured by Day" }
+    parents: [ROOT_ID, GRID_ID, ROW_TREND]
+  CH_CATALOG_QUALITY_TABLE:
+    type: CHART
+    id: CH_CATALOG_QUALITY_TABLE
+    children: []
+    meta: { uuid: c1000000-0000-4000-8000-000000000010, chartId: 0, width: 12, height: 50, sliceName: "Catalog Quality by Collection" }
+    parents: [ROOT_ID, GRID_ID, ROW_TABLE]
+  CH_SCENE_DETAIL:
+    type: CHART
+    id: CH_SCENE_DETAIL
+    children: []
+    meta: { uuid: c1000000-0000-4000-8000-00000000000c, chartId: 0, width: 12, height: 50, sliceName: "Scene Catalog Detail" }
+    parents: [ROOT_ID, GRID_ID, ROW_DETAIL]

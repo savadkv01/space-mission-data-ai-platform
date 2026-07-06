@@ -1,0 +1,27 @@
+slice_name: "Scene Catalog Detail"
+viz_type: table
+description: "Imagery — raw scene catalog records (UC-25) for drill-down."
+certified_by: "Data Steward"
+params:
+  datasource: "d1000000-0000-4000-8000-000000000004__table"
+  viz_type: table
+  query_mode: raw
+  all_columns:
+    - scene_key
+    - capture_date
+    - collection
+    - provider
+    - platform
+    - geo_key
+    - cloud_cover
+    - completeness_score
+    - is_searchable
+    - quality_band
+  adhoc_filters: []
+  time_range: "No filter"
+  order_by_cols: []
+query_context: null
+cache_timeout: 3600
+uuid: c1000000-0000-4000-8000-00000000000c
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-000000000004

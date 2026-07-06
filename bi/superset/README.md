@@ -56,7 +56,10 @@ docker compose --env-file infrastructure/env/.env \
 # 3. import the assets bundle via the v1 REST API (NOT the `superset
 #    import-dashboards` CLI — that dispatches to the legacy v0 JSON importer
 #    and fails on these YAML assets). Log in for an access token + CSRF token,
-#    then POST the zip to /api/v1/dashboard/import/ with overwrite=true.
+#    then POST the zip to /api/v1/assets/import/ (field name `bundle`, NOT
+#    `formData`) — this endpoint matches metadata.yaml's `type: assets` and
+#    always overwrites existing entities in place. `/api/v1/dashboard/import/`
+#    only accepts `type: Dashboard` bundles and will reject this one.
 ```
 
 > **Bundle gotchas (verified):**
@@ -66,8 +69,16 @@ docker compose --env-file infrastructure/env/.env \
 >   the zip with `System.IO.Compression` (forward slashes) or `zip` on Linux.
 > - Every `CHART` node in a dashboard's `position` needs both `uuid` **and**
 >   `chartId` (int) in its `meta`, or the importer raises `KeyError: 'chartId'`.
+>   A placeholder `chartId` (e.g. `0`) is fine for brand-new charts as long as
+>   the chart's YAML is in the SAME bundle — the importer remaps it by `uuid`.
 > - `${...}` placeholders in `databases/serving_duckdb.yaml` (S3 endpoint/creds)
 >   are substituted with real values at import time; secrets are never committed.
+> - The endpoint MUST match `metadata.yaml`'s `type:`. This bundle is `type:
+>   assets`, so it goes to `POST /api/v1/assets/import/` with multipart field
+>   name **`bundle`** (not `formData`) and no `overwrite` field — it always
+>   overwrites every entity in place. `POST /api/v1/dashboard/import/` is for
+>   single-dashboard `type: Dashboard` exports only and rejects this bundle
+>   with `metadata.yaml: {'type': ['Must be equal to Dashboard.']}`.
 
 ## Export (after editing in the UI)
 
@@ -97,10 +108,20 @@ docker compose ... exec superset \
 
 ## Coverage
 
-This bundle imports live end-to-end: the connection, all 10 certified datasets,
-8 charts, and the Executive + Earth Observation dashboards (with layout). Verified
-via `POST /api/v1/chart/data` — both the baked `serving_*` tables and the
-`s3://gold` httpfs `sim` datasets return rows. The remaining dashboards (Platform,
-Satellite `sim`, Launch `sim`, Weather `sim`) follow the identical pattern
-documented per-dashboard in [`../dashboards/`](../dashboards/) and are generated
-with the same export workflow.
+This bundle imports live end-to-end via `POST /api/v1/assets/import/` (full
+databases + datasets + charts + dashboards bundle, `type: assets` in
+`metadata.yaml` — NOT the single-dashboard `/api/v1/dashboard/import/` endpoint,
+which rejects `type: assets` bundles). The connection, all 10 certified
+datasets, 21 charts, and 4 dashboards import and render: Executive + Earth
+Observation (each with an Overview tab and a Details tab of raw drill-down
+tables), Imagery & Catalog Quality (previously-uncharted `scene_catalog` /
+`catalog_quality` datasets), and Simulation Track (`sat_health` /
+`launch_monthly` / `weather_impact`, tabbed Satellite/Launch/Weather). Verified
+via `POST /api/v1/chart/data` and live dashboard render — both the baked
+`serving_*` tables and the `s3://gold` httpfs `sim` datasets return rows.
+`flood_daily` and `launch_monthly` currently have 0 rows in this environment
+(no NDWI/launch source ingested yet) but the charts and datasets are fully
+wired and will populate once that data lands. Remaining dashboard ideas in
+[`../dashboards/`](../dashboards/) (e.g. Platform Operations) need a metrics
+source Superset can't reach via the DuckDB connection (Prometheus/Airflow) and
+are intentionally left as markdown-only specs.
