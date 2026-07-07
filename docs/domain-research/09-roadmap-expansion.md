@@ -23,6 +23,8 @@ This document describes how the dataset ecosystem can evolve beyond the MVP into
 - **Capability:** vessel behavior modeling, emissions hotspot detection, smoke-impact analysis.
 - **New engineering needs:** streaming ingestion at scale, entity resolution, cross-domain correlation.
 
+> **Formalized initiative (Stages 2-3):** The environmental capabilities above are delivered as a concrete **climate, dust & air-quality** expansion using tabular/statistical-API sources — **OpenAQ, Sentinel-5P/TROPOMI, MODIS/VIIRS AOD**, plus indicators derived from already-ingested LST/NDVI/SST/Global Forest Watch data. **CAMS and ERA5 are kept as raw NetCDF sources and are deferred** (they need a binary blob-landing capability); geostationary GOES/SEVIRI is likewise deferred (16 GB budget). Delivery is via extension prompts `05b`-`16b` in [../../.github/prompts/](../../.github/prompts/).
+
 ### Stage 4 - Space Weather and Mission Context
 
 - **New datasets:** NOAA SWPC, NASA DONKI, GOES, Space-Track, CelesTrak history.

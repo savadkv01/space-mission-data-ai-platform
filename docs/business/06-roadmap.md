@@ -55,6 +55,16 @@ This roadmap defines how the business scope can evolve from a focused MVP into a
 | AI Features | Time-series anomaly detection, predictive maintenance support, RAG-enhanced operational copilots |
 | Expected Complexity | Very high due to proprietary data needs, operational sensitivity, and validation demands |
 
+## Concrete Expansion Initiative — Climate, Dust & Air-Quality
+
+The Version 2.0–3.0 environmental themes (drought/crop stress, EO change detection, climate emissions intelligence) are formalized into a concrete, authored initiative: **climate change, dust storm, and air-quality monitoring**. It reuses existing platform patterns with no architectural change and is scoped to tabular/statistical-API sources only.
+
+| Included (Strategy A) | Deferred |
+| --- | --- |
+| OpenAQ, Sentinel-5P/TROPOMI (via Sentinel Hub Statistical API), MODIS/VIIRS AOD; indicators derived from already-ingested LST/NDVI/SST/forest data | CAMS & ERA5 raw NetCDF (need blob-landing); geostationary SEVIRI/Himawari (exceeds 16 GB budget) |
+
+Delivery: extension prompt phases `05b`–`12b` then `13b`–`16b` in [.github/prompts/](../../.github/prompts/). The dataset-level roadmap is in [../domain-research/09-roadmap-expansion.md](../domain-research/09-roadmap-expansion.md).
+
 ## Roadmap Trade-Offs
 
 | Option | Why It Was Not Chosen as the Starting Point |

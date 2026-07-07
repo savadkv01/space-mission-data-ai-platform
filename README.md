@@ -6,20 +6,37 @@ An enterprise-grade, production-simulated **Space Mission Data & AI Platform** c
 
 ## Phase Progress
 
+Phase numbering aligns with the authored phase prompts in [.github/prompts/](.github/prompts/).
+
 | Phase | Title | Status |
 | --- | --- | --- |
-| 01 | Business Analysis & Use-Case Discovery | ✅ Complete |
-| 02 | Domain Research & Dataset Ecosystem Mapping | ✅ Complete |
-| 03 | Solution Architecture & System Design | ✅ Complete |
-| 04 | Infrastructure Design & Container Architecture | ✅ Complete |
+| 01 | Business Analysis | ✅ Complete |
+| 02 | Domain Research | ✅ Complete |
+| 03 | Solution Architecture | ✅ Complete |
+| 04 | Infrastructure Design | ✅ Complete |
 | 05 | Source Data Analysis | ✅ Complete |
-| 06 | Data Modeling & Lakehouse Design | ✅ Complete |
-| 07 | Data Ingestion Engineering | ✅ Complete |
-| 08 | Data Processing & Transformation | 🔜 Upcoming |
-| 09 | AI/ML Pipelines | 🔜 Upcoming |
-| 10 | LLM + RAG Systems | 🔜 Upcoming |
-| 11 | APIs & Serving | 🔜 Upcoming |
-| 12 | Observability & DevOps | 🔜 Upcoming |
+| 06 | Data Modeling | ✅ Complete |
+| 07 | Infrastructure Implementation | ✅ Complete |
+| 08 | Data Ingestion | ✅ Complete |
+| 09 | Data Transformation | ✅ Complete |
+| 10 | Data Quality | ✅ Complete |
+| 11 | Serving Layer | ✅ Complete |
+| 12 | Business Intelligence (BI) | ✅ Complete |
+| 13 | Feature Store | 🔜 Upcoming |
+| 14 | Machine Learning | 🔜 Upcoming |
+| 15 | RAG (LLM Retrieval) | 🔜 Upcoming |
+| 16 | Platform API | 🔜 Upcoming |
+| 17 | Observability | 🔜 Upcoming |
+| 18 | Security | 🔜 Upcoming |
+| 19 | CI/CD | 🔜 Upcoming |
+| 20 | Production Incidents | 🔜 Upcoming |
+| 21 | Testing | 🔜 Upcoming |
+| 22 | Performance | 🔜 Upcoming |
+| 23 | Documentation | 🔜 Upcoming |
+| 24 | Interview Preparation | 🔜 Upcoming |
+| 25 | Project Review | 🔜 Upcoming |
+
+> **Planned parallel track:** a Climate, Dust & Air-Quality expansion (extension prompts `05b`–`16b`) — see [Planned Expansion](#planned-expansion--climate-dust--air-quality-monitoring) below.
 
 ---
 
@@ -28,6 +45,11 @@ An enterprise-grade, production-simulated **Space Mission Data & AI Platform** c
 Day-to-day operator commands — start/stop, status & health, service URLs and login,
 querying PostgreSQL, browsing MinIO, and viewing Bronze/Silver/Gold — live in the
 [Operations Runbook](OPERATIONS.md). It is a living document, extended each phase.
+
+Two operator references complement the runbook:
+
+- [Data Inventory](DATA-INVENTORY.md) — consolidated table of every Bronze source, Silver entity, Gold fact/dim, serving product, BI dataset, feature group, ML artifact, and RAG collection, with a short description of what each contains.
+- [Functional Test Cases](FUNCTIONAL-TEST-CASES.md) — business-level acceptance tests (Given/When/Then) that validate use-case outcomes against certified data products and KPI thresholds.
 
 ---
 
@@ -41,8 +63,15 @@ querying PostgreSQL, browsing MinIO, and viewing Bronze/Silver/Gold — live in 
 | `docs/source-data-analysis/` | 45-dataset inventory, profiling, structure, quality, use-case mapping, prioritization |
 | `docs/data-modeling/` | Medallion design, Bronze/Silver/Gold models, star schemas, time-series, geospatial, feature store, vector model, governance, ADRs |
 | `docs/ingestion/` | Ingestion design (streaming, batch, API/file, simulation, landing zone, quality, observability, ADRs) |
+| `docs/transformation/` | Transformation design (processing engines, Bronze→Silver→Gold, streaming/batch, cleaning, feature engineering, geospatial, time-series, lineage, ADRs) |
+| `docs/data-quality/` | Data-quality design (dimensions, validation rules, medallion validation, profiling, reconciliation, monitoring, governance, SLAs/KPIs, ADRs) |
+| `docs/bi/` | BI design (strategy, dashboard catalog, KPIs, dashboard standards, personas, datasets, reporting, alerting, security, ADRs) |
 | `infrastructure/` | Docker Compose stacks, configs (Kafka, MinIO, Spark, Postgres, Prometheus, Grafana, OpenTelemetry) |
 | `ingestion/` | Ingestion layer implementation — Kafka producers/consumers, Airflow DAGs, API/file connectors, synthetic data generators, quality/quarantine |
+| `transformation/` | Transformation layer implementation — Bronze→Silver→Gold (PySpark + dbt/DuckDB), geospatial/time-series/feature engineering, Spark streaming, Airflow orchestration |
+| `quality/` | Data-quality framework — validation rules, profiling, monitoring, governance, and incident records |
+| `serving/` | Serving layer — Gold data products, semantic layer, dbt marts, REST API design, and LLM/RAG serving models |
+| `bi/` | Business intelligence — Apache Superset dashboards, certified datasets, KPI catalog, alerts, and reporting strategy |
 | `tools/` | Developer utilities (e.g. `datasource-preflight` data-source connectivity checks) |
 
 ---
@@ -74,16 +103,41 @@ querying PostgreSQL, browsing MinIO, and viewing Bronze/Silver/Gold — live in 
 - Data relationships, granularity, partitioning, lifecycle, performance, governance
 - 6 ADRs, trade-off analysis, and glossary
 
-### Phase 7 — Data Ingestion
+### Phase 7 — Infrastructure Implementation
+`infrastructure/` — Docker Compose stacks (storage, processing, ingestion, AI, BI, observability) plus service configs for Kafka, MinIO, Spark, PostgreSQL, Prometheus, Grafana, and OpenTelemetry. See [infrastructure/README.md](infrastructure/README.md).
+
+### Phase 8 — Data Ingestion
 `docs/ingestion/` (17 design docs) + `ingestion/` (implementation):
 - Streaming ingestion (Kafka producers/consumers, topic architecture, at-least-once delivery, DLQ)
 - Batch ingestion (Airflow DAGs, scheduling, retry/backoff, idempotent re-runs)
-- API connectors (NASA FIRMS/POWER, NOAA SWPC, CelesTrak) with retry, rate-limiting and backoff
+- API connectors (NASA FIRMS/POWER, NOAA SWPC, CelesTrak, Sentinel Hub) with retry, rate-limiting and backoff
 - File ingestion + MinIO landing-zone layout (Hive-style `ingest_date` partitions)
 - Synthetic data generators (satellite telemetry, orbit via SGP4, space weather)
 - Bronze envelope (provenance + checksum), ingestion-time validation and quarantine
 - Observability, latency, scalability, security, trade-offs, ADRs and glossary
-- Offline-validated: 14 unit tests pass and an end-to-end in-memory demo runs without infrastructure. See [ingestion/README.md](ingestion/README.md).
+- Offline-validated: unit tests pass and an end-to-end in-memory demo runs without infrastructure. See [ingestion/README.md](ingestion/README.md).
+
+### Phase 9 — Data Transformation
+`docs/transformation/` (19 design docs) + `transformation/` (implementation):
+- Processing engines (PySpark + dbt/DuckDB) and Bronze→Silver→Gold pipelines
+- Cleaning framework, feature engineering, aggregation, geospatial (Apache Sedona), and time-series transforms
+- Spark structured streaming, Airflow orchestration, lineage, performance, error handling, ADRs
+- Pure-Python rules offline unit-tested; Spark/dbt entrypoints ready for infra. See [transformation/README.md](transformation/README.md).
+
+### Phase 10 — Data Quality
+`docs/data-quality/` (16 design docs) + `quality/` (implementation):
+- Quality dimensions, validation rules, medallion validation, and data profiling
+- Business rules, reconciliation, monitoring, exception handling, metadata/lineage
+- Governance, SLAs/KPIs, production incidents, trade-offs, ADRs. See [quality/README.md](quality/README.md).
+
+### Phase 11 — Serving Layer
+`serving/` — Gold data products (wildfire, flood, vessel, scene-catalog, AOI-validation daily), a semantic layer (business dimensions + metric registry), dbt marts and raw DDL, a materialized KPI aggregate, REST API design, and LLM/RAG serving models. Contract-tested with dbt schema tests and offline Python unit tests. See [serving/README.md](serving/README.md).
+
+### Phase 12 — Business Intelligence
+`docs/bi/` (14 design docs) + `bi/` (implementation):
+- Apache Superset dashboards (executive, earth-observation, satellite, weather, launch, platform)
+- Certified datasets, KPI catalog, alert strategy, reporting strategy, dataset governance
+- Dashboard standards, personas, security, ADRs. See [bi/README.md](bi/README.md).
 
 ---
 
@@ -105,3 +159,17 @@ querying PostgreSQL, browsing MinIO, and viewing Bronze/Silver/Gold — live in 
 ## Project Intent
 
 Simulates a real enterprise aerospace data platform end-to-end: from raw open datasets through lakehouse modeling, AI/ML, LLM+RAG, APIs, and observability — while remaining fully feasible on a developer laptop with free, open-source tools.
+
+---
+
+## Planned Expansion — Climate, Dust & Air-Quality Monitoring
+
+A post-MVP initiative extends the platform into **climate change, dust storm, and air-quality monitoring** (high value for UAE contexts). It is delivered as a set of authored phase prompts and requires **no architectural change** — it reuses the existing `ApiConnector` → JSONL Bronze → Silver/Gold → serving → BI pattern, plus the existing Feast, MLflow, and Qdrant/Ollama stacks.
+
+**Scope decision (Strategy A — tabular / statistical-API sources only):**
+
+| Included | Deferred |
+| --- | --- |
+| OpenAQ (ground air quality); Sentinel-5P/TROPOMI via Sentinel Hub Statistical API (NO₂, SO₂, CO, O₃, CH₄, aerosol index); MODIS/VIIRS AOD; climate indicators derived from already-ingested LST/NDVI/SST/forest data | CAMS & ERA5 raw NetCDF (need a binary blob-landing capability); geostationary SEVIRI/Himawari (exceeds the 16 GB budget) |
+
+**Authored prompt phases:** `05b → 06b → 08b → 09b → 10b → 11b → 12b` (extend the completed source-analysis → BI layers), then `13b → 14b → 15b → 16b` (climate-scoped feature store, ML, RAG, API). Phases 17–25 run once and cover the new components automatically. See [.github/prompts/](.github/prompts/).

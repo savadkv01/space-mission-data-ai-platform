@@ -26,6 +26,8 @@ The recommended Minimum Viable Product is an Earth Observation Operations Intell
 | Climate emissions and methane monitoring | Valuable but more specialized and harder to validate cleanly in an initial release |
 | Space weather forecasting support | Strong aerospace relevance, but weaker fit with the first EO-centric operating model |
 
+> **Authored expansion path (post-MVP):** The *drought/crop stress* and *climate emissions/methane* candidates above now have a concrete, phase-by-phase implementation plan for **climate change, dust storm, and air-quality monitoring**, delivered as extension prompts (`05b`–`16b`) that reuse existing platform patterns with no architectural change. In-scope sources are OpenAQ, Sentinel-5P/TROPOMI, and MODIS/VIIRS AOD (plus indicators derived from already-ingested data); CAMS/ERA5 raw NetCDF and geostationary imagery are explicitly deferred. This does **not** alter the frozen MVP scope. See [.github/prompts/](../../.github/prompts/) and [06-roadmap.md](./06-roadmap.md).
+
 ## Excluded Use Cases and Rationale
 
 | Excluded Category | Why Excluded from MVP |
