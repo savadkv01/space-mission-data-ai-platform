@@ -26,6 +26,15 @@ sources:
         description: "EMS ground-truth corroboration per AOI (UC-27)."
       - name: ref_aoi
         description: "Copernicus-EMS AOI footprints (AOI dimension source)."
+      # --- Climate / dust / air-quality marts (Phase 9b) ---
+      - name: fact_air_quality_daily
+        description: "Daily air-quality KPIs per AOI (PM/AQI/exceedance)."
+      - name: fact_dust_event_daily
+        description: "Daily dust KPIs per AOI (AOD, dust-flag, wind context)."
+      - name: fact_climate_indicator_daily
+        description: "Daily climate indicators per AOI (LST/SST anomaly, NDWI, desertification)."
+      - name: fact_vegetation_health_daily
+        description: "Daily vegetation-health KPIs per AOI (NDVI/EVI trend, crop stress)."
       # --- Simulation-Track marts (post-MVP demonstrator, ADR-09) ---
       - name: fact_sat_health
         description: "Daily satellite health (sim track)."

@@ -1,0 +1,22 @@
+slice_name: "Dust-day Calendar"
+viz_type: cal_heatmap
+description: "Weather (real) — calendar heatmap of active dust-event days."
+certified_by: "Air-Quality Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000c__table"
+  viz_type: cal_heatmap
+  metrics:
+    - dust_days
+  domain_granularity: month
+  subdomain_granularity: day
+  adhoc_filters: []
+  time_range: "Last 365 days"
+  cell_size: 10
+  cell_padding: 2
+  steps: 10
+  y_axis_format: SMART_NUMBER
+query_context: null
+cache_timeout: 3600
+uuid: c2000000-0000-4000-8000-000000000018
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000c

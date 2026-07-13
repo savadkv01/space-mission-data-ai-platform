@@ -1,0 +1,80 @@
+table_name: air_quality_daily
+main_dttm_col: event_date
+description: "Certified (12b): Air Quality & AQI (per AOI per day), from serving_air_quality_daily."
+default_endpoint: null
+offset: 0
+cache_timeout: 3600
+schema: null
+sql: |
+  select
+      aoi_key, aoi_name, cast(date_key as date) as event_date,
+      pm25_mean, pm25_max, pm10_mean, pm10_max,
+      no2_column_mean, so2_column_mean, co_column_mean, o3_column_mean,
+      station_count, aqi_pm25, aqi_pm10, aqi_band, exceedance_flag, area_km2
+  from serving.serving_air_quality_daily
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra:
+  certification:
+    certified_by: "Air-Quality Lead"
+    details: "Certified serving product (11b); AQI bands pre-computed upstream. No ad-hoc SQL in charts."
+uuid: d1000000-0000-4000-8000-00000000000b
+metrics:
+  - metric_name: mean_aqi_pm25
+    verbose_name: Mean AQI (PM2.5)
+    expression: AVG(aqi_pm25)
+  - metric_name: max_pm25
+    verbose_name: Max PM2.5
+    expression: MAX(pm25_max)
+  - metric_name: mean_pm25
+    verbose_name: Mean PM2.5
+    expression: AVG(pm25_mean)
+  - metric_name: mean_pm10
+    verbose_name: Mean PM10
+    expression: AVG(pm10_mean)
+  - metric_name: exceedance_days
+    verbose_name: AQI Exceedance Days
+    expression: SUM(CASE WHEN exceedance_flag THEN 1 ELSE 0 END)
+columns:
+  - column_name: aoi_key
+    type: VARCHAR
+  - column_name: aoi_name
+    type: VARCHAR
+    groupby: true
+  - column_name: event_date
+    type: DATE
+    is_dttm: true
+  - column_name: pm25_mean
+    type: DOUBLE
+  - column_name: pm25_max
+    type: DOUBLE
+  - column_name: pm10_mean
+    type: DOUBLE
+  - column_name: pm10_max
+    type: DOUBLE
+  - column_name: no2_column_mean
+    type: DOUBLE
+  - column_name: so2_column_mean
+    type: DOUBLE
+  - column_name: co_column_mean
+    type: DOUBLE
+  - column_name: o3_column_mean
+    type: DOUBLE
+  - column_name: station_count
+    type: BIGINT
+  - column_name: aqi_pm25
+    type: DOUBLE
+  - column_name: aqi_pm10
+    type: DOUBLE
+  - column_name: aqi_band
+    type: VARCHAR
+    groupby: true
+  - column_name: exceedance_flag
+    type: BOOLEAN
+    groupby: true
+  - column_name: area_km2
+    type: DOUBLE
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

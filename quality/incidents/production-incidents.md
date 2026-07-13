@@ -134,6 +134,61 @@ Severity legend: 🔴 Critical · 🟠 High · 🟡 Medium.
 
 ---
 
+## Climate / dust / air-quality incidents (Phase 10b)
+
+> Recorded with the full `_shared.prompt.md` incident template
+> (`ID`, `phase`, `severity`, `symptoms`, `detection`, `root cause`,
+> `resolution`, `prevention`, `MTTD`, `MTTR`) so Phase 20 can consolidate them.
+
+### INC-C01 🔴 TROPOMI retrieval gap (trace-gas columns missing)
+
+- **Phase:** 10b — climate data quality.
+- **Symptoms:** `dq_freshness_lag_seconds{entity="obs_atmos_column"}` exceeds the
+  24 h SLA; `no2/so2/co/o3_column_mean` null in `fact_air_quality_daily`; dust
+  UV-AI corroboration unavailable.
+- **Detection:** `TROPOMIRetrievalGap` alert (Prometheus).
+- **Root cause:** Sentinel-Hub Statistical API returned no valid pixels (cloud,
+  processor downtime, or overpass gap) for the AOI/day.
+- **Resolution:** confirm source availability; retry the Statistical request;
+  backfill the AOI/day window from Bronze; keep prior-day column mean as a
+  documented gap (do **not** fabricate); re-run the Gold marts.
+- **Prevention:** treat TROPOMI as near-real-time (gaps expected); coverage floor
+  `valid_pixel_fraction ≥ 0.5` flags `low_coverage`; freshness alert + backfill DAG.
+- **MTTD:** ≤ 15 min · **MTTR:** ≤ 4 h.
+
+### INC-C02 🟠 OpenAQ station dropout (air-quality coverage loss)
+
+- **Phase:** 10b — climate data quality.
+- **Symptoms:** `dq_completeness_score{entity="fact_air_quality_daily"} < 0.8`;
+  `station_count` drops to 0 for one or more AOIs; `aqi_pm25` becomes null.
+- **Detection:** `StationCoverageDrop` alert; station-coverage completeness rule (WARN).
+- **Root cause:** OpenAQ stations offline / stopped reporting, or reference-grade
+  filter excluded low-cost sensors.
+- **Resolution:** verify station status via OpenAQ; widen the AOI station set or
+  fall back to the TROPOMI NO₂ column signal; mark the AOI-day AQI `estimated`;
+  keep the mart `VALIDATED` (not `CERTIFIED`) until coverage recovers.
+- **Prevention:** monitor `station_count` per AOI; multi-station redundancy;
+  coverage floor in the certification criteria (C5).
+- **MTTD:** ≤ 15 min · **MTTR:** ≤ 6 h.
+
+### INC-C03 🟠 AOD cloud contamination / bright-surface bias
+
+- **Phase:** 10b — climate data quality.
+- **Symptoms:** `dust_flag` spikes without a wind/UV-AI corroboration; `aod_mean`
+  implausibly high over a desert AOI; `dq_null_pct{entity="obs_aerosol",column="aod_550nm"}`
+  elevated.
+- **Detection:** `AODCloudContamination` alert; `obs_aerosol` `suspect` share > 30% (profiling).
+- **Root cause:** residual cloud edges or desert bright-surface reflectance
+  inflate the AOD retrieval; low `valid_fraction`.
+- **Resolution:** drop `suspect`/low-`valid_fraction` retrievals from the daily
+  aggregate; require UV-aerosol-index corroboration before `dust_flag`; re-run
+  `fact_dust_event_daily`.
+- **Prevention:** `bright_surface_flag` + `valid_fraction ≥ 0.5` gate; UV-AI
+  corroboration in `dust_flag`; AOD `[0, 5]` hard bound at Silver.
+- **MTTD:** ≤ 20 min · **MTTR:** ≤ 4 h.
+
+---
+
 ## Incident summary matrix
 
 | ID | Title | Severity | Primary detector |
@@ -148,3 +203,6 @@ Severity legend: 🔴 Critical · 🟠 High · 🟡 Medium.
 | INC-08 | Time sync | 🟠 | timestamp / late-arrival |
 | INC-09 | Storage corruption | 🔴 | integrity / checkpoint |
 | INC-10 | Invalid coordinates | 🟠 | geospatial rule |
+| INC-C01 | TROPOMI retrieval gap | 🔴 | TROPOMIRetrievalGap |
+| INC-C02 | OpenAQ station dropout | 🟠 | StationCoverageDrop |
+| INC-C03 | AOD cloud contamination | 🟠 | AODCloudContamination |

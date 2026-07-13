@@ -1,60 +1,67 @@
-# Space Weather Dashboard  `sim`
+# Weather & Climate Dashboard  `real`
 
-> Phase 12 · Task 2 — Dashboard Catalog · Audience: **Platform Engineers / Demo**
-> Superset slug: `weather` · Role: `demo` · **Simulation-Track (post-MVP, ADR-09)**
+> Phase 12 · Task 2 (spec) → **Phase 12b · Task 3 (promoted sim → real)**
+> Audience: **Climate / Air-Quality / Operations** · Superset slug: `weather`
+> Roles: `ops_climate`, `ops_airquality` (+ `exec` read)
 
-## Scope Note
+## Promotion Note (12b)
 
-Space-weather forecasting support is a **post-MVP expansion candidate** — retained
-here as a demonstrator that fuses **real NOAA SWPC Kp** data with the synthetic
-telemetry anomaly rate. Because it depends on the sim telemetry for the impact
-join, the dashboard is tagged `sim`.
+This dashboard was originally a **Simulation-Track demonstrator** that fused real
+NOAA SWPC Kp with synthetic telemetry anomaly rate (dataset `weather_impact`,
+tagged `sim`, ADR-09). In Phase 12b it is **repointed to real certified climate /
+air-quality products** from Phase 11b. The layout is preserved; only the datasets
+and KPIs change, and the `sim` tag is removed.
 
-## KPI Tiles (dataset `weather_impact`)
+| Aspect | Before (sim) | After (real, 12b) |
+| --- | --- | --- |
+| Primary dataset | `weather_impact` (Gold httpfs) | `climate_daily` (`serving_agg.mv_kpi_climate_daily`) |
+| Supporting | — | `dust_event_daily`, `climate_indicator_daily` |
+| Track tag | `sim` | `real` |
+| Role | `demo` | `ops_climate` / `ops_airquality` / `exec` |
 
-| Tile | KPI | Column | Definition | Band |
+> The original space-weather (Kp) demonstrator is retained on the
+> **Simulation-Track dashboard** so no capability is lost.
+
+## KPI Tiles
+
+| Tile | KPI | Dataset · column | Definition | Band |
 | --- | --- | --- | --- | --- |
-| Solar / Geomagnetic Activity | Max Kp index | `max_kp_index` | daily peak Kp | ≥5 storm |
-| Radiation Index (proxy) | Mean Kp index | `mean_kp_index` | daily mean Kp | — |
-| Geomagnetic Storms | Storm events | `storm_events` | count of storm periods | trend |
-| Weather Alerts | Storm days | `storm_day` | days with Kp≥5 | red when true |
-| Telemetry Impact | Anomaly rate | `anomaly_rate` | anomalies / samples on storm days | correlate |
-
-> "Radiation Index" is proxied by the Kp mean (the sim mart does not carry a
-> distinct radiation measure). The value of this dashboard is the **correlation**
-> between geomagnetic storms and telemetry anomaly rate.
+| Air Quality | Mean AQI (PM2.5) | `climate_daily.mean_aqi_pm25` | window mean AQI | ≤50 good / 51–100 moderate / >100 unhealthy |
+| Exceedances | AQI Exceedance Days | `climate_daily.aqi_exceedance_days` | Σ AOI-days over WHO guideline | trend |
+| Dust | Active Dust Days | `climate_daily.dust_event_days` | Σ dust-flag days | ≥5 alert |
+| Temperature | Mean LST Anomaly | `climate_daily.mean_lst_anomaly` | window mean LST anomaly (°C) | ≥+2 °C red |
 
 ## Charts
 
 | Chart | Type | Columns |
 | --- | --- | --- |
-| Kp index trend (max/mean) | line | `weather_date`, `max_kp_index`, `mean_kp_index` |
-| Storm-day calendar | calendar heatmap | `weather_date`, `storm_day` |
-| Storm events by day | bar | `weather_date`, `storm_events` |
-| Anomaly rate vs Kp | scatter | `max_kp_index`, `anomaly_rate` |
+| Mean AQI (PM2.5) | big number | `climate_daily.mean_aqi_pm25` |
+| AQI & Exceedance Trend | line | `kpi_date`, `mean_aqi_pm25`, `aqi_exceedance_days` |
+| Dust-day Calendar | calendar heatmap | `event_date`, `dust_days` (`dust_event_daily`) |
+| LST Anomaly Trend | line | `kpi_date`, `mean_lst_anomaly` |
 
-## Layout (wireframe)
+## Layout (wireframe — preserved)
 
 ```
 +---------------------------------------------------------------+
-| SPACE WEATHER  `sim`                                   [ ▾ ]   |
-+------------+------------+------------+------------+
-| Max Kp     | Mean Kp    | Storm      | Storm      |
-| (window)   |            | Events     | Days       |
-|   6        |   3.1      |   4        |   2        |
-+------------+------------+------------+------------+
-| Kp index trend (max/mean, line)                              |
+| WEATHER & CLIMATE  `real`                              [ ▾ ]   |
 +---------------------------------------------------------------+
-| Storm-day calendar            | Anomaly rate vs Kp (scatter)  |
+| Mean AQI (PM2.5)                                              |
+|        63                                                    |
++---------------------------------------------------------------+
+| AQI & Exceedance Trend (line)                                |
++-------------------------------+-------------------------------+
+| Dust-day Calendar             | LST Anomaly Trend (line)      |
 +-------------------------------+-------------------------------+
 ```
 
 ## Filters
 
-- Time range; storm-day toggle (`storm_day = true`).
+- Global time range (default 30 days).
 
 ## Alignment
 
-- Post-MVP expansion; ADR-09. Data product `gold.fact_weather_impact` →
-  [weather_impact dataset](../datasets/sql/weather_impact.sql).
-- Kp source is real (NOAA SWPC); impact join uses sim telemetry.
+- Promoted to real certified 11b products (`mv_kpi_climate_daily`,
+  `serving_dust_event_daily`, `serving_climate_indicator_daily`).
+- KPIs single-sourced in [../kpis/kpi-catalog.md](../kpis/kpi-catalog.md).
+- Superset export: [../superset/dashboards/weather-dashboard.yaml](../superset/dashboards/weather-dashboard.yaml).

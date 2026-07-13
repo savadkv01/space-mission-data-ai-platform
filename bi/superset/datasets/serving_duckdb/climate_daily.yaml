@@ -1,0 +1,68 @@
+table_name: climate_daily
+main_dttm_col: kpi_date
+description: "Certified (12b, materialized): platform-wide daily climate KPIs from mv_kpi_climate_daily. Exec/weather rollup."
+default_endpoint: null
+offset: 0
+cache_timeout: 900
+schema: null
+sql: |
+  select
+      cast(date_key as date) as kpi_date,
+      mean_aqi_pm25, aqi_exceedance_days, air_quality_aois,
+      dust_event_days, peak_aod, dust_aois,
+      mean_lst_anomaly, warming_days, desertification_days,
+      mean_ndvi, crop_stress_days
+  from serving_agg.mv_kpi_climate_daily
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra:
+  certification:
+    certified_by: "Platform Lead"
+    details: "Materialized rollup (11b) mirroring platform_daily; 15-min cache for exec/weather tiles."
+uuid: d1000000-0000-4000-8000-00000000000f
+metrics:
+  - metric_name: aqi_exceedance_days
+    verbose_name: AQI Exceedance Days
+    expression: SUM(aqi_exceedance_days)
+  - metric_name: dust_event_days
+    verbose_name: Active Dust Days
+    expression: SUM(dust_event_days)
+  - metric_name: mean_lst_anomaly
+    verbose_name: Mean LST Anomaly (C)
+    expression: AVG(mean_lst_anomaly)
+  - metric_name: warming_days
+    verbose_name: Warming Days
+    expression: SUM(warming_days)
+  - metric_name: mean_aqi_pm25
+    verbose_name: Mean AQI (PM2.5)
+    expression: AVG(mean_aqi_pm25)
+columns:
+  - column_name: kpi_date
+    type: DATE
+    is_dttm: true
+  - column_name: mean_aqi_pm25
+    type: DOUBLE
+  - column_name: aqi_exceedance_days
+    type: BIGINT
+  - column_name: air_quality_aois
+    type: BIGINT
+  - column_name: dust_event_days
+    type: BIGINT
+  - column_name: peak_aod
+    type: DOUBLE
+  - column_name: dust_aois
+    type: BIGINT
+  - column_name: mean_lst_anomaly
+    type: DOUBLE
+  - column_name: warming_days
+    type: BIGINT
+  - column_name: desertification_days
+    type: BIGINT
+  - column_name: mean_ndvi
+    type: DOUBLE
+  - column_name: crop_stress_days
+    type: BIGINT
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

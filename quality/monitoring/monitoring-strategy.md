@@ -59,6 +59,21 @@ standardize these across ingestion **and** transformation gates.
 | `CheckpointFailed` | `dq_checkpoint_pass == 0` | critical | data-oncall |
 | `DriftDetected` | `dq_psi > 0.25` | warning | steward + ML |
 
+### 3.1 Climate / dust / air-quality alerts (Phase 10b)
+
+Reuse the generic `dq_*` alerts above, with these entity-scoped freshness and
+anomaly-rate thresholds (aligned with the SLAs in
+[quality-kpis.md](quality-kpis.md#21-climate--dust--air-quality-freshness-slas-phase-10b)):
+
+| Alert | Condition | Severity | Route |
+|-------|-----------|----------|-------|
+| `OpenAQFreshnessBreach` | `dq_freshness_lag_seconds{entity="obs_air_quality"} > 10800` (3 h) | critical | data-oncall |
+| `TROPOMIRetrievalGap` | `dq_freshness_lag_seconds{entity="obs_atmos_column"} > 86400` (24 h) | critical | data-oncall |
+| `AODFreshnessBreach` | `dq_freshness_lag_seconds{entity="obs_aerosol"} > 86400` (24 h) | warning | data-oncall |
+| `StationCoverageDrop` | `dq_completeness_score{entity="fact_air_quality_daily"} < 0.8` | warning | steward |
+| `AODCloudContamination` | `dq_null_pct{entity="obs_aerosol",column="aod_550nm"} > baseline + 0.2` | warning | steward |
+| `ClimateCheckpointFailed` | `dq_checkpoint_pass{entity=~"obs_air_quality|obs_aerosol|obs_atmos_column|fact_.*_daily"} == 0` | critical | data-oncall |
+
 ---
 
 ## 4. Monitoring flow

@@ -23,6 +23,20 @@ grain, definition, and the serving product it is computed over. Consumers call
 | Mean Satellite Health | score | sat/day | avg(`health_score`) | `serving_sat_health` |
 | Launch Success Rate | ratio | provider/month | avg(`success_rate`) | `serving_launch_monthly` |
 
+## Climate / Dust / Air-Quality KPIs (Phase 11b)
+
+| KPI | Unit | Grain | Definition | Product |
+| --- | --- | --- | --- | --- |
+| Mean PM2.5 AQI | index | aoi/day | avg(`aqi_pm25`) | `serving_air_quality_daily` |
+| AQI Exceedance Days | count | aoi/day | count where `exceedance_flag` | `serving_air_quality_daily` |
+| Dust Event Days | count | aoi/day | count where `dust_flag` | `serving_dust_event_daily` |
+| Peak Aerosol Optical Depth | unitless | aoi/day | max(`aod_mean`) | `serving_dust_event_daily` |
+| Mean LST Anomaly | °C | aoi/day | avg(`lst_anomaly_c`) | `serving_climate_indicator_daily` |
+| Warming Days | count | aoi/day | count where `warming_flag` | `serving_climate_indicator_daily` |
+| Desertification Days | count | aoi/day | count where `desertification_flag` | `serving_climate_indicator_daily` |
+| Mean NDVI | index | aoi/day | avg(`ndvi_mean`) | `serving_vegetation_health_daily` |
+| Crop-Stress Days | count | aoi/day | count where `crop_stress_flag` | `serving_vegetation_health_daily` |
+
 ## Derived / Banded Attributes
 
 These are deterministic classifications produced inside the data products (not
@@ -36,6 +50,10 @@ metrics to aggregate), documented here so BI and API agree on thresholds:
 | `trust` | validation | corroborated ⇒ corroborated, else unconfirmed |
 | `status` | sat health (sim) | ≥0.8 nominal · ≥0.5 degraded · else critical |
 | `storm_day` | weather (sim) | `max_kp_index` ≥ 5 |
+| `dust_severity_label` | dust event | 0 Clear · 1 Hazy · 2 Dusty · 3 Heavy dust · 4 Severe |
+| `lst_anomaly_label` | climate indicator | −1 Cooler · 0 Normal · 1 Warm · 2 Hot · 3 Extreme |
+| `ndvi_health_label` | vegetation health | 0 Bare/water · 1 Sparse · 2 Moderate · 3 Healthy · 4 Dense |
+| `ndvi_trend_dir` | vegetation health | slope >0 improving · <0 declining · else flat |
 
 ## Consistency Guarantees
 

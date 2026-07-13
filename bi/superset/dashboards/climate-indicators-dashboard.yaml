@@ -1,0 +1,144 @@
+dashboard_title: "Climate Indicators — Monitoring"
+description: "Climate indicators: LST/SST anomalies, vegetation health, water availability, deforestation (real data, 11b products)."
+slug: climate-indicators
+certified_by: "Climate Analytics Lead"
+css: ""
+published: true
+uuid: e1000000-0000-4000-8000-000000000006
+version: 1.0.0
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 3600
+  default_filters: "{}"
+  # RBAC: granted to `ops_climate` (+ `exec` read). No RLS (all AOIs public).
+  native_filter_configuration:
+    - id: NF_time
+      name: "Time range"
+      filterType: filter_time
+      targets: []
+      defaultDataMask:
+        filterState:
+          value: "Last 90 days"
+    - id: NF_aoi
+      name: "AOI"
+      filterType: filter_select
+      targets:
+        - datasetUuid: d1000000-0000-4000-8000-00000000000d
+          column: { name: aoi_name }
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children: [GRID_ID]
+  HEADER_ID:
+    type: HEADER
+    id: HEADER_ID
+    meta: { text: "Climate Indicators — Monitoring" }
+  GRID_ID:
+    type: GRID
+    id: GRID_ID
+    children: [TABS_ID]
+    parents: [ROOT_ID]
+  TABS_ID:
+    type: TABS
+    id: TABS_ID
+    children: [TAB_TEMP, TAB_VEG, TAB_DETAILS]
+    meta: {}
+    parents: [ROOT_ID, GRID_ID]
+  TAB_TEMP:
+    type: TAB
+    id: TAB_TEMP
+    children: [ROW_TEMP_TILES, ROW_TEMP_CHARTS]
+    meta: { text: "Temperature & Water" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
+  TAB_VEG:
+    type: TAB
+    id: TAB_VEG
+    children: [ROW_VEG_TILES, ROW_VEG_CHARTS]
+    meta: { text: "Vegetation & Land" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
+  TAB_DETAILS:
+    type: TAB
+    id: TAB_DETAILS
+    children: [ROW_DETAILS]
+    meta: { text: "Details" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
+  ROW_TEMP_TILES:
+    type: ROW
+    id: ROW_TEMP_TILES
+    children: [CH_LST_KPI]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_TEMP]
+  ROW_TEMP_CHARTS:
+    type: ROW
+    id: ROW_TEMP_CHARTS
+    children: [CH_LST_TREND, CH_SST_TREND]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_TEMP]
+  ROW_VEG_TILES:
+    type: ROW
+    id: ROW_VEG_TILES
+    children: [CH_VEG_PIE]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_VEG]
+  ROW_VEG_CHARTS:
+    type: ROW
+    id: ROW_VEG_CHARTS
+    children: [CH_NDVI_TREND, CH_DEFOREST]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_VEG]
+  ROW_DETAILS:
+    type: ROW
+    id: ROW_DETAILS
+    children: [CH_CLIM_DETAIL, CH_VEG_DETAIL]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DETAILS]
+  CH_LST_KPI:
+    type: CHART
+    id: CH_LST_KPI
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-00000000000a, chartId: 30, width: 4, height: 30, sliceName: "Mean LST Anomaly" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_TEMP, ROW_TEMP_TILES]
+  CH_LST_TREND:
+    type: CHART
+    id: CH_LST_TREND
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-00000000000b, chartId: 31, width: 6, height: 50, sliceName: "LST & Anomaly Trend" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_TEMP, ROW_TEMP_CHARTS]
+  CH_SST_TREND:
+    type: CHART
+    id: CH_SST_TREND
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-00000000000e, chartId: 34, width: 6, height: 50, sliceName: "SST & Anomaly Trend (coastal)" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_TEMP, ROW_TEMP_CHARTS]
+  CH_VEG_PIE:
+    type: CHART
+    id: CH_VEG_PIE
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-00000000000d, chartId: 33, width: 12, height: 30, sliceName: "Vegetation Health Distribution" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_VEG, ROW_VEG_TILES]
+  CH_NDVI_TREND:
+    type: CHART
+    id: CH_NDVI_TREND
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-00000000000c, chartId: 32, width: 6, height: 50, sliceName: "NDVI Vegetation Trend" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_VEG, ROW_VEG_CHARTS]
+  CH_DEFOREST:
+    type: CHART
+    id: CH_DEFOREST
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-00000000000f, chartId: 35, width: 6, height: 50, sliceName: "Tree-cover Loss by AOI" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_VEG, ROW_VEG_CHARTS]
+  CH_CLIM_DETAIL:
+    type: CHART
+    id: CH_CLIM_DETAIL
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000010, chartId: 36, width: 6, height: 50, sliceName: "Climate Indicator Details" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DETAILS, ROW_DETAILS]
+  CH_VEG_DETAIL:
+    type: CHART
+    id: CH_VEG_DETAIL
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000011, chartId: 37, width: 6, height: 50, sliceName: "Vegetation Health Details" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DETAILS, ROW_DETAILS]

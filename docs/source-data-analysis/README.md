@@ -21,6 +21,12 @@ Deep technical analysis of all data sources for the Space Mission Data & AI Plat
 | 13 | [Glossary](./13-glossary.md) | Terms |
 | 14 | [References & Access Prerequisites](./14-references.md) | Access points + auth requirements |
 
+## Extensions
+
+| Phase | Extension | Purpose |
+| --- | --- | --- |
+| 5b | [Climate / Dust / Air-Quality](./climate/README.md) | Atmospheric column: OpenAQ, TROPOMI, MODIS/VIIRS AOD, derived indicators |
+
 ## Scope Note
 
 Documentation only. All sources free and open, feasible on a 16 GB RAM laptop. Builds on the Phase 2 catalog of 30 datasets.

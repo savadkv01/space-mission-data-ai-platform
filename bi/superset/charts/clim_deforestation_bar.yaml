@@ -1,0 +1,20 @@
+slice_name: "Tree-cover Loss by AOI"
+viz_type: echarts_timeseries_bar
+description: "Climate — deforestation proxy: tree-cover loss (ha) aggregated by AOI."
+certified_by: "Climate Analytics Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000d__table"
+  viz_type: echarts_timeseries_bar
+  x_axis: event_date
+  metrics:
+    - tree_cover_loss_ha
+  groupby:
+    - aoi_name
+  adhoc_filters: []
+  time_range: "Last 365 days"
+  time_grain_sqla: P1M
+query_context: null
+cache_timeout: 3600
+uuid: c2000000-0000-4000-8000-00000000000f
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000d

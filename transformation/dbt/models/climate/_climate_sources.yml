@@ -1,0 +1,19 @@
+version: 2
+
+# Climate Silver sources (Phase 9b). dbt-duckdb reads each conformed Silver
+# table directly from the Parquet the Spark Bronze->Silver jobs write, so Gold
+# lineage links back to Silver (Task 5). {name} resolves to
+# s3://silver/<table>/*.parquet via the httpfs extension.
+sources:
+  - name: silver_climate
+    schema: silver
+    description: "Conformed climate/dust/air-quality Silver tables (Parquet on the lakehouse)."
+    meta:
+      external_location: "s3://silver/{name}/*.parquet"
+    tables:
+      - name: silver_air_quality
+        description: "Unit-standardized, AOI-tagged OpenAQ surface pollutant readings."
+      - name: silver_aerosol
+        description: "MODIS/VIIRS AOD per AOI per day (QA-filtered)."
+      - name: silver_atmos_column
+        description: "TROPOMI trace-gas column densities per AOI per day."

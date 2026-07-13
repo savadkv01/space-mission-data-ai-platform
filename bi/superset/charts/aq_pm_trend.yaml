@@ -1,0 +1,20 @@
+slice_name: "PM2.5 / PM10 Trend"
+viz_type: echarts_timeseries_line
+description: "Air-Quality — daily mean PM2.5 and PM10 concentration trend."
+certified_by: "Air-Quality Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000b__table"
+  viz_type: echarts_timeseries_line
+  x_axis: event_date
+  metrics:
+    - mean_pm25
+    - mean_pm10
+  groupby: []
+  adhoc_filters: []
+  time_range: "Last 90 days"
+  time_grain_sqla: P1D
+query_context: null
+cache_timeout: 3600
+uuid: c2000000-0000-4000-8000-000000000002
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000b

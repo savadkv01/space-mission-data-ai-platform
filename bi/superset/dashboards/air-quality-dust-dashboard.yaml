@@ -1,0 +1,150 @@
+dashboard_title: "Air Quality & Dust — Monitoring"
+description: "Air-quality and dust monitoring for smart-city, aviation, and port teams (real data, 11b products)."
+slug: air-quality-dust
+certified_by: "Air-Quality Lead"
+css: ""
+published: true
+uuid: e1000000-0000-4000-8000-000000000005
+version: 1.0.0
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 3600
+  default_filters: "{}"
+  # RBAC: granted to `ops_airquality` (+ `exec` read). No RLS (all AOIs public).
+  native_filter_configuration:
+    - id: NF_time
+      name: "Time range"
+      filterType: filter_time
+      targets: []
+      defaultDataMask:
+        filterState:
+          value: "Last 30 days"
+    - id: NF_aoi
+      name: "AOI"
+      filterType: filter_select
+      targets:
+        - datasetUuid: d1000000-0000-4000-8000-00000000000b
+          column: { name: aoi_name }
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children: [GRID_ID]
+  HEADER_ID:
+    type: HEADER
+    id: HEADER_ID
+    meta: { text: "Air Quality & Dust — Monitoring" }
+  GRID_ID:
+    type: GRID
+    id: GRID_ID
+    children: [TABS_ID]
+    parents: [ROOT_ID]
+  TABS_ID:
+    type: TABS
+    id: TABS_ID
+    children: [TAB_AIR, TAB_DUST, TAB_DETAILS]
+    meta: {}
+    parents: [ROOT_ID, GRID_ID]
+  TAB_AIR:
+    type: TAB
+    id: TAB_AIR
+    children: [ROW_AQ_TILES, ROW_AQ_CHARTS]
+    meta: { text: "Air Quality" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
+  TAB_DUST:
+    type: TAB
+    id: TAB_DUST
+    children: [ROW_DUST_TILES, ROW_DUST_CHARTS]
+    meta: { text: "Dust" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
+  TAB_DETAILS:
+    type: TAB
+    id: TAB_DETAILS
+    children: [ROW_DETAILS]
+    meta: { text: "Details" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
+  ROW_AQ_TILES:
+    type: ROW
+    id: ROW_AQ_TILES
+    children: [CH_AQ_KPI, CH_AQ_BAND]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_AIR]
+  ROW_AQ_CHARTS:
+    type: ROW
+    id: ROW_AQ_CHARTS
+    children: [CH_AQ_TREND]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_AIR]
+  ROW_DUST_TILES:
+    type: ROW
+    id: ROW_DUST_TILES
+    children: [CH_DUST_KPI, CH_DUST_SEV]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DUST]
+  ROW_DUST_CHARTS:
+    type: ROW
+    id: ROW_DUST_CHARTS
+    children: [CH_DUST_AOD, CH_DUST_CAL]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DUST]
+  ROW_DETAILS:
+    type: ROW
+    id: ROW_DETAILS
+    children: [CH_AQ_DETAIL, CH_DUST_DETAIL]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DETAILS]
+  CH_AQ_KPI:
+    type: CHART
+    id: CH_AQ_KPI
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000001, chartId: 20, width: 4, height: 30, sliceName: "AQI Exceedance Days" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_AIR, ROW_AQ_TILES]
+  CH_AQ_BAND:
+    type: CHART
+    id: CH_AQ_BAND
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000003, chartId: 22, width: 8, height: 30, sliceName: "AQI Band Distribution" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_AIR, ROW_AQ_TILES]
+  CH_AQ_TREND:
+    type: CHART
+    id: CH_AQ_TREND
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000002, chartId: 21, width: 12, height: 50, sliceName: "PM2.5 / PM10 Trend" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_AIR, ROW_AQ_CHARTS]
+  CH_DUST_KPI:
+    type: CHART
+    id: CH_DUST_KPI
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000005, chartId: 24, width: 4, height: 30, sliceName: "Active Dust Days" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DUST, ROW_DUST_TILES]
+  CH_DUST_SEV:
+    type: CHART
+    id: CH_DUST_SEV
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000008, chartId: 27, width: 8, height: 30, sliceName: "Dust Severity Distribution" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DUST, ROW_DUST_TILES]
+  CH_DUST_AOD:
+    type: CHART
+    id: CH_DUST_AOD
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000006, chartId: 25, width: 6, height: 50, sliceName: "AOD (Dust) Trend" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DUST, ROW_DUST_CHARTS]
+  CH_DUST_CAL:
+    type: CHART
+    id: CH_DUST_CAL
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000007, chartId: 26, width: 6, height: 50, sliceName: "Dust-flag Calendar" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DUST, ROW_DUST_CHARTS]
+  CH_AQ_DETAIL:
+    type: CHART
+    id: CH_AQ_DETAIL
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000004, chartId: 23, width: 6, height: 50, sliceName: "Air Quality Details" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DETAILS, ROW_DETAILS]
+  CH_DUST_DETAIL:
+    type: CHART
+    id: CH_DUST_DETAIL
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000009, chartId: 28, width: 6, height: 50, sliceName: "Dust & Wind-transport Details" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_DETAILS, ROW_DETAILS]

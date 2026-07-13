@@ -1,0 +1,80 @@
+table_name: climate_indicator_daily
+main_dttm_col: event_date
+description: "Certified (12b): Climate indicators — LST/SST anomalies, NDWI, deforestation, desertification (per AOI per day)."
+default_endpoint: null
+offset: 0
+cache_timeout: 3600
+schema: null
+sql: |
+  select
+      aoi_key, aoi_name, cast(date_key as date) as event_date,
+      lst_c, lst_anomaly_c, sst_c, sst_anomaly_c, ndwi_mean,
+      tree_cover_loss_ha, desertification_proxy,
+      lst_anomaly_band, lst_anomaly_label, warming_flag, desertification_flag, area_km2
+  from serving.serving_climate_indicator_daily
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra:
+  certification:
+    certified_by: "Climate Analytics Lead"
+    details: "Certified serving product (11b); LST-anomaly band pre-computed upstream."
+uuid: d1000000-0000-4000-8000-00000000000d
+metrics:
+  - metric_name: mean_lst_anomaly
+    verbose_name: Mean LST Anomaly (C)
+    expression: AVG(lst_anomaly_c)
+  - metric_name: max_lst_anomaly
+    verbose_name: Max LST Anomaly (C)
+    expression: MAX(lst_anomaly_c)
+  - metric_name: mean_sst_anomaly
+    verbose_name: Mean SST Anomaly (C)
+    expression: AVG(sst_anomaly_c)
+  - metric_name: warming_days
+    verbose_name: Warming Days
+    expression: SUM(CASE WHEN warming_flag THEN 1 ELSE 0 END)
+  - metric_name: desertification_days
+    verbose_name: Desertification Days
+    expression: SUM(CASE WHEN desertification_flag THEN 1 ELSE 0 END)
+  - metric_name: tree_cover_loss_ha
+    verbose_name: Tree-cover Loss (ha)
+    expression: SUM(tree_cover_loss_ha)
+columns:
+  - column_name: aoi_key
+    type: VARCHAR
+  - column_name: aoi_name
+    type: VARCHAR
+    groupby: true
+  - column_name: event_date
+    type: DATE
+    is_dttm: true
+  - column_name: lst_c
+    type: DOUBLE
+  - column_name: lst_anomaly_c
+    type: DOUBLE
+  - column_name: sst_c
+    type: DOUBLE
+  - column_name: sst_anomaly_c
+    type: DOUBLE
+  - column_name: ndwi_mean
+    type: DOUBLE
+  - column_name: tree_cover_loss_ha
+    type: DOUBLE
+  - column_name: desertification_proxy
+    type: DOUBLE
+  - column_name: lst_anomaly_band
+    type: BIGINT
+  - column_name: lst_anomaly_label
+    type: VARCHAR
+    groupby: true
+  - column_name: warming_flag
+    type: BOOLEAN
+    groupby: true
+  - column_name: desertification_flag
+    type: BOOLEAN
+    groupby: true
+  - column_name: area_km2
+    type: DOUBLE
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

@@ -1,0 +1,66 @@
+table_name: vegetation_health_daily
+main_dttm_col: event_date
+description: "Certified (12b): Vegetation health — NDVI/EVI, 30-day trend, crop-stress proxy (per AOI per day)."
+default_endpoint: null
+offset: 0
+cache_timeout: 3600
+schema: null
+sql: |
+  select
+      aoi_key, aoi_name, cast(date_key as date) as event_date,
+      ndvi_mean, ndvi_max, evi_mean, ndvi_trend_30d, ndvi_trend_dir,
+      valid_pixel_fraction, ndvi_health_band, ndvi_health_label, crop_stress_flag, area_km2
+  from serving.serving_vegetation_health_daily
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra:
+  certification:
+    certified_by: "Climate Analytics Lead"
+    details: "Certified serving product (11b); vegetation-health band pre-computed upstream."
+uuid: d1000000-0000-4000-8000-00000000000e
+metrics:
+  - metric_name: mean_ndvi
+    verbose_name: Mean NDVI
+    expression: AVG(ndvi_mean)
+  - metric_name: mean_evi
+    verbose_name: Mean EVI
+    expression: AVG(evi_mean)
+  - metric_name: crop_stress_days
+    verbose_name: Crop-stress Days
+    expression: SUM(CASE WHEN crop_stress_flag THEN 1 ELSE 0 END)
+columns:
+  - column_name: aoi_key
+    type: VARCHAR
+  - column_name: aoi_name
+    type: VARCHAR
+    groupby: true
+  - column_name: event_date
+    type: DATE
+    is_dttm: true
+  - column_name: ndvi_mean
+    type: DOUBLE
+  - column_name: ndvi_max
+    type: DOUBLE
+  - column_name: evi_mean
+    type: DOUBLE
+  - column_name: ndvi_trend_30d
+    type: DOUBLE
+  - column_name: ndvi_trend_dir
+    type: VARCHAR
+    groupby: true
+  - column_name: valid_pixel_fraction
+    type: DOUBLE
+  - column_name: ndvi_health_band
+    type: BIGINT
+  - column_name: ndvi_health_label
+    type: VARCHAR
+    groupby: true
+  - column_name: crop_stress_flag
+    type: BOOLEAN
+    groupby: true
+  - column_name: area_km2
+    type: DOUBLE
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

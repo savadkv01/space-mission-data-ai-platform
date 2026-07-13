@@ -34,6 +34,10 @@ from typing import Any, Callable
 from transformation.batch.bronze_to_silver import (
     _expand_feature_collections, clean_ems_aoi,
 )
+from transformation.batch.climate_silver_to_gold import (
+    gold_air_quality_daily, gold_climate_indicator_daily, gold_dust_event_daily,
+    gold_vegetation_health_daily,
+)
 from transformation.batch.silver_to_gold import (
     gold_aoi_validation, gold_earth_observation, gold_flood_aoi,
     gold_launch_performance, gold_satellite_health, gold_scene_catalog,
@@ -88,6 +92,9 @@ def build_marts(silver: dict[str, list[dict[str, Any]]],
     """Compute every Gold mart from Silver rows + the AOI reference (pure Python)."""
     fire = silver.get("fire", [])
     index = silver.get("index", [])
+    air_quality = silver.get("air_quality", [])
+    aerosol = silver.get("aerosol", [])
+    atmos = silver.get("atmos_column", [])
     wildfire = gold_wildfire_aoi(fire, aois)
     flood = gold_flood_aoi(index, aois)
     return {
@@ -99,6 +106,11 @@ def build_marts(silver: dict[str, list[dict[str, Any]]],
         "kpi_eo_daily": gold_earth_observation(fire),
         "kpi_aoi_validation": gold_aoi_validation(aois, wildfire, flood),
         "ref_aoi": [_ref_aoi_row(a) for a in aois],
+        # --- Climate / dust / air-quality marts (Phase 9b) ---
+        "fact_air_quality_daily": gold_air_quality_daily(air_quality, atmos),
+        "fact_dust_event_daily": gold_dust_event_daily(aerosol, atmos),
+        "fact_climate_indicator_daily": gold_climate_indicator_daily(index, aois),
+        "fact_vegetation_health_daily": gold_vegetation_health_daily(index, aois),
         # --- Simulation-track marts (post-MVP demonstrator, ADR-09) ---
         "fact_sat_health": gold_satellite_health(silver.get("telemetry", [])),
         "kpi_launch_monthly": gold_launch_performance(silver.get("launch", [])),
@@ -169,6 +181,31 @@ def _gold_spark_schemas():  # pragma: no cover - needs Spark
             _l("storm_events"), _l("telemetry_samples"), _l("anomaly_samples"),
             _d("anomaly_rate"),
         ]),
+        # --- Climate / dust / air-quality marts (Phase 9b) ---
+        "fact_air_quality_daily": StructType([
+            _s("aoi_key"), _s("date_key"), _d("pm25_mean"), _d("pm25_max"),
+            _d("pm10_mean"), _d("pm10_max"), _d("no2_column_mean"),
+            _d("so2_column_mean"), _d("co_column_mean"), _d("o3_column_mean"),
+            _l("station_count"), _d("column_valid_fraction"), _l("aqi_pm25"),
+            _l("aqi_pm10"), _s("aqi_band"), _b("exceedance_flag"),
+        ]),
+        "fact_dust_event_daily": StructType([
+            _s("aoi_key"), _s("date_key"), _d("aod_mean"), _d("aod_max"),
+            _d("uv_aerosol_index_mean"), _d("wind_speed_mean"),
+            _d("wind_dir_dominant"), _d("corridor_aod_max"), _d("valid_fraction"),
+            _l("dust_severity_band"), _b("dust_flag"), _b("transport_flag"),
+        ]),
+        "fact_climate_indicator_daily": StructType([
+            _s("aoi_key"), _s("date_key"), _d("lst_c"), _d("lst_anomaly_c"),
+            _d("sst_c"), _d("sst_anomaly_c"), _d("ndwi_mean"),
+            _d("tree_cover_loss_ha"), _d("desertification_proxy"),
+            _l("lst_anomaly_band"), _b("warming_flag"), _b("desertification_flag"),
+        ]),
+        "fact_vegetation_health_daily": StructType([
+            _s("aoi_key"), _s("date_key"), _d("ndvi_mean"), _d("ndvi_max"),
+            _d("evi_mean"), _d("ndvi_trend_30d"), _d("valid_pixel_fraction"),
+            _l("ndvi_health_band"), _b("crop_stress_flag"),
+        ]),
     }
 
 
@@ -194,7 +231,8 @@ def run_gold_spark(seed_path: str | None = None) -> None:  # pragma: no cover - 
 
     silver = {
         entity: _read_silver(entity)
-        for entity in ("telemetry", "space_weather", "fire", "vessel", "scene", "index")
+        for entity in ("telemetry", "space_weather", "fire", "vessel", "scene",
+                       "index", "air_quality", "aerosol", "atmos_column")
     }
     aois = load_aoi_reference(seed_path)
     marts = build_marts(silver, aois)

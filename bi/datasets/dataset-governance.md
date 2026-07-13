@@ -46,13 +46,26 @@ A dataset is **Certified** only when all are true:
 
 | Dataset class | Freshness SLO | Cache TTL | Refresh trigger |
 | --- | --- | --- | --- |
-| Materialized aggregate (`platform_daily`) | ≤ 15 min behind serving | 15 min | `serving_refresh` DAG completion |
+| Materialized aggregate (`platform_daily`, `climate_daily`) | ≤ 15 min behind serving | 15 min | `serving_refresh` DAG completion |
 | Daily serving product | ≤ 1 h behind Gold | 1 h | `serving_refresh` DAG completion |
 | Sim-track (`gold.*`) | best-effort (demo) | 1 h | Gold write |
 
 Cache is warmed after — never before — the serving refresh completes, so a
 dashboard never shows a half-built product (see
 [incident BI-04](../docs/bi/11-production-incidents.md)).
+
+## Phase 12b Climate Extension
+
+The five Phase 12b climate datasets (`air_quality_daily`, `dust_event_daily`,
+`climate_indicator_daily`, `vegetation_health_daily`, `climate_daily`) inherit
+this governance unchanged — no new rules, tooling, or ownership model:
+
+- They read certified 11b serving products (`serving.serving_*` /
+  `serving_agg.mv_kpi_climate_daily`), never Silver/Gold directly.
+- Grain uniqueness + KPI bounds + accepted-band values are enforced by the 11b
+  dbt contract tests ([`serving/dbt/models/climate/_climate.yml`](../../serving/dbt/models/climate/_climate.yml)).
+- No RLS is required (all climate AOIs are public); roles are `ops_airquality`,
+  `ops_climate`, and `exec`.
 
 ## Auditability
 

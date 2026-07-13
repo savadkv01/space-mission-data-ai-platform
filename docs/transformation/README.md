@@ -28,6 +28,12 @@ This folder is the enterprise design specification for the transformation layer.
 | 18 | [ADRs](18-adr.md) | 18 |
 | 19 | [Glossary](19-glossary.md) | — |
 
+## Extensions
+
+| Doc | Phase | Scope |
+| --- | --- | --- |
+| [Climate / Dust / Air-Quality Marts](climate-marts.md) | 9b | Bronze→Silver→Gold for air quality, aerosol/dust, atmospheric columns, and derived climate/vegetation indicators (AOI-date grain). |
+
 ## Status
 
 Design + reference implementation complete. Infrastructure (Spark, Kafka, MinIO, Airflow) is **not yet provisioned** — the pure-Python transformation rules and the offline demo run today; Spark/dbt/Airflow entrypoints activate when infra lands.

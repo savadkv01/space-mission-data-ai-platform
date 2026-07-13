@@ -1,0 +1,23 @@
+slice_name: "LST & Anomaly Trend"
+viz_type: echarts_timeseries_line
+description: "Climate — daily mean land-surface temperature and its anomaly."
+certified_by: "Climate Analytics Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000d__table"
+  viz_type: echarts_timeseries_line
+  x_axis: event_date
+  metrics:
+    - metric_name: mean_lst
+      label: "Mean LST (C)"
+      expressionType: SQL
+      sqlExpression: "AVG(lst_c)"
+    - mean_lst_anomaly
+  groupby: []
+  adhoc_filters: []
+  time_range: "Last 90 days"
+  time_grain_sqla: P1D
+query_context: null
+cache_timeout: 3600
+uuid: c2000000-0000-4000-8000-00000000000b
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000d

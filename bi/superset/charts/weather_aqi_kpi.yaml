@@ -1,0 +1,18 @@
+slice_name: "Mean AQI (PM2.5)"
+viz_type: big_number_total
+description: "Weather (real) KPI tile — window mean AQI from the climate rollup."
+certified_by: "Air-Quality Lead"
+certification_details: "Certified metric from mv_kpi_climate_daily (mean_aqi_pm25)."
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000f__table"
+  viz_type: big_number_total
+  metric: mean_aqi_pm25
+  adhoc_filters: []
+  time_range: "Last 30 days"
+  header_font_size: 0.4
+  subheader_font_size: 0.15
+query_context: null
+cache_timeout: 900
+uuid: c2000000-0000-4000-8000-000000000016
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000f

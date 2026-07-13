@@ -1,0 +1,51 @@
+version: 2
+
+# Climate Gold model contracts + tests (Phase 9b). Run in the Airflow DAG's
+# dbt_test step, enforcing the AOI-date grain and KPI bounds. The dbt marts
+# cover the AOI-pre-tagged facts (air quality, dust); the derived-indicator and
+# vegetation-health marts need bbox-centroid point-in-polygon attribution and
+# are produced by the Spark/pure-Python gold writer (ADR-SV-01) — see
+# docs/transformation/climate-marts.md.
+models:
+  - name: fact_air_quality_daily
+    description: "Daily air-quality KPIs per AOI (1 row per AOI per day)."
+    columns:
+      - name: aoi_key
+        tests: [not_null]
+      - name: date_key
+        tests: [not_null]
+      - name: station_count
+        description: "Contributing OpenAQ stations (>=1 required for AQI)."
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: aqi_pm25
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 500
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [aoi_key, date_key]
+
+  - name: fact_dust_event_daily
+    description: "Daily dust KPIs per AOI (AOD + dust flag + transport context)."
+    columns:
+      - name: aoi_key
+        tests: [not_null]
+      - name: date_key
+        tests: [not_null]
+      - name: aod_mean
+        description: "AOD 550 nm, physical range [0, 5]."
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 5
+      - name: dust_severity_band
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 4
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [aoi_key, date_key]

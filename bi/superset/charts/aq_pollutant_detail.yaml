@@ -1,0 +1,27 @@
+slice_name: "Air Quality Details"
+viz_type: table
+description: "Air-Quality — raw per-AOI-per-day pollutant records for drill-down."
+certified_by: "Air-Quality Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000b__table"
+  viz_type: table
+  query_mode: raw
+  all_columns:
+    - aoi_name
+    - event_date
+    - pm25_mean
+    - pm10_mean
+    - no2_column_mean
+    - o3_column_mean
+    - aqi_pm25
+    - aqi_band
+    - exceedance_flag
+    - station_count
+  adhoc_filters: []
+  time_range: "Last 30 days"
+  order_by_cols: []
+query_context: null
+cache_timeout: 3600
+uuid: c2000000-0000-4000-8000-000000000004
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000b

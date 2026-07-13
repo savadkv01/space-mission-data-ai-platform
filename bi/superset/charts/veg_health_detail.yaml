@@ -1,0 +1,27 @@
+slice_name: "Vegetation Health Details"
+viz_type: table
+description: "Climate — raw per-AOI-per-day NDVI/EVI + crop-stress records for drill-down."
+certified_by: "Climate Analytics Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000e__table"
+  viz_type: table
+  query_mode: raw
+  all_columns:
+    - aoi_name
+    - event_date
+    - ndvi_mean
+    - ndvi_max
+    - evi_mean
+    - ndvi_trend_30d
+    - ndvi_trend_dir
+    - ndvi_health_label
+    - crop_stress_flag
+    - valid_pixel_fraction
+  adhoc_filters: []
+  time_range: "Last 30 days"
+  order_by_cols: []
+query_context: null
+cache_timeout: 3600
+uuid: c2000000-0000-4000-8000-000000000011
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000e

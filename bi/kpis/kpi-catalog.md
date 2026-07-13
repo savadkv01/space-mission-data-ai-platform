@@ -74,6 +74,52 @@ flowchart LR
 - **Thresholds:** ≥0.8 green / 0.6–0.8 amber / <0.6 red.
 - **Impact:** false-positive/negative trust; the headline executive quality KPI.
 
+## Climate / Dust / Air-Quality KPIs (real data — Phase 12b)
+
+### 11. AQI Exceedance Days
+- **Business definition:** AOI-days on which a pollutant daily mean breached its
+  WHO 2021 guideline — the air-quality alert workload signal.
+- **Formula:** `Σ (exceedance_flag)` over `air_quality_daily`; rollup
+  `climate_daily.aqi_exceedance_days`.
+- **Source:** `serving_air_quality_daily.exceedance_flag` →
+  `mv_kpi_climate_daily`. AQI band is US-EPA piecewise, pre-computed upstream.
+- **Refresh:** hourly (exec tile 15-min cache). **Owner:** Air-Quality Lead.
+- **Thresholds:** 0 green / 1–5 amber / >5 red.
+- **Impact:** smart-city / aviation / ports public-health notifications.
+
+### 12. Mean AQI (PM2.5)
+- **Definition:** Window mean US-EPA AQI from PM2.5.
+- **Formula:** `avg(aqi_pm25)`; band ≤50 good / 51–100 moderate / >100 unhealthy.
+- **Source:** `air_quality_daily.aqi_pm25`; `climate_daily.mean_aqi_pm25`.
+- **Refresh:** hourly. **Owner:** Air-Quality Lead.
+- **Impact:** headline air-quality index for operations and executives.
+
+### 13. Active Dust Days
+- **Definition:** AOI-days flagged as a dust event (AOD / dust-index band).
+- **Formula:** `Σ (dust_flag)`; `climate_daily.dust_event_days`.
+- **Source:** `serving_dust_event_daily.dust_flag`; peak `aod_max`.
+- **Refresh:** hourly. **Owner:** Air-Quality Lead.
+- **Thresholds:** 0 green / 1–4 amber / ≥5 red.
+- **Impact:** aviation visibility, port operations, health advisories.
+
+### 14. Mean LST Anomaly
+- **Definition:** Window mean land-surface-temperature anomaly vs same-day-of-year
+  baseline (°C) — the climate-warming signal.
+- **Formula:** `avg(lst_anomaly_c)`; `climate_daily.mean_lst_anomaly`.
+- **Source:** `serving_climate_indicator_daily.lst_anomaly_c` / `warming_flag`.
+- **Refresh:** hourly. **Owner:** Climate Analytics Lead.
+- **Thresholds:** <+1 green / +1–+2 amber / ≥+2 red.
+- **Impact:** heatwave and desertification early warning.
+
+### 15. Mean NDVI (Vegetation Health)
+- **Definition:** Window mean NDVI greenness; crop-stress proxy when NDVI low and
+  declining.
+- **Formula:** `avg(ndvi_mean)`; `Σ (crop_stress_flag)`.
+- **Source:** `serving_vegetation_health_daily.ndvi_mean` / `crop_stress_flag`.
+- **Refresh:** hourly. **Owner:** Climate Analytics Lead.
+- **Thresholds:** health band pre-computed (Bare/Sparse/Moderate/Healthy/Dense).
+- **Impact:** agriculture, food-security, and desertification monitoring.
+
 ## Platform / Engineering KPIs
 
 ### 7. Searchable Rate (collection) — `catalog_quality.searchable_rate`

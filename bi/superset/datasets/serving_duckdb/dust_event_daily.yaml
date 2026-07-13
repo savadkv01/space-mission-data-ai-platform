@@ -1,0 +1,74 @@
+table_name: dust_event_daily
+main_dttm_col: event_date
+description: "Certified (12b): Dust events, AOD & wind transport (per AOI per day), from serving_dust_event_daily."
+default_endpoint: null
+offset: 0
+cache_timeout: 3600
+schema: null
+sql: |
+  select
+      aoi_key, aoi_name, cast(date_key as date) as event_date,
+      aod_mean, aod_max, uv_aerosol_index_mean,
+      wind_speed_mean, wind_dir_dominant, corridor_aod_max, valid_fraction,
+      dust_severity_band, dust_severity_label, dust_flag, transport_flag, area_km2
+  from serving.serving_dust_event_daily
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra:
+  certification:
+    certified_by: "Air-Quality Lead"
+    details: "Certified serving product (11b); dust-severity band pre-computed upstream."
+uuid: d1000000-0000-4000-8000-00000000000c
+metrics:
+  - metric_name: dust_days
+    verbose_name: Dust Event Days
+    expression: SUM(CASE WHEN dust_flag THEN 1 ELSE 0 END)
+  - metric_name: peak_aod
+    verbose_name: Peak AOD
+    expression: MAX(aod_max)
+  - metric_name: mean_aod
+    verbose_name: Mean AOD
+    expression: AVG(aod_mean)
+  - metric_name: transport_days
+    verbose_name: Dust Transport Days
+    expression: SUM(CASE WHEN transport_flag THEN 1 ELSE 0 END)
+columns:
+  - column_name: aoi_key
+    type: VARCHAR
+  - column_name: aoi_name
+    type: VARCHAR
+    groupby: true
+  - column_name: event_date
+    type: DATE
+    is_dttm: true
+  - column_name: aod_mean
+    type: DOUBLE
+  - column_name: aod_max
+    type: DOUBLE
+  - column_name: uv_aerosol_index_mean
+    type: DOUBLE
+  - column_name: wind_speed_mean
+    type: DOUBLE
+  - column_name: wind_dir_dominant
+    type: DOUBLE
+  - column_name: corridor_aod_max
+    type: DOUBLE
+  - column_name: valid_fraction
+    type: DOUBLE
+  - column_name: dust_severity_band
+    type: BIGINT
+  - column_name: dust_severity_label
+    type: VARCHAR
+    groupby: true
+  - column_name: dust_flag
+    type: BOOLEAN
+    groupby: true
+  - column_name: transport_flag
+    type: BOOLEAN
+    groupby: true
+  - column_name: area_km2
+    type: DOUBLE
+version: 1.0.0
+database_uuid: b1000000-0000-4000-8000-000000000001

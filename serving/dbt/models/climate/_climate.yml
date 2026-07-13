@@ -1,0 +1,106 @@
+version: 2
+
+# Climate serving data-product contracts + tests (Task 4). Mirrors
+# models/serving/_serving.yml: grain uniqueness, KPI ranges, enum validation and
+# not-null keys. No AOI is restricted, so no row-level security is required here
+# (reuses the existing RLS approach — none needed).
+models:
+  - name: serving_air_quality_daily
+    description: "Air-Quality data product, 1 row per AOI per day."
+    columns:
+      - name: aoi_key
+        tests: [not_null]
+      - name: date_key
+        tests: [not_null]
+      - name: pm25_mean
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 2000 }
+      - name: aqi_pm25
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 500 }
+      - name: aqi_band
+        tests:
+          - accepted_values:
+              values: ['Good', 'Moderate', 'Unhealthy (sensitive)', 'Unhealthy',
+                       'Very Unhealthy', 'Hazardous']
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [aoi_key, date_key]
+
+  - name: serving_dust_event_daily
+    description: "Dust-Event data product, 1 row per AOI per day."
+    columns:
+      - name: aoi_key
+        tests: [not_null]
+      - name: date_key
+        tests: [not_null]
+      - name: aod_mean
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 5 }
+      - name: dust_severity_band
+        tests:
+          - accepted_values: { values: [0, 1, 2, 3, 4] }
+      - name: dust_severity_label
+        tests:
+          - accepted_values:
+              values: ['Clear', 'Hazy', 'Dusty', 'Heavy dust', 'Severe', 'unknown']
+      - name: valid_fraction
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 1 }
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [aoi_key, date_key]
+
+  - name: serving_climate_indicator_daily
+    description: "Climate-Indicator data product, 1 row per AOI per day."
+    columns:
+      - name: aoi_key
+        tests: [not_null]
+      - name: date_key
+        tests: [not_null]
+      - name: lst_anomaly_band
+        tests:
+          - accepted_values: { values: [-1, 0, 1, 2, 3] }
+      - name: lst_anomaly_label
+        tests:
+          - accepted_values:
+              values: ['Cooler', 'Normal', 'Warm', 'Hot', 'Extreme', 'unknown']
+      - name: desertification_proxy
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 1 }
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [aoi_key, date_key]
+
+  - name: serving_vegetation_health_daily
+    description: "Vegetation-Health data product, 1 row per AOI per day."
+    columns:
+      - name: aoi_key
+        tests: [not_null]
+      - name: date_key
+        tests: [not_null]
+      - name: ndvi_mean
+        tests:
+          - dbt_utils.accepted_range: { min_value: -1, max_value: 1 }
+      - name: ndvi_health_band
+        tests:
+          - accepted_values: { values: [0, 1, 2, 3, 4] }
+      - name: ndvi_health_label
+        tests:
+          - accepted_values:
+              values: ['Bare / water', 'Sparse', 'Moderate', 'Healthy', 'Dense', 'unknown']
+      - name: ndvi_trend_dir
+        tests:
+          - accepted_values: { values: ['improving', 'declining', 'flat'] }
+      - name: valid_pixel_fraction
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 1 }
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [aoi_key, date_key]
+
+  - name: mv_kpi_climate_daily
+    description: "Materialized climate/dust/air-quality daily KPI rollup (executive/weather view)."
+    columns:
+      - name: date_key
+        tests: [not_null, unique]

@@ -36,7 +36,7 @@ Phase numbering aligns with the authored phase prompts in [.github/prompts/](.gi
 | 24 | Interview Preparation | 🔜 Upcoming |
 | 25 | Project Review | 🔜 Upcoming |
 
-> **Planned parallel track:** a Climate, Dust & Air-Quality expansion (extension prompts `05b`–`16b`) — see [Planned Expansion](#planned-expansion--climate-dust--air-quality-monitoring) below.
+> **Parallel track:** a Climate, Dust & Air-Quality expansion (extension prompts `05b`–`16b`) — see [Planned Expansion](#planned-expansion--climate-dust--air-quality-monitoring) below. The source-analysis → BI layers (`05b`–`12b`) are **implemented**; `13b`–`16b` (feature store, ML, RAG, API) are upcoming with the AI/ML track.
 
 ---
 
@@ -170,6 +170,21 @@ A post-MVP initiative extends the platform into **climate change, dust storm, an
 
 | Included | Deferred |
 | --- | --- |
-| OpenAQ (ground air quality); Sentinel-5P/TROPOMI via Sentinel Hub Statistical API (NO₂, SO₂, CO, O₃, CH₄, aerosol index); MODIS/VIIRS AOD; climate indicators derived from already-ingested LST/NDVI/SST/forest data | CAMS & ERA5 raw NetCDF (need a binary blob-landing capability); geostationary SEVIRI/Himawari (exceeds the 16 GB budget) |
+| OpenAQ (ground air quality); Sentinel-5P/TROPOMI + MODIS/VIIRS AOD via **Google Earth Engine** (free — NO₂, SO₂, CO, O₃, CH₄, aerosol index, AOD); climate indicators derived from already-ingested LST/NDVI/SST/forest data | CAMS & ERA5 raw NetCDF (need a binary blob-landing capability); geostationary SEVIRI/Himawari (exceeds the 16 GB budget) |
 
 **Authored prompt phases:** `05b → 06b → 08b → 09b → 10b → 11b → 12b` (extend the completed source-analysis → BI layers), then `13b → 14b → 15b → 16b` (climate-scoped feature store, ML, RAG, API). Phases 17–25 run once and cover the new components automatically. See [.github/prompts/](.github/prompts/).
+
+**Implementation status:**
+
+| Phase | Deliverable | Status |
+| --- | --- | --- |
+| 05b | Climate source-data analysis (inventory, AOI strategy, derived indicators, quality, freshness/risk, MVP) — [docs](docs/source-data-analysis/climate/README.md) | ✅ Complete |
+| 06b | Climate data model (Bronze/Silver/Gold contracts, dimensions, KPI thresholds, lineage) — [docs](docs/data-modeling/climate/README.md) | ✅ Complete |
+| 08b | Ingestion — OpenAQ + Google Earth Engine (S-5P/AOD) connectors, DAGs, preflight — [docs](docs/ingestion/climate-connectors.md) | ✅ Complete |
+| 09b | Transformation — atmospheric Bronze→Silver→Gold marts + climate indicators — [docs](docs/transformation/climate-marts.md) | ✅ Complete |
+| 10b | Data quality — climate profiling, rules, and validation suites | ✅ Complete |
+| 11b | Serving — climate serving products + semantic dimensions | ✅ Complete |
+| 12b | BI — air-quality/dust + climate-indicators dashboards; weather promoted to real data | ✅ Complete |
+| 13b–16b | Climate-scoped feature store, ML, RAG, API | 🔜 With AI/ML track |
+
+> **Atmospheric access-layer note.** Sentinel-5P (trace gases) and MODIS/VIIRS AOD are ingested via **Google Earth Engine** (free, non-commercial) rather than the Sentinel Hub Statistical API, whose `sentinel-5p-l2` / MODIS collections are not entitled on the free plan. The emitted Bronze bucket shape is unchanged, so every downstream Silver/Gold/serving/BI layer is backend-agnostic. See [docs/ingestion/climate-connectors.md](docs/ingestion/climate-connectors.md).

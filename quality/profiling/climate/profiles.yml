@@ -1,0 +1,75 @@
+# Climate profiling configuration (Phase 10b)
+# Consumed by the existing profiler (quality/profiling/statistics-framework.md).
+# Baselines are established on first certified batch and rolled forward.
+
+version: 1
+domain: climate
+
+defaults:
+  numeric_stats: [count, min, max, mean, median, stddev, p05, p25, p50, p75, p95]
+  null_pct: true
+  cardinality: true
+  drift:
+    method: psi
+    baseline: rolling_30d
+    alert_threshold: 0.25        # dq_psi warn (align monitoring alert DriftDetected)
+  null_alert_delta: 0.20         # dq_null_pct baseline + 0.20 -> NullSpike
+
+entities:
+
+  obs_air_quality:
+    layer: silver
+    numeric: [value_std, value_raw, latitude, longitude]
+    categorical: [pollutant_code, quality_flag, unit_raw]
+    anomaly_rate:
+      suspect_share: {expr: "quality_flag != 'valid'", warn_above: 0.10}
+    completeness:
+      station_coverage: {group_by: [aoi_id, stat_date], min_distinct: [location_id], warn_below: 1}
+
+  obs_aerosol:
+    layer: silver
+    numeric: [aod_550nm, valid_fraction, angstrom_exponent, uv_aerosol_index]
+    categorical: [sensor, quality_flag, bright_surface_flag]
+    anomaly_rate:
+      low_coverage_share: {expr: "valid_fraction < 0.5", warn_above: 0.30}
+    distribution_watch: [aod_550nm]
+
+  obs_atmos_column:
+    layer: silver
+    numeric: [mean, valid_pixel_fraction, min, max, stddev]
+    categorical: [gas_code, unit_std, quality_flag]
+    partition_by: gas_code          # per-gas distributions (mol/m2 vs ppb vs unitless)
+    anomaly_rate:
+      low_coverage_share: {expr: "quality_flag == 'low_coverage'", warn_above: 0.30}
+
+  fact_air_quality_daily:
+    layer: gold
+    numeric: [pm25_mean, pm10_mean, aqi_pm25, aqi_pm10, station_count, column_valid_fraction]
+    categorical: [aqi_band, exceedance_flag]
+    anomaly_rate:
+      exceedance_share: {expr: "exceedance_flag == true", watch: true}
+      no_station_share: {expr: "station_count == 0", warn_above: 0.20}
+
+  fact_dust_event_daily:
+    layer: gold
+    numeric: [aod_mean, aod_max, uv_aerosol_index_mean, corridor_aod_max, valid_fraction]
+    categorical: [dust_severity_band, dust_flag, transport_flag]
+    anomaly_rate:
+      dust_event_share: {expr: "dust_flag == true", watch: true}
+
+  fact_climate_indicator_daily:
+    layer: gold
+    numeric: [lst_c, lst_anomaly_c, sst_c, sst_anomaly_c, ndwi_mean, desertification_proxy]
+    categorical: [lst_anomaly_band, warming_flag, desertification_flag]
+    anomaly_rate:
+      warming_share: {expr: "warming_flag == true", watch: true}
+      desertification_share: {expr: "desertification_flag == true", watch: true}
+    distribution_watch: [lst_anomaly_c]
+
+  fact_vegetation_health_daily:
+    layer: gold
+    numeric: [ndvi_mean, evi_mean, ndvi_trend_30d, valid_pixel_fraction]
+    categorical: [ndvi_health_band, crop_stress_flag]
+    anomaly_rate:
+      crop_stress_share: {expr: "crop_stress_flag == true", watch: true}
+    distribution_watch: [ndvi_mean]

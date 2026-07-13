@@ -111,12 +111,17 @@ docker compose ... exec superset \
 This bundle imports live end-to-end via `POST /api/v1/assets/import/` (full
 databases + datasets + charts + dashboards bundle, `type: assets` in
 `metadata.yaml` — NOT the single-dashboard `/api/v1/dashboard/import/` endpoint,
-which rejects `type: assets` bundles). The connection, all 10 certified
-datasets, 21 charts, and 4 dashboards import and render: Executive + Earth
+which rejects `type: assets` bundles). The connection, all 15 certified
+datasets, 46 charts, and 7 dashboards import and render: Executive + Earth
 Observation (each with an Overview tab and a Details tab of raw drill-down
 tables), Imagery & Catalog Quality (previously-uncharted `scene_catalog` /
-`catalog_quality` datasets), and Simulation Track (`sat_health` /
-`launch_monthly` / `weather_impact`, tabbed Satellite/Launch/Weather). Verified
+`catalog_quality` datasets), Simulation Track (`sat_health` /
+`launch_monthly` / `weather_impact`, tabbed Satellite/Launch/Weather), and the
+**Phase 12b climate set**: Air Quality & Dust, Climate Indicators, the promoted
+real-data Weather dashboard, and the Executive climate KPI tiles (datasets
+`air_quality_daily` / `dust_event_daily` / `climate_indicator_daily` /
+`vegetation_health_daily` / `climate_daily` over the certified 11b products).
+Verified
 via `POST /api/v1/chart/data` and live dashboard render — both the baked
 `serving_*` tables and the `s3://gold` httpfs `sim` datasets return rows.
 `flood_daily` and `launch_monthly` currently have 0 rows in this environment

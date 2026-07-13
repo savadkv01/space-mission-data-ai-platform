@@ -74,6 +74,45 @@ class DatasetCredentials:
     gfw_api_token: str = field(default_factory=lambda: _get("GFW_API_TOKEN"))
     sentinelhub_client_id: str = field(default_factory=lambda: _get("SENTINELHUB_CLIENT_ID"))
     sentinelhub_client_secret: str = field(default_factory=lambda: _get("SENTINELHUB_CLIENT_SECRET"))
+    openaq_api_key: str = field(default_factory=lambda: _get("OPENAQ_API_KEY"))
+    # Google Earth Engine (free S-5P / MODIS AOD backend; service-account auth).
+    gee_project: str = field(default_factory=lambda: _get("GEE_PROJECT"))
+    gee_service_account: str = field(default_factory=lambda: _get("GEE_SERVICE_ACCOUNT"))
+    gee_key_file: str = field(default_factory=lambda: _get("GEE_KEY_FILE"))
+
+
+@dataclass(frozen=True)
+class ClimateSettings:
+    """AOIs and source parameter lists for the climate / dust / air-quality track.
+
+    Bounding boxes are ``[min_lon, min_lat, max_lon, max_lat]`` (EPSG:4326),
+    sourced from Phase 5b (docs/source-data-analysis/climate/02-aoi-strategy.md).
+    AOI clipping is mandatory to respect the 16 GB budget and Sentinel Hub
+    Processing-Unit quota; all atmospheric requests are AOI-bounded.
+    """
+
+    #: Named AOI bounding boxes (primary UAE + secondary dust corridors).
+    aois: dict[str, tuple[float, float, float, float]] = field(default_factory=lambda: {
+        "AOI-UAE-NAT": (51.0, 22.5, 56.5, 26.2),
+        "AOI-AUH": (53.3, 23.5, 55.3, 24.7),
+        "AOI-DXB": (54.9, 24.8, 55.6, 25.4),
+        "AOI-COAST": (51.5, 24.0, 56.4, 26.1),
+        "AOI-DESERT": (52.0, 22.5, 55.5, 23.8),
+        "AOI-ARABIA": (42.0, 18.0, 55.0, 30.0),
+        "AOI-IRAQ": (42.0, 29.0, 48.5, 36.0),
+        "AOI-IRAN": (47.0, 28.0, 55.0, 34.0),
+        "AOI-GULF": (48.0, 24.0, 57.0, 30.5),
+    })
+    #: OpenAQ ground-station pollutants (canonical lowercase parameter codes).
+    openaq_pollutants: tuple[str, ...] = ("pm25", "pm10", "o3", "no2", "co", "so2")
+    #: TROPOMI (Sentinel-5P) products via the Sentinel Hub Statistical API.
+    tropomi_products: tuple[str, ...] = ("NO2", "SO2", "CO", "O3", "CH4", "AER_AI")
+
+    def bbox(self, aoi_id: str) -> list[float]:
+        """Return the bounding box for ``aoi_id`` as a mutable list."""
+        if aoi_id not in self.aois:
+            raise KeyError(f"unknown AOI {aoi_id!r}; choose from {sorted(self.aois)}")
+        return list(self.aois[aoi_id])
 
 
 @dataclass(frozen=True)
@@ -83,6 +122,7 @@ class Settings:
     kafka: KafkaSettings = field(default_factory=KafkaSettings)
     minio: MinioSettings = field(default_factory=MinioSettings)
     credentials: DatasetCredentials = field(default_factory=DatasetCredentials)
+    climate: ClimateSettings = field(default_factory=ClimateSettings)
 
 
 @lru_cache(maxsize=1)

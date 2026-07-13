@@ -48,6 +48,19 @@ SILVER_ENTITIES = [
     "fire", "vessel", "scene", "index",
 ]
 
+# Climate/dust/air-quality entities (Phase 9b). Their Bronze is produced by the
+# Phase 8b ingestion DAGs (``openaq_ingest``, ``tropomi_ingest``,
+# ``modis_aod_ingest``); this pipeline consumes it Bronze->Silver->Gold. Run via
+# the climate launcher (climate_bronze_to_silver.run_spark).
+CLIMATE_ENTITIES = ["air_quality", "aerosol", "atmos_column"]
+
+# Upstream Phase 8b ingestion DAGs the climate marts depend on (documented for
+# operators; wired below with a soft ExternalTaskSensor when Airflow is present).
+CLIMATE_UPSTREAM_DAGS = ["openaq_ingest", "tropomi_ingest", "modis_aod_ingest"]
+
+# Per-task SLA: Silver jobs should complete within this window of their start.
+SILVER_SLA = timedelta(minutes=45)
+
 # Hardened Spark/dbt runner (compose default container name; override via env).
 SPARK_CONTAINER = os.environ.get("SPARK_CONTAINER", "space-platform-spark-master-1")
 _WORKDIR = "/opt/spark/work-dir"
@@ -84,25 +97,38 @@ def build_dag() -> "DAG | None":
             BashOperator(
                 task_id=f"silver_{entity}",
                 bash_command=_in_spark(f"{_SUBMIT} transformation/scripts/run_silver.py {entity}"),
+                sla=SILVER_SLA,
             )
             for entity in SILVER_ENTITIES
         ]
 
-        # Primary Gold: every mart (sim + MVP EO) materialised to s3://gold
-        # Parquet — the serving layer's only source.
+        # Climate Silver jobs (Phase 9b), dispatched through the climate launcher.
+        climate_silver_tasks = [
+            BashOperator(
+                task_id=f"silver_{entity}",
+                bash_command=_in_spark(
+                    f"{_SUBMIT} transformation/scripts/run_climate_silver.py {entity}"
+                ),
+                sla=SILVER_SLA,
+            )
+            for entity in CLIMATE_ENTITIES
+        ]
+
+        # Primary Gold: every mart (sim + MVP EO + climate) materialised to
+        # s3://gold Parquet — the serving layer's only source.
         gold_lakehouse = BashOperator(
             task_id="gold_lakehouse",
             bash_command=_in_spark(f"{_SUBMIT} transformation/scripts/run_gold.py"),
         )
 
-        # Secondary Gold: dbt-duckdb sim-track demonstrator warehouse.
+        # Secondary Gold: dbt-duckdb sim-track + climate demonstrator warehouse.
         gold_dbt = BashOperator(
             task_id="gold_dbt",
             bash_command=_in_spark("cd transformation/dbt && dbt deps && dbt run && dbt test"),
         )
 
-        # All Silver jobs must succeed before the Gold marts are (re)built.
-        silver_tasks >> gold_lakehouse >> gold_dbt
+        # All Silver jobs (sim + EO + climate) must succeed before Gold is built.
+        (silver_tasks + climate_silver_tasks) >> gold_lakehouse >> gold_dbt
 
     return dag
 

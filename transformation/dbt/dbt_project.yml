@@ -26,6 +26,9 @@ models:
     gold:
       +materialized: table
       +schema: gold
+    climate:
+      +materialized: table
+      +schema: gold
 
 seeds:
   space_transform:

@@ -21,6 +21,11 @@ Prometheus/Alertmanager in the observability stack
 | New flood-day | new `flood_daily.flood_flag = true` | Superset alert | high | EO Ops Lead | `ops_eo` + EM |
 | Corroboration drop | EMS corroboration rate < 0.6 (7-day) | Superset alert on `aoi_validation` | medium | EO Ops Lead | governance |
 | Catalog quality drop | `catalog_quality.searchable_rate` < 0.75 | Superset alert | medium | Data Steward | `steward` |
+| AQI exceedance | new `air_quality_daily.exceedance_flag = true` | Superset alert on `air_quality_daily` | high | Air-Quality Lead | `ops_airquality` + EM |
+| High-AOD dust event | new `dust_event_daily.aod_max` in heavy-dust band (≥ 1.0) or `dust_severity_band ≥ 3` | Superset alert on `dust_event_daily` | high | Air-Quality Lead | `ops_airquality` + aviation/ports |
+| Extreme LST anomaly | `climate_indicator_daily.lst_anomaly_c` in extreme band (≥ +2 °C, 7-day) or `warming_flag` sustained | Superset alert on `climate_indicator_daily` | medium | Climate Analytics Lead | `ops_climate` |
+| Desertification onset | new `climate_indicator_daily.desertification_flag = true` | Superset alert | medium | Climate Analytics Lead | `ops_climate` + governance |
+| Crop-stress spike | new `vegetation_health_daily.crop_stress_flag = true` | Superset alert | medium | Climate Analytics Lead | `ops_climate` |
 | Space-weather storm `sim` | `weather_impact.max_kp_index ≥ 5` | Superset alert | info (demo) | Platform Lead | `demo` |
 
 ## Notification Flow

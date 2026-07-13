@@ -1,0 +1,19 @@
+slice_name: "Mean LST Anomaly (window)"
+viz_type: big_number_total
+description: "Executive climate KPI — mean land-surface-temperature anomaly from the climate rollup."
+certified_by: "Platform Lead"
+certification_details: "Certified metric from mv_kpi_climate_daily (mean_lst_anomaly)."
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000f__table"
+  viz_type: big_number_total
+  metric: mean_lst_anomaly
+  adhoc_filters: []
+  time_range: "Last 30 days"
+  y_axis_format: "+.2f"
+  header_font_size: 0.4
+  subheader_font_size: 0.15
+query_context: null
+cache_timeout: 900
+uuid: c2000000-0000-4000-8000-000000000014
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000f

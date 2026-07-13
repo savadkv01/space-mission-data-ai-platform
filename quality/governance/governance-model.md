@@ -42,6 +42,9 @@
 | Maritime (UC-18) | Maritime Lead | Analytics Eng | `silver_vessel`, `fact_vessel_activity` |
 | Catalog (UC-25) | Data Product Lead | Analytics Eng | `silver_scene`, `fact_scene_catalog` |
 | Validation ground truth | Data Product Lead | Analytics Eng | `ref_aoi`, `kpi_aoi_validation` |
+| Air Quality (climate) | Environment Lead | Climate Analytics Eng | `obs_air_quality`, `fact_air_quality_daily` |
+| Dust / Aerosol (climate) | Environment Lead | Climate Analytics Eng | `obs_aerosol`, `obs_atmos_column`, `fact_dust_event_daily` |
+| Climate Indicators | Environment Lead | Climate Analytics Eng | `fact_climate_indicator_daily`, `fact_vegetation_health_daily` |
 | Simulation track | Platform Lead | Platform Eng | telemetry/orbit/launch/weather |
 
 Full mapping: [ownership-matrix.md](ownership-matrix.md).
@@ -67,6 +70,30 @@ flowchart LR
 
 **Certification status values:** `DRAFT` → `VALIDATED` → `CERTIFIED` →
 (`DEPRECATED`). Only `CERTIFIED` datasets are consumable by downstream products.
+
+---
+
+## 5. Climate certification criteria (Phase 10b)
+
+The new climate Gold marts are marked **`CERTIFIED`** (consumable by BI / serving /
+RAG per Phase 11b/15b/16b) only when **all** of the following hold on the latest
+batch. Criteria compose the executable suites in
+[`transformation/quality/climate_suites.py`](../../transformation/quality/climate_suites.py)
+with the freshness/profiling signals.
+
+| # | Criterion | Evidence |
+|---|-----------|----------|
+| C1 | All **critical** expectations pass (`dq_checkpoint_pass == 1`) | Silver + Gold suite checkpoint |
+| C2 | Grain uniqueness holds (1 row / AOI / day) | `unique:aoi_key+date_key` |
+| C3 | Range & enum rules pass (pollutants, AOD, LST/SST, bands) | suite expectations |
+| C4 | Freshness within SLA (`dq_freshness_lag_seconds ≤ SLA`) | [quality-kpis.md §2.1](../monitoring/quality-kpis.md) |
+| C5 | Station coverage `≥ 0.8` (AQ) / valid-pixel floor met (raster) | `dq_completeness_score`, profiling |
+| C6 | No unresolved 🔴/🟠 open incident on the entity | [incidents](../incidents/production-incidents.md) |
+| C7 | Profiling drift within band (`dq_psi ≤ 0.25`) | [profiling/climate](../profiling/climate/README.md) |
+
+Owner (Environment Lead) approves; steward (Climate Analytics Eng) attests C1–C7.
+A WARN-level failure (e.g. low coverage) yields **`VALIDATED`** (usable with a
+caveat), a CRITICAL failure holds the mart at **`DRAFT`**.
 
 ---
 

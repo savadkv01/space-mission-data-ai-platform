@@ -1,0 +1,19 @@
+slice_name: "AOD (Dust) Trend"
+viz_type: echarts_timeseries_bar
+description: "Dust — daily peak aerosol optical depth (AOD), a dust-loading proxy."
+certified_by: "Air-Quality Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000c__table"
+  viz_type: echarts_timeseries_bar
+  x_axis: event_date
+  metrics:
+    - peak_aod
+  groupby: []
+  adhoc_filters: []
+  time_range: "Last 90 days"
+  time_grain_sqla: P1D
+query_context: null
+cache_timeout: 3600
+uuid: c2000000-0000-4000-8000-000000000006
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000c

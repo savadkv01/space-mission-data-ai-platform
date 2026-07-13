@@ -32,6 +32,24 @@
 | `silver_scene` | STAC/CMR continuous | ≤ 12 h | UC-25 catalog currency |
 | `ref_aoi` | Copernicus EMS (manual) | on activation | ground-truth layer |
 
+### 2.1 Climate / dust / air-quality freshness SLAs (Phase 10b)
+
+| Entity | Source | Cadence | Freshness SLA | Alert threshold | Rationale |
+|--------|--------|---------|---------------|-----------------|-----------|
+| `obs_air_quality` | OpenAQ | near-real-time (hourly) | ≤ 3 h | > 3 h | AQI currency for public-health signal |
+| `obs_atmos_column` | TROPOMI (Sentinel-5P) | ~daily overpass | ≤ 24 h | > 24 h | daily trace-gas column |
+| `obs_aerosol` | MODIS/VIIRS AOD | daily | ≤ 24 h | > 24 h | daily dust monitoring |
+| `fact_air_quality_daily` | derived | daily batch | ≤ 6 h after sources | > 6 h | dashboard/KPI currency |
+| `fact_dust_event_daily` | derived | daily batch | ≤ 6 h after sources | > 6 h | dust-event alerting |
+| `fact_climate_indicator_daily` | derived (`obs_index`) | daily batch | ≤ 48 h | > 48 h | slow-moving climate signal |
+| `fact_vegetation_health_daily` | derived (`obs_index`) | daily batch | ≤ 48 h | > 48 h | vegetation revisit cadence |
+
+> **Availability:** OpenAQ and TROPOMI are treated as **near-real-time** feeds
+> (station dropouts / retrieval gaps are expected and handled as WARN, escalating
+> to CRITICAL past the SLA); MODIS AOD is a **daily** feed. Freshness is measured
+> as `dq_freshness_lag_seconds{entity} = now − max(event_ts)` and reuses the
+> existing `FreshnessBreach` alert.
+
 ---
 
 ## 3. Per-use-case quality KPIs

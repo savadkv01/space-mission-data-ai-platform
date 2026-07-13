@@ -1,0 +1,20 @@
+slice_name: "Climate Exceedance & Dust Trend"
+viz_type: echarts_timeseries_line
+description: "Executive — daily AQI exceedance days and active dust days from the climate rollup."
+certified_by: "Platform Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000f__table"
+  viz_type: echarts_timeseries_line
+  x_axis: kpi_date
+  metrics:
+    - aqi_exceedance_days
+    - dust_event_days
+  groupby: []
+  adhoc_filters: []
+  time_range: "Last 90 days"
+  time_grain_sqla: P1D
+query_context: null
+cache_timeout: 900
+uuid: c2000000-0000-4000-8000-000000000015
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000f

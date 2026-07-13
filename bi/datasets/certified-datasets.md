@@ -50,6 +50,16 @@ flowchart LR
 | `platform_daily` | [platform_daily.sql](./sql/platform_daily.sql) | `serving_agg.mv_kpi_platform_daily` | day | Materialized | 15min TTL | Platform Lead | `exec` |
 | `catalog_quality` | [catalog_quality.sql](./sql/catalog_quality.sql) | `serving.serving_scene_catalog` | collection | Certified (BI aggregate) | 1h TTL | Data Steward | `steward` |
 
+### Climate / Dust / Air-Quality — real data (Phase 12b, primary)
+
+| Dataset | Certified SQL | Source table | Grain | Type | Refresh | Owner | Roles |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `air_quality_daily` | [air_quality_daily.sql](./sql/air_quality_daily.sql) | `serving.serving_air_quality_daily` | AOI/day | Certified | 1h TTL | Air-Quality Lead | `ops_airquality`, `exec` |
+| `dust_event_daily` | [dust_event_daily.sql](./sql/dust_event_daily.sql) | `serving.serving_dust_event_daily` | AOI/day | Certified | 1h TTL | Air-Quality Lead | `ops_airquality`, `exec` |
+| `climate_indicator_daily` | [climate_indicator_daily.sql](./sql/climate_indicator_daily.sql) | `serving.serving_climate_indicator_daily` | AOI/day | Certified | 1h TTL | Climate Analytics Lead | `ops_climate`, `exec` |
+| `vegetation_health_daily` | [vegetation_health_daily.sql](./sql/vegetation_health_daily.sql) | `serving.serving_vegetation_health_daily` | AOI/day | Certified | 1h TTL | Climate Analytics Lead | `ops_climate`, `exec` |
+| `climate_daily` | [climate_daily.sql](./sql/climate_daily.sql) | `serving_agg.mv_kpi_climate_daily` | day | Materialized | 15min TTL | Platform Lead | `exec`, `ops_climate`, `ops_airquality` |
+
 ### Simulation-Track — post-MVP demonstrator (ADR-09)
 
 | Dataset | Certified SQL | Source table | Grain | Type | Owner | Roles |
@@ -62,9 +72,9 @@ flowchart LR
 
 | Tier | Definition | In this platform |
 | --- | --- | --- |
-| **Certified** | Governed, tested, single-owner, safe for exec reporting | All 10 datasets above |
-| **Shared** | Reusable across teams, certified upstream | All MVP serving products |
-| **Materialized** | Pre-computed rollup for latency-critical charts | `platform_daily` |
+| **Certified** | Governed, tested, single-owner, safe for exec reporting | All 15 datasets above |
+| **Shared** | Reusable across teams, certified upstream | All MVP + climate serving products |
+| **Materialized** | Pre-computed rollup for latency-critical charts | `platform_daily`, `climate_daily` |
 | **Virtual** | SQL-defined view (not physically stored in Superset) | Every dataset here (SQL in `sql/`) |
 | **Personal** | Analyst-owned exploration, **not** promoted to dashboards | Allowed only in a personal Superset folder; excluded from version control and RBAC dashboards |
 

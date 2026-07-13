@@ -29,6 +29,10 @@ models:
       # Data products are materialized tables (BI/API read path, no runtime joins).
       +materialized: table
       +schema: serving
+    climate:
+      # Climate / dust / air-quality data products (Phase 11b) — same serving tier.
+      +materialized: table
+      +schema: serving
     marts_agg:
       # Pre-computed cross-product KPI rollups — the "materialized view" tier.
       +materialized: table

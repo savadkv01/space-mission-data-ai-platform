@@ -94,6 +94,7 @@ serving/
 | Maritime intelligence | vessel activity | Superset, REST API |
 | Data stewards | scene catalog, catalog quality | Superset |
 | Program leadership | platform daily KPI rollup | Superset (executive) |
+| Climate analysts | air-quality/dust/climate/vegetation products | Superset, REST API |
 | ML pipelines | offline product snapshots | Parquet / Feature Store |
 | RAG assistant | curated docs + product summaries | Qdrant + Ollama |
 
@@ -110,7 +111,7 @@ serving/
 
 ```bash
 # from serving/
-& '../ingestion/.venv/Scripts/python.exe' -m pytest -q   # 16 offline tests
+& '../ingestion/.venv/Scripts/python.exe' -m pytest -q   # offline tests
 ```
 
 The dbt/SQL models activate once the lakehouse (MinIO + Gold Parquet) is

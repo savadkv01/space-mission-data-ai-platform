@@ -13,8 +13,8 @@ the Bronze → Silver → Gold medallion.
 
 | Area | Files |
 |------|-------|
-| **Rules** | [rules/earth-observation-quality-rules.md](rules/earth-observation-quality-rules.md) (MVP), [rules/satellite-quality-rules.md](rules/satellite-quality-rules.md), [rules/orbit-quality-rules.md](rules/orbit-quality-rules.md), [rules/launch-quality-rules.md](rules/launch-quality-rules.md), [rules/weather-quality-rules.md](rules/weather-quality-rules.md) (Sim) |
-| **Profiling** | [profiling/profiling-strategy.md](profiling/profiling-strategy.md), [profiling/statistics-framework.md](profiling/statistics-framework.md) |
+| **Rules** | [rules/earth-observation-quality-rules.md](rules/earth-observation-quality-rules.md) (MVP), [rules/satellite-quality-rules.md](rules/satellite-quality-rules.md), [rules/orbit-quality-rules.md](rules/orbit-quality-rules.md), [rules/launch-quality-rules.md](rules/launch-quality-rules.md), [rules/weather-quality-rules.md](rules/weather-quality-rules.md) (Sim), [rules/climate/](rules/climate/README.md) (Climate 10b) |
+| **Profiling** | [profiling/profiling-strategy.md](profiling/profiling-strategy.md), [profiling/statistics-framework.md](profiling/statistics-framework.md), [profiling/climate/](profiling/climate/README.md) |
 | **Monitoring** | [monitoring/monitoring-strategy.md](monitoring/monitoring-strategy.md), [monitoring/quality-kpis.md](monitoring/quality-kpis.md) |
 | **Governance** | [governance/governance-model.md](governance/governance-model.md), [governance/ownership-matrix.md](governance/ownership-matrix.md) |
 | **Incidents** | [incidents/production-incidents.md](incidents/production-incidents.md), [incidents/runbooks.md](incidents/runbooks.md) |
@@ -25,6 +25,7 @@ the Bronze → Silver → Gold medallion.
 |-------|----------------|-------|
 | Ingestion (record) | [ingestion/quality/validators.py](../ingestion/quality/validators.py), [ingestion/quality/quarantine.py](../ingestion/quality/quarantine.py) | [ingestion/tests/test_validators.py](../ingestion/tests/test_validators.py) |
 | Silver / Gold (batch) | [transformation/cleaning/validation_framework.py](../transformation/cleaning/validation_framework.py), [transformation/quality/eo_suites.py](../transformation/quality/eo_suites.py) | [transformation/tests/test_eo_quality_suites.py](../transformation/tests/test_eo_quality_suites.py) |
+| Climate (Silver/Gold, 10b) | [transformation/quality/climate_suites.py](../transformation/quality/climate_suites.py) | [transformation/tests/test_climate_rules.py](../transformation/tests/test_climate_rules.py) |
 | Sim-track marts | dbt tests in `transformation/dbt/models/gold/_gold.yml` | `dbt test` |
 
 ## Run

@@ -18,6 +18,9 @@
 | `silver_telemetry` | Sim | Synthetic generator | Platform Lead | Platform Eng | ≤ 5 min | VALIDATED |
 | `silver_orbit` | Sim | Synthetic / TLE | Platform Lead | Platform Eng | ≤ 5 min | VALIDATED |
 | `silver_space_weather` | Sim | NOAA SWPC-shaped | Platform Lead | Platform Eng | ≤ 30 min | VALIDATED |
+| `obs_air_quality` | Climate | OpenAQ | Environment Lead | Climate Analytics Eng | ≤ 3 h | CERTIFIED |
+| `obs_aerosol` | Climate | MODIS/VIIRS AOD | Environment Lead | Climate Analytics Eng | ≤ 24 h | CERTIFIED |
+| `obs_atmos_column` | Climate | TROPOMI (Sentinel-5P) | Environment Lead | Climate Analytics Eng | ≤ 24 h | CERTIFIED |
 
 ---
 
@@ -34,6 +37,10 @@
 | `fact_sat_health` | sat / day | Platform Lead | Platform Eng | Sim demo | VALIDATED |
 | `fact_weather_impact` | day | Platform Lead | Platform Eng | Sim demo | VALIDATED |
 | `kpi_launch_monthly` | provider / month | Platform Lead | Platform Eng | Sim demo | VALIDATED |
+| `fact_air_quality_daily` | aoi / day | Environment Lead | Climate Analytics Eng | Air-Quality dashboard, RAG | CERTIFIED |
+| `fact_dust_event_daily` | aoi / day | Environment Lead | Climate Analytics Eng | Dust dashboard, dust forecast | CERTIFIED |
+| `fact_climate_indicator_daily` | aoi / day | Environment Lead | Climate Analytics Eng | Climate-Indicators dashboard | CERTIFIED |
+| `fact_vegetation_health_daily` | aoi / day | Environment Lead | Climate Analytics Eng | Climate-Indicators dashboard | CERTIFIED |
 
 ---
 
@@ -49,6 +56,9 @@
 | `nasa_power` | climate grids | Platform Lead | none/public | supplementary |
 | `noaa_swpc` | space weather | Platform Lead | none/public | Sim |
 | `celestrak` | TLE | Platform Lead | none/public | Sim |
+| `openaq` | surface air quality | Environment Lead | API key | near-real-time |
+| `sentinelhub_stats` (TROPOMI) | trace-gas columns | Environment Lead | OAuth secret | daily overpass |
+| `modis_aod` | aerosol optical depth | Environment Lead | Earthdata login | daily |
 
 Secrets must be gitignored and injected via `infrastructure/env`; never committed.
 

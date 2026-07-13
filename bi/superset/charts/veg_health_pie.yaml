@@ -1,0 +1,20 @@
+slice_name: "Vegetation Health Distribution"
+viz_type: pie
+description: "Climate — share of AOI-days by vegetation-health band (Bare/Sparse/Moderate/Healthy/Dense)."
+certified_by: "Climate Analytics Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000e__table"
+  viz_type: pie
+  metric:
+    expressionType: SQL
+    sqlExpression: "COUNT(*)"
+    label: "AOI-days"
+  groupby:
+    - ndvi_health_label
+  adhoc_filters: []
+  time_range: "Last 30 days"
+query_context: null
+cache_timeout: 3600
+uuid: c2000000-0000-4000-8000-00000000000d
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000e

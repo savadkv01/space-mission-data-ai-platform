@@ -1,0 +1,28 @@
+slice_name: "Climate Indicator Details"
+viz_type: table
+description: "Climate — raw per-AOI-per-day LST/SST/NDWI/desertification records for drill-down."
+certified_by: "Climate Analytics Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000d__table"
+  viz_type: table
+  query_mode: raw
+  all_columns:
+    - aoi_name
+    - event_date
+    - lst_c
+    - lst_anomaly_c
+    - lst_anomaly_label
+    - sst_c
+    - sst_anomaly_c
+    - ndwi_mean
+    - tree_cover_loss_ha
+    - desertification_proxy
+    - desertification_flag
+  adhoc_filters: []
+  time_range: "Last 30 days"
+  order_by_cols: []
+query_context: null
+cache_timeout: 3600
+uuid: c2000000-0000-4000-8000-000000000010
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000d

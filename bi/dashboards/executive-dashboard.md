@@ -28,6 +28,21 @@ and stays within the caching SLA.
 > Availability* is drawn from the **simulation track** (ADR-09) and is tagged
 > `sim` on the tile.
 
+## Climate KPI Tiles  *(added Phase 12b)*
+
+Sourced from the extended materialized aggregate
+[`climate_daily`](../datasets/sql/climate_daily.sql) (`serving_agg.mv_kpi_climate_daily`)
+so the executive view stays within the 15-min caching SLA.
+
+| Tile | KPI | Dataset · column | Definition | Green / Amber / Red |
+| --- | --- | --- | --- | --- |
+| Air-Quality Exceedances | AQI Exceedance Days | `climate_daily.aqi_exceedance_days` | Σ AOI-days over WHO guideline | 0 / 1–5 / >5 |
+| Active Dust Days | Dust event days | `climate_daily.dust_event_days` | Σ dust-flag days in window | 0 / 1–4 / ≥5 |
+| Climate Signal | Mean LST anomaly (°C) | `climate_daily.mean_lst_anomaly` | window mean LST anomaly | <+1 / +1–+2 / ≥+2 |
+
+> These climate KPIs are **real-data** (Phase 11b certified products) and drill
+> down into the Air-Quality/Dust and Climate-Indicators dashboards.
+
 ## Layout (wireframe)
 
 ```
@@ -46,6 +61,11 @@ and stays within the caching SLA.
 +-------------------------------+-------------------------------+
 | Satellite Availability `sim`  | SLA / Pipeline health (links) |
 +-------------------------------+-------------------------------+
+| AQI Exceed. | Active Dust | Mean LST Anomaly (climate_daily)  |
+|    12       |     4       |    +1.8 °C                        |
++-------------+-------------+-----------------------------------+
+| Climate Exceedance & Dust Trend (line, climate_daily)         |
++---------------------------------------------------------------+
 ```
 
 ## Filters
@@ -58,6 +78,7 @@ and stays within the caching SLA.
 - Detections trend → **Earth Observation Dashboard** (wildfire tab).
 - Suspicious vessels → **Earth Observation Dashboard** (maritime tab).
 - SLA / Pipeline health tiles → **Platform Operations Dashboard**.
+- Climate KPI tiles → **Air Quality & Dust** and **Climate Indicators** dashboards.
 
 ## Data Lineage
 

@@ -1,0 +1,19 @@
+slice_name: "Mean LST Anomaly"
+viz_type: big_number_total
+description: "Climate KPI tile — mean land-surface-temperature anomaly (°C) vs baseline."
+certified_by: "Climate Analytics Lead"
+certification_details: "Certified metric from serving_climate_indicator_daily (lst_anomaly_c)."
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000d__table"
+  viz_type: big_number_total
+  metric: mean_lst_anomaly
+  adhoc_filters: []
+  time_range: "Last 30 days"
+  y_axis_format: "+.2f"
+  header_font_size: 0.4
+  subheader_font_size: 0.15
+query_context: null
+cache_timeout: 3600
+uuid: c2000000-0000-4000-8000-00000000000a
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000d

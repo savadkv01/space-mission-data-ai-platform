@@ -36,6 +36,14 @@ for entity in telemetry orbit space_weather fire vessel scene index; do
   "${SPARK_SUBMIT[@]}" transformation/scripts/run_silver.py "$entity"
 done
 
+echo "==================== Bronze -> Silver (climate, Phase 9b) =============="
+# Atmospheric domain: OpenAQ air quality, MODIS/VIIRS AOD, TROPOMI columns.
+# An absent Bronze source is skipped inside climate run_spark.
+for entity in air_quality aerosol atmos_column; do
+  echo "--> climate silver: $entity"
+  "${SPARK_SUBMIT[@]}" transformation/scripts/run_climate_silver.py "$entity"
+done
+
 echo "==================== Silver -> Gold (Spark -> s3://gold) ==============="
 # Materialises every business-ready mart (sim + MVP EO) to s3://gold/<table>/
 # Parquet — the serving layer's only source. Reuses the tested pure-Python Gold

@@ -37,6 +37,8 @@ registries) and mirrored by the dbt semantic models under
 | `dim_vessel` | `vessel_key` | vessel identity (MMSI/IMO) |
 | `dim_provider` | `provider_key` | launch/data provider (sim) |
 | `dim_satellite` | `sat_key` | spacecraft (sim) |
+| `dim_pollutant` | `pollutant_code` | pollutant / aerosol species (11b) |
+| `dim_climate_indicator` | `indicator_code` | climate / vegetation indicator (11b) |
 
 Dimensions are **conformed**: `date_key` and `aoi_key` mean the same thing across
 every product, which is what makes cross-product rollups (e.g.

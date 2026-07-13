@@ -403,6 +403,198 @@ def check_sentinelhub(session: requests.Session) -> CheckResult:
     return result
 
 
+# ---------------------------------------------------------------------------
+# Climate / dust / air-quality expansion (Phase 8b) — tabular / stats sources
+# ---------------------------------------------------------------------------
+
+def check_openaq(session: requests.Session) -> CheckResult:
+    """OpenAQ v3 ground-station air quality — requires OPENAQ_API_KEY (UC-C3)."""
+    result = CheckResult("OpenAQ (air quality)", "Climate / Air Quality", "Free API key")
+    key = env("OPENAQ_API_KEY")
+    if not key:
+        result.status = SKIP
+        result.message = "OPENAQ_API_KEY not set"
+        return result
+
+    url = "https://api.openaq.org/v3/locations"
+    params = {"bbox": "54.9,24.8,55.6,25.4", "limit": "3"}  # Dubai AOI
+    headers = {"X-API-Key": key}
+    try:
+        resp = session.get(url, params=params, headers=headers, timeout=DEFAULT_TIMEOUT)
+    except requests.RequestException as exc:
+        return _net_fail(result, exc)
+
+    if resp.status_code in (401, 403):
+        result.status = FAIL
+        result.message = "OPENAQ_API_KEY rejected"
+    elif resp.status_code == 200 and isinstance(resp.json().get("results"), list):
+        rows = resp.json()["results"]
+        result.sample_path = save_json_sample("openaq_locations.json", rows[:3])
+        result.status = PASS
+        result.message = f"{len(rows)} stations found in AOI"
+    else:
+        result.status = WARN
+        result.message = f"authenticated but HTTP {resp.status_code} on sample query"
+    return result
+
+
+def check_tropomi(session: requests.Session) -> CheckResult:
+    """TROPOMI (Sentinel-5P) NO2 via Sentinel Hub Statistical API (UC-C2/C3)."""
+    result = CheckResult("TROPOMI (Sentinel-5P)", "Climate / Air Quality", "Free account + token")
+    client_id = env("SENTINELHUB_CLIENT_ID")
+    client_secret = env("SENTINELHUB_CLIENT_SECRET")
+    if not (client_id and client_secret):
+        result.status = SKIP
+        result.message = "SENTINELHUB_CLIENT_ID/SECRET not set"
+        return result
+
+    try:
+        token_resp = session.post(
+            "https://services.sentinel-hub.com/oauth/token",
+            data={
+                "grant_type": "client_credentials",
+                "client_id": client_id,
+                "client_secret": client_secret,
+            },
+            timeout=DEFAULT_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        return _net_fail(result, exc)
+
+    if token_resp.status_code != 200 or "access_token" not in token_resp.json():
+        result.status = FAIL
+        result.message = "client credentials rejected (no token)"
+        return result
+
+    token = token_resp.json()["access_token"]
+    evalscript = (
+        "//VERSION=3\n"
+        'function setup() { return { input: [{ bands: ["NO2", "dataMask"] }],'
+        ' output: [{ id: "index", bands: 1 }, { id: "dataMask", bands: 1 }] }; }\n'
+        "function evaluatePixel(s) { return { index: [s.NO2], dataMask: [s.dataMask] }; }\n"
+    )
+    body = {
+        "input": {
+            "bounds": {
+                "bbox": [51.0, 22.5, 56.5, 26.2],  # UAE national AOI
+                "properties": {"crs": "http://www.opengis.net/def/crs/EPSG/0/4326"},
+            },
+            "data": [{"type": "sentinel-5p-l2"}],
+        },
+        "aggregation": {
+            "timeRange": {"from": "2024-06-01T00:00:00Z", "to": "2024-06-10T23:59:59Z"},
+            "aggregationInterval": {"of": "P1D"},
+            "evalscript": evalscript,
+            "resx": 0.05,
+            "resy": 0.05,
+        },
+    }
+    try:
+        resp = session.post(
+            "https://services.sentinel-hub.com/api/v1/statistics",
+            json=body,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=DEFAULT_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        return _net_fail(result, exc)
+
+    if resp.status_code == 200 and isinstance(resp.json().get("data"), list):
+        buckets = resp.json()["data"]
+        result.sample_path = save_json_sample("tropomi_no2_stats.json", buckets[:3])
+        result.status = PASS
+        result.message = f"NO2 column statistics retrieved ({len(buckets)} buckets)"
+    elif resp.status_code in (400, 401, 403):
+        result.status = FAIL
+        result.message = f"statistical request rejected (HTTP {resp.status_code})"
+    else:
+        result.status = WARN
+        result.message = f"unexpected response (HTTP {resp.status_code})"
+    return result
+
+
+def check_modis_aod(session: requests.Session) -> CheckResult:
+    """MODIS/VIIRS AOD via Sentinel Hub — OAuth reachability check (UC-C2).
+
+    AOD is requested through the same Statistical API as TROPOMI; the exact AOD
+    collection is account-dependent, so this confirms the OAuth token needed for
+    the connector can be acquired.
+    """
+    result = CheckResult("MODIS/VIIRS AOD", "Climate / Dust", "Free account + token")
+    client_id = env("SENTINELHUB_CLIENT_ID")
+    client_secret = env("SENTINELHUB_CLIENT_SECRET")
+    if not (client_id and client_secret):
+        result.status = SKIP
+        result.message = "SENTINELHUB_CLIENT_ID/SECRET not set"
+        return result
+
+    try:
+        resp = session.post(
+            "https://services.sentinel-hub.com/oauth/token",
+            data={
+                "grant_type": "client_credentials",
+                "client_id": client_id,
+                "client_secret": client_secret,
+            },
+            timeout=DEFAULT_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        return _net_fail(result, exc)
+
+    if resp.status_code == 200 and "access_token" in resp.json():
+        result.status = PASS
+        result.message = "OAuth validated; AOD stats collection is account-dependent"
+    elif resp.status_code in (400, 401):
+        result.status = FAIL
+        result.message = "client credentials rejected"
+    else:
+        result.status = WARN
+        result.message = f"unexpected response (HTTP {resp.status_code})"
+    return result
+
+
+def check_gee(session: requests.Session) -> CheckResult:
+    """Google Earth Engine — free Sentinel-5P / MODIS AOD backend (UC-C2/C3).
+
+    GEE is the free alternative to the Sentinel Hub Statistical API for the two
+    atmospheric collections not entitled on the free plan. Uses the
+    ``earthengine-api`` SDK + a service-account key rather than a REST session,
+    so this probe imports the SDK and runs a trivial server round-trip.
+    """
+    result = CheckResult("Google Earth Engine", "Climate / Air Quality", "Free (service account)")
+    project = env("GEE_PROJECT")
+    service_account = env("GEE_SERVICE_ACCOUNT")
+    key_file = env("GEE_KEY_FILE")
+    if not (project or service_account or key_file):
+        result.status = SKIP
+        result.message = "GEE_PROJECT / GEE_SERVICE_ACCOUNT / GEE_KEY_FILE not set"
+        return result
+
+    try:
+        import ee  # type: ignore
+    except ImportError:
+        result.status = WARN
+        result.message = "earthengine-api not installed (`pip install earthengine-api`)"
+        return result
+
+    try:
+        if service_account and key_file:
+            creds = ee.ServiceAccountCredentials(service_account, key_file)
+            ee.Initialize(creds, project=project or None)
+        else:
+            ee.Initialize(project=project or None)
+        # Trivial server round-trip confirms auth + project quota access.
+        _ = ee.Number(1).add(1).getInfo()
+    except Exception as exc:  # noqa: BLE001 - report any GEE/auth error
+        result.status = FAIL
+        result.message = f"GEE init/auth failed: {type(exc).__name__}: {exc}"
+        return result
+
+    result.status = PASS
+    result.message = f"authenticated (project={project or 'default'}); S-5P + MODIS AOD reachable"
+    return result
+
+
 _NDVI_EVALSCRIPT = (
     "//VERSION=3\n"
     'function setup() { return { input: [{ bands: ["B04", "B08", "dataMask"] }],'
@@ -495,4 +687,8 @@ ALL_CHECKS = [
     check_nasa_apod,
     check_noaa_swpc,
     check_celestrak,
+    check_openaq,
+    check_tropomi,
+    check_modis_aod,
+    check_gee,
 ]

@@ -1,0 +1,23 @@
+slice_name: "SST & Anomaly Trend (coastal)"
+viz_type: echarts_timeseries_line
+description: "Climate — daily mean sea-surface temperature and its anomaly (coastal AOIs)."
+certified_by: "Climate Analytics Lead"
+params:
+  datasource: "d1000000-0000-4000-8000-00000000000d__table"
+  viz_type: echarts_timeseries_line
+  x_axis: event_date
+  metrics:
+    - metric_name: mean_sst
+      label: "Mean SST (C)"
+      expressionType: SQL
+      sqlExpression: "AVG(sst_c)"
+    - mean_sst_anomaly
+  groupby: []
+  adhoc_filters: []
+  time_range: "Last 90 days"
+  time_grain_sqla: P1D
+query_context: null
+cache_timeout: 3600
+uuid: c2000000-0000-4000-8000-00000000000e
+version: 1.0.0
+dataset_uuid: d1000000-0000-4000-8000-00000000000d

@@ -22,10 +22,10 @@ docs are version-controlled and load against the serving layer.
 
 | Path | Contents |
 | --- | --- |
-| [`datasets/sql/`](./datasets/sql/) | Certified dataset SQL (10 datasets) |
+| [`datasets/sql/`](./datasets/sql/) | Certified dataset SQL (15 datasets) |
 | [`datasets/certified-datasets.md`](./datasets/certified-datasets.md) | Dataset catalog + tiers + lifecycle |
 | [`datasets/dataset-governance.md`](./datasets/dataset-governance.md) | Governance rules + certification checklist |
-| [`dashboards/`](./dashboards/) | 6 dashboard specs (wireframes, KPI tiles, drill-down) |
+| [`dashboards/`](./dashboards/) | 8 dashboard specs (wireframes, KPI tiles, drill-down) |
 | [`kpis/kpi-catalog.md`](./kpis/kpi-catalog.md) | Full KPI catalog (definition→threshold→impact) |
 | [`reports/reporting-strategy.md`](./reports/reporting-strategy.md) | Scheduled + real-time reporting |
 | [`alerts/alert-strategy.md`](./alerts/alert-strategy.md) | Decision + infra alert catalog + flow |
@@ -40,6 +40,8 @@ Governance narrative lives in [`../docs/bi/`](../docs/bi/) (14 documents).
 | `wildfire_daily`, `flood_daily`, `vessel_activity`, `scene_catalog`, `aoi_validation` | `serving.serving_*` | MVP |
 | `platform_daily` | `serving_agg.mv_kpi_platform_daily` | MVP (materialized) |
 | `catalog_quality` | `serving.serving_scene_catalog` (aggregate) | MVP |
+| `air_quality_daily`, `dust_event_daily`, `climate_indicator_daily`, `vegetation_health_daily` | `serving.serving_*` (11b climate) | Climate (12b) |
+| `climate_daily` | `serving_agg.mv_kpi_climate_daily` | Climate (12b, materialized) |
 | `sat_health`, `launch_monthly`, `weather_impact` | `gold.*` via httpfs | Sim (`demo`) |
 
 ## Dashboards
@@ -49,7 +51,11 @@ Track (Satellite/Launch/Weather `sim`, tabbed). Executive and Earth Observation 
 have an **Overview** tab and a **Details** tab with raw drill-down tables (fire
 detections, flood extent, suspicious vessels). Platform Operations remains a
 markdown-only spec (Prometheus/Airflow metrics aren't queryable via the Superset
-DuckDB connection). See [`docs/bi/02-dashboard-catalog.md`](../docs/bi/02-dashboard-catalog.md).
+DuckDB connection). **Phase 12b adds Air Quality & Dust and Climate Indicators**
+dashboards, promotes the Weather dashboard from `sim` to real climate/air-quality
+products, and adds climate KPIs to the Executive dashboard (see
+[`docs/bi/climate-dashboards.md`](../docs/bi/climate-dashboards.md)). See
+[`docs/bi/02-dashboard-catalog.md`](../docs/bi/02-dashboard-catalog.md).
 
 ## Run It
 

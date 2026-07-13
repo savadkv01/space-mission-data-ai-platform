@@ -1,0 +1,90 @@
+dashboard_title: "Weather & Climate — Real"
+description: "Promoted from the sim space-weather demo to real climate/air-quality products (11b)."
+slug: weather
+certified_by: "Air-Quality Lead"
+css: ""
+published: true
+uuid: e1000000-0000-4000-8000-000000000007
+version: 1.0.0
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 3600
+  default_filters: "{}"
+  # RBAC: granted to `ops_climate`, `ops_airquality` (+ `exec` read). Real data — no `sim` tag.
+  native_filter_configuration:
+    - id: NF_time
+      name: "Time range"
+      filterType: filter_time
+      targets: []
+      defaultDataMask:
+        filterState:
+          value: "Last 30 days"
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children: [GRID_ID]
+  HEADER_ID:
+    type: HEADER
+    id: HEADER_ID
+    meta: { text: "Weather & Climate — Real" }
+  GRID_ID:
+    type: GRID
+    id: GRID_ID
+    children: [TABS_ID]
+    parents: [ROOT_ID]
+  TABS_ID:
+    type: TABS
+    id: TABS_ID
+    children: [TAB_OVERVIEW]
+    meta: {}
+    parents: [ROOT_ID, GRID_ID]
+  TAB_OVERVIEW:
+    type: TAB
+    id: TAB_OVERVIEW
+    children: [ROW_TILES, ROW_TREND, ROW_BOTTOM]
+    meta: { text: "Overview" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
+  ROW_TILES:
+    type: ROW
+    id: ROW_TILES
+    children: [CH_AQI_KPI]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW]
+  ROW_TREND:
+    type: ROW
+    id: ROW_TREND
+    children: [CH_AQI_TREND]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW]
+  ROW_BOTTOM:
+    type: ROW
+    id: ROW_BOTTOM
+    children: [CH_DUST_CAL, CH_LST_TREND]
+    meta: { background: BACKGROUND_TRANSPARENT }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW]
+  CH_AQI_KPI:
+    type: CHART
+    id: CH_AQI_KPI
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000016, chartId: 40, width: 12, height: 30, sliceName: "Mean AQI (PM2.5)" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW, ROW_TILES]
+  CH_AQI_TREND:
+    type: CHART
+    id: CH_AQI_TREND
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000017, chartId: 41, width: 12, height: 50, sliceName: "AQI & Exceedance Trend" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW, ROW_TREND]
+  CH_DUST_CAL:
+    type: CHART
+    id: CH_DUST_CAL
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000018, chartId: 42, width: 6, height: 50, sliceName: "Dust-day Calendar" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW, ROW_BOTTOM]
+  CH_LST_TREND:
+    type: CHART
+    id: CH_LST_TREND
+    children: []
+    meta: { uuid: c2000000-0000-4000-8000-000000000019, chartId: 43, width: 6, height: 50, sliceName: "LST Anomaly Trend" }
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW, ROW_BOTTOM]

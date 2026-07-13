@@ -254,7 +254,9 @@ flowchart LR
 
 ## Planned Additions — Climate / Dust / Air-Quality (authored, not built)
 
-Delivered via extension prompts `05b`–`16b` (see [README.md](README.md#planned-expansion--climate-dust--air-quality-monitoring)). New objects will follow the same patterns and AOI-date grain:
+Delivered via extension prompts `05b`–`16b` (see [README.md](README.md#planned-expansion--climate-dust--air-quality-monitoring)). New objects will follow the same patterns and AOI-date grain. Design contracts are authored in [docs/source-data-analysis/climate/](docs/source-data-analysis/climate/README.md) (05b) and [docs/data-modeling/climate/](docs/data-modeling/climate/README.md) (06b); implementation (08b+) is pending.
+
+> **Bronze source codes:** `OPENAQ`, `TROPOMI` (Sentinel-5P via Google Earth Engine), `MODIS_AOD` (MODIS MAIAC AOD via Google Earth Engine).
 
 | Layer | Planned objects |
 | --- | --- |

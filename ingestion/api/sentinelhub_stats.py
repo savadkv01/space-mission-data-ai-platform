@@ -69,36 +69,14 @@ class SentinelHubStatsConnector(SentinelHubConnector):
                 f"unknown index {index!r}; choose from {sorted(self.EVALSCRIPTS)}"
             )
         aoi = bbox or [54.8, 24.8, 55.6, 25.5]  # Dubai-ish AOI
-        time_from, _, time_to = datetime_range.partition("/")
-        time_from = self._rfc3339(time_from, end=False)
-        time_to = self._rfc3339(time_to or time_from, end=True)
-        # The Statistical API caps the output raster at ~2500 px per side; for a
-        # geographic (EPSG:4326) request the resolution is in degrees, so a wide
-        # AOI at native 10 m spacing would exceed the cap and return HTTP 400.
-        # Auto-coarsen resx/resy to keep each dimension within the budget.
-        resx, resy = self._safe_resolution(aoi, resolution)
-        token = self._access_token()
-        body = {
-            "input": {
-                "bounds": {
-                    "bbox": aoi,
-                    "properties": {
-                        "crs": "http://www.opengis.net/def/crs/EPSG/0/4326"
-                    },
-                },
-                "data": [{"type": collection}],
-            },
-            "aggregation": {
-                "timeRange": {"from": time_from, "to": time_to or time_from},
-                "aggregationInterval": {"of": aggregation_interval},
-                "evalscript": self.EVALSCRIPTS[index_name],
-                "resx": resx,
-                "resy": resy,
-            },
-        }
-        headers = {"Authorization": f"Bearer {token}"}
-        data = self.http.post_json(self.STATS_URL, json=body, headers=headers)
-        buckets = data.get("data", []) if isinstance(data, dict) else []
+        buckets = self._request_stats(
+            evalscript=self.EVALSCRIPTS[index_name],
+            bbox=aoi,
+            datetime_range=datetime_range,
+            aggregation_interval=aggregation_interval,
+            collection=collection,
+            resolution=resolution,
+        )
         # Statistical buckets carry no AOI/index context; stamp the request
         # parameters onto each record so the Silver cleaner can key them.
         records: list[dict[str, Any]] = []
@@ -110,6 +88,47 @@ class SentinelHubStatsConnector(SentinelHubConnector):
                 enriched["collection"] = collection
                 records.append(enriched)
         return records, "json"
+
+    def _request_stats(self, *, evalscript: str, bbox: list[float],
+                       datetime_range: str, aggregation_interval: str,
+                       collection: str, resolution: float) -> list[dict[str, Any]]:
+        """POST an evalscript to the Statistical API and return the raw buckets.
+
+        Shared by every stats-based subclass (NDVI/NDWI/NBR here, TROPOMI trace
+        gases, MODIS/VIIRS AOD). Handles OAuth, RFC3339 time bounds, and the
+        output-raster resolution cap. The ``data`` array of per-time-bucket
+        aggregates is returned verbatim; callers stamp source-specific context.
+        """
+        time_from, _, time_to = datetime_range.partition("/")
+        time_from = self._rfc3339(time_from, end=False)
+        time_to = self._rfc3339(time_to or time_from, end=True)
+        # The Statistical API caps the output raster at ~2500 px per side; for a
+        # geographic (EPSG:4326) request the resolution is in degrees, so a wide
+        # AOI at native spacing would exceed the cap and return HTTP 400.
+        # Auto-coarsen resx/resy to keep each dimension within the budget.
+        resx, resy = self._safe_resolution(bbox, resolution)
+        token = self._access_token()
+        body = {
+            "input": {
+                "bounds": {
+                    "bbox": bbox,
+                    "properties": {
+                        "crs": "http://www.opengis.net/def/crs/EPSG/0/4326"
+                    },
+                },
+                "data": [{"type": collection}],
+            },
+            "aggregation": {
+                "timeRange": {"from": time_from, "to": time_to or time_from},
+                "aggregationInterval": {"of": aggregation_interval},
+                "evalscript": evalscript,
+                "resx": resx,
+                "resy": resy,
+            },
+        }
+        headers = {"Authorization": f"Bearer {token}"}
+        data = self.http.post_json(self.STATS_URL, json=body, headers=headers)
+        return data.get("data", []) if isinstance(data, dict) else []
 
     def _event_ts(self, record: dict[str, Any]) -> str | None:
         interval = record.get("interval") if isinstance(record, dict) else None
