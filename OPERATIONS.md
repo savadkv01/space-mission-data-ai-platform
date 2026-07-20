@@ -26,7 +26,8 @@ hands-on operator guide.
 11. [Running the transformation layer](#11-running-the-transformation-layer)
 12. [Full end-to-end platform run (infra → ingestion → transformation → serving → BI)](#12-full-end-to-end-platform-run-infra--ingestion--transformation--serving--bi)
 13. [Manual data verification & validation (per stage)](#13-manual-data-verification--validation-per-stage)
-14. [Phase status & changelog](#phase-status--changelog)
+14. [Airflow-orchestrated pipelines & run-logging (pipelines/)](#14-airflow-orchestrated-pipelines--run-logging-pipelines)
+15. [Phase status & changelog](#phase-status--changelog)
 
 ---
 
@@ -233,7 +234,7 @@ docker compose @ALL up -d --force-recreate iceberg-rest
 | Kafka UI | http://localhost:8088 | no auth |
 | Spark Master UI | http://localhost:8080 | no auth |
 | Spark Worker UI | http://localhost:8081 | no auth |
-| Airflow | http://localhost:8082 | user `admin` / auto-generated (see below) |
+| Airflow | http://localhost:8082 | user `admin` (`AIRFLOW_ADMIN_USER`) / `AIRFLOW_ADMIN_PASSWORD` |
 | MLflow | http://localhost:5000 | no auth |
 | Jupyter Lab | http://localhost:8888 | token = `JUPYTER_TOKEN` (append `?token=…`) |
 | Qdrant dashboard | http://localhost:6333/dashboard | no auth |
@@ -243,36 +244,60 @@ docker compose @ALL up -d --force-recreate iceberg-rest
 | Superset | http://localhost:8089 | user `admin` (`SUPERSET_ADMIN_USER`) / `SUPERSET_ADMIN_PASSWORD` |
 | FastAPI (later phase) | http://localhost:8000 | — |
 
-**Airflow admin password** (standalone generates it on first boot):
+**Airflow admin password.** Login credentials are declarative, read from
+`infrastructure/env/.env` (`AIRFLOW_ADMIN_USER` / `AIRFLOW_ADMIN_PASSWORD`, same
+pattern as `SUPERSET_ADMIN_USER`/`SUPERSET_ADMIN_PASSWORD` and
+`GRAFANA_ADMIN_USER`/`GRAFANA_ADMIN_PASSWORD`) — **not** Airflow's own
+auto-generated-on-first-boot password. That auto-generated file
+(`/opt/airflow/standalone_admin_password.txt`) lives outside any persisted volume, so
+it silently disappears the next time the container is recreated even though the
+`admin` account itself persists (it lives in the `airflow` PostgreSQL schema, which
+*is* persistent) — relying on it turned out to be a dead end after the first boot, so
+the `airflow` service's `command` now creates the user (or resets its password if it
+already exists) from those two env vars **every time the container starts**,
+converging the login to whatever is currently in `.env`:
 
 ```powershell
-docker compose @ALL exec airflow cat /opt/airflow/standalone_admin_password.txt
-# Fallback: search the logs
-docker compose @ALL logs airflow | Select-String "Password for user 'admin'"
+# Change the password: edit AIRFLOW_ADMIN_PASSWORD in infrastructure/env/.env, then
+docker compose @ALL up -d --force-recreate airflow
+
+# Verify the account exists / is active:
+docker compose @ALL exec airflow airflow users list
 ```
 
 ### Trigger ingestion & transformation jobs from the UI
 
 The **processing** stack builds a custom Airflow image (`airflow.Dockerfile`) that mounts
-the repo, installs the ingestion deps, and mounts the Docker socket. The DAGs appear at
-`http://localhost:8082`:
+the repo, installs the ingestion + pipelines runtime deps (incl. `psycopg2`, `duckdb`,
+`earthengine-api`), and mounts the Docker socket. The DAGs appear at `http://localhost:8082`:
 
-| DAG | What it does | Runs |
-| --- | --- | --- |
-| `ingest_nasa_power` / `ingest_nasa_firms` / `ingest_noaa_swpc` / `ingest_celestrak_tle` | API connector → Bronze/MinIO | **in-process** in the Airflow container |
-| `transformation_medallion_batch` | 7× Bronze→Silver (sim + MVP EO, Spark) → Gold lakehouse (Spark → `s3://gold`) → Gold dbt demonstrator | **dispatched into `spark-master`** via `docker exec` |
+| DAG | What it does | Runs | Schedule |
+| --- | --- | --- | --- |
+| `ingest_nasa_power` / `ingest_nasa_firms` / `ingest_noaa_swpc` / `ingest_celestrak_tle` / `ingest_openaq` / `ingest_tropomi` / `ingest_modis_aod` | One API connector → Bronze/MinIO | **in-process** in the Airflow container | Scheduled (per-source cadence) |
+| `transformation_medallion_batch` | 10× Bronze→Silver (sim + MVP EO + climate, Spark, run **sequentially**) → Gold lakehouse (Spark → `s3://gold`) → Gold dbt demonstrator | **dispatched into `spark-master`** via `docker exec` | Daily `0 1 * * *` |
+| `platform_batch_pipeline` | Full batch track: ingestion (every source) → transformation (10 Silver + 14 Gold marts + dbt demonstrator) → serving (dbt build) → bi (Superset dataset refresh). Logs run/row metrics to `metadata.*` — see [§14](#14-airflow-orchestrated-pipelines--run-logging-pipelines) | Mixed: ingestion + bi in-process, transformation + serving via `docker exec` | **Manual only** |
+| `platform_streaming_pipeline` | Bounded streaming demo: telemetry produce → Bronze raw-consume → validate, then a Spark Structured Streaming windowed transform (start → 2 real waves to advance the watermark → stop) | Mixed (in-process + `docker exec`) | **Manual only** |
+| `platform_master_pipeline` | Triggers `platform_batch_pipeline` fully, then `platform_streaming_pipeline` | Orchestrates the two DAGs above (`TriggerDagRunOperator`, waits for completion) | **Manual only** |
 
 Steps:
 
 1. Open `http://localhost:8082`, log in as `admin` (password above).
-2. Toggle a DAG **On** (unpause) to let it run on schedule, or click **▶ Trigger DAG** for an immediate run.
+2. Toggle a DAG **On** (unpause) to let it run on schedule, or click **▶ Trigger DAG** for
+   an immediate run. The three `platform_*` DAGs have no schedule — they only ever run
+   when triggered (UI button or `airflow dags trigger <dag_id>`).
 3. Watch progress in **Grid/Graph**; task logs are in the UI (and the `airflow-logs` volume).
 
 > **Prerequisites.** Transformation needs Bronze seeded and `spark-master` healthy (see
-> §11). The transformation DAG shells into the container named `space-platform-spark-master-1`
+> §11). The transformation DAGs shell into the container named `space-platform-spark-master-1`
 > (compose default); if your project name differs, set `SPARK_CONTAINER` on the `airflow`
 > service. On Linux-native Docker (not Docker Desktop) the `airflow` user may need the host
 > Docker group — add `group_add: ["<docker-gid>"]` to the service.
+>
+> **`platform_batch_pipeline` takes ~35-45 minutes** (real API calls + sequential Spark
+> jobs) and **`platform_streaming_pipeline` takes ~3-5 minutes** (deliberately bounded
+> waits for the watermark to advance) — trigger them and check back rather than waiting
+> synchronously. See [§14](#14-airflow-orchestrated-pipelines--run-logging-pipelines) for
+> how to monitor and query results without babysitting the UI.
 
 ---
 
@@ -1187,6 +1212,105 @@ populated.
 
 ---
 
+## 14. Airflow-orchestrated pipelines & run-logging (`pipelines/`)
+
+Everything in §12 can also be run **from Airflow** instead of by hand, with automatic
+run/row-level logging to PostgreSQL. This is a thin orchestration layer over the exact
+same commands documented in §10/§11/§12 — it doesn't change what runs, only *how it's
+triggered* and *what gets recorded*.
+
+### What it is
+
+- **3 DAGs**, no schedule (manual trigger only — see the table in §5):
+  `platform_batch_pipeline` (ingestion → transformation → serving → bi),
+  `platform_streaming_pipeline` (bounded streaming demo), and
+  `platform_master_pipeline` (triggers the batch pipeline fully, then the streaming one).
+- **`metadata` schema in PostgreSQL** (ADR-007's already-reserved "lineage/quality"
+  schema) gets 12 run-logging tables: a header table per stage
+  (`ingestion_run`, `transformation_run`, `serving_run`, `bi_run`, `streaming_run`, plus
+  the roll-ups `batch_run`/`master_run`) and a detail table per stage with one row **per
+  source / Silver entity / Gold mart / serving model / BI dataset** processed in that
+  run (`ingestion_run_detail`, `transformation_run_detail`, `serving_run_detail`,
+  `bi_run_detail`, `streaming_run_detail`). `run_id` is Airflow's own `dag_run_id`,
+  threaded through every table so one run's whole trail is queryable by a single value;
+  `parent_run_id` links a child run (e.g. the batch DAG run `platform_master_pipeline`
+  triggered) back to its trigger. Every write is idempotent (`INSERT ... ON CONFLICT DO
+  UPDATE`), so a retried task never duplicates a row.
+- Defined in the new top-level `pipelines/` package: `pipelines/dags/*.py` (the 3 DAGs,
+  bind-mounted into Airflow at `/opt/airflow/dags/pipelines`), `pipelines/common/*.py`
+  (the shared `StageRunLogger`, DuckDB-httpfs row-counters, Superset REST client),
+  `pipelines/config/settings.py`. Offline-testable: `pipelines/tests/` (10 unit tests,
+  no real Postgres needed) — run with `cd pipelines; python -m pytest`.
+- The migration lives at `infrastructure/configs/postgres/init/02-pipeline-run-logging.sql`
+  (auto-applied on a fresh volume; also wired into `bootstrap.sh` step 3b for existing ones).
+
+### Trigger a run
+
+```powershell
+# From the CLI (or use the ▶ Trigger DAG button in the UI, see §5)
+docker compose @ALL exec airflow airflow dags trigger platform_batch_pipeline
+docker compose @ALL exec airflow airflow dags trigger platform_streaming_pipeline
+docker compose @ALL exec airflow airflow dags trigger platform_master_pipeline   # runs both, sequentially
+```
+
+Each returns immediately with a `dag_run_id` like `manual__2026-07-20T12:37:27+00:00`
+(the master DAG's triggered children get a derived id: `<run_id>__batch` /
+`<run_id>__streaming`) — use that value in the queries below.
+
+### Monitor progress (UI or CLI)
+
+```powershell
+# UI: http://localhost:8082 -> click the DAG -> Grid view (per-task status/logs)
+
+# CLI: all task states for one run
+docker compose @ALL exec airflow airflow tasks states-for-dag-run platform_batch_pipeline "<dag_run_id>"
+
+# CLI: just the DAG run's overall state
+docker compose @ALL exec airflow airflow dags list-runs --dag-id platform_batch_pipeline
+```
+
+### Query run history (the actual point of this layer)
+
+```powershell
+# Every batch pipeline run, most recent first, with total rows processed
+docker compose @ALL exec -T postgres psql -U platform -d platform -c `
+  "select run_id, status, duration_seconds, total_rows, error_message from metadata.batch_run order by started_at desc limit 10;"
+
+# Per-source ingestion detail for one run (status/rows/error per source)
+docker compose @ALL exec -T postgres psql -U platform -d platform -c `
+  "select unit_name, status, rows, error_message from metadata.ingestion_run_detail where run_id='<dag_run_id>' order by started_at;"
+
+# Per-entity/mart transformation detail (Silver row counts, Gold mart row counts)
+docker compose @ALL exec -T postgres psql -U platform -d platform -c `
+  "select unit_name, status, rows from metadata.transformation_run_detail where run_id='<dag_run_id>' order by started_at;"
+
+# Per-model serving detail, per-dataset BI-refresh detail, per-unit streaming detail — same pattern:
+docker compose @ALL exec -T postgres psql -U platform -d platform -c `
+  "select unit_name, status, rows, error_message from metadata.serving_run_detail where run_id='<dag_run_id>';"
+docker compose @ALL exec -T postgres psql -U platform -d platform -c `
+  "select unit_name, status, error_message from metadata.bi_run_detail where run_id='<dag_run_id>';"
+docker compose @ALL exec -T postgres psql -U platform -d platform -c `
+  "select unit_name, status, rows from metadata.streaming_run_detail where run_id='<dag_run_id>';"
+
+# A master run's rollup, incl. which batch/streaming run_ids it triggered
+docker compose @ALL exec -T postgres psql -U platform -d platform -c `
+  "select run_id, status, batch_run_id, streaming_run_id, error_message from metadata.master_run order by started_at desc limit 5;"
+```
+
+**Checklist:** a `FAILED` detail row always has a non-null `error_message` (real
+exception text, not just a status flag); a stage's header row's `total_rows`/`total_units`
+equal the `sum(rows)`/`count(*)` of its own detail rows for that `run_id`; `batch_run`'s
+`total_rows` equals the sum across its 4 stage headers for that run.
+
+| Symptom | Likely cause / fix |
+| --- | --- |
+| A task is `up_for_retry` / `failed` right after you fixed something (env var, schema, code) | Airflow does not auto-retry a task just because you fixed the underlying cause — clear it explicitly: `airflow tasks clear -y -t <task_id> -s <exec_date> -e <exec_date> <dag_id>`. If a **downstream** task already shows `upstream_failed`, clear that one too (clearing the upstream alone does not reschedule it). |
+| `ModuleNotFoundError: No module named 'kafka.vendor.six.moves'` in a streaming task | `kafka-python==2.0.2`'s vendored `six` shim breaks under Airflow's Python 3.12. Already fixed via `pipelines/common/kafka_py312_shim.py` (imported for its side effect at the top of `streaming_pipeline_dag.py`) — if you see this again, confirm that import is still first in the file. |
+| 10 Silver tasks all show `running` at once and the `spark-master` container hits ~100% of its `mem_limit` | A DAG's Silver-entity tasks were built as a plain list without explicit `>>` chaining, so Airflow's LocalExecutor ran them all concurrently against the one Spark driver. Both `transformation_medallion_batch` and `platform_batch_pipeline`'s transformation stage now chain every entity `previous >> next` — if you add a new entity, chain it into that sequence, never as a bare parallel task. |
+| `platform_batch_pipeline` looks "stuck" for 20-40 minutes | Expected — it's making real API calls (TROPOMI/MODIS_AOD via Earth Engine, OpenAQ, Sentinel Hub) and running 10 Spark jobs sequentially. Check `metadata.ingestion_run_detail` / `transformation_run_detail` (above) to see live per-unit progress instead of waiting on the UI. |
+
+---
+
 ## Phase Status & Changelog
 
 What is operationally available today, and what each future phase will add to this runbook.
@@ -1199,6 +1323,7 @@ What is operationally available today, and what each future phase will add to th
 | 11 — Serving | Serving dbt data products (wildfire/flood/vessel/scene/AOI-validation + platform KPI MV) built from `s3://gold` Parquet via DuckDB+httpfs; `dbt run` + 18 contract tests | ✅ Data products available (FastAPI 🔜) |
 | 8b / 9b / 12b — Climate/dust/air-quality track | §12 full-run recipe incl. climate connectors (OpenAQ, TROPOMI, MODIS/VIIRS AOD) and climate Gold marts/BI dashboards; `preflight_infra_env.py` + `run_full_batch_ingest.py` operator scripts | ✅ Available (TROPOMI/AOD data-availability gaps — see §12) |
 | Manual verification | §13 per-stage validation cheat-sheet (Bronze/Kafka/Silver/Gold/streaming/serving/BI), UI + CLI/API methods for each | ✅ Available |
+| Orchestration (`pipelines/`) | §14 Airflow-triggered `platform_batch_pipeline` / `platform_streaming_pipeline` / `platform_master_pipeline` DAGs (no schedule, manual only) + `metadata.*` run/row-level logging tables in PostgreSQL | ✅ Available |
 | AI/ML | MLflow experiment/run queries; Feast feature retrieval; model registry commands | 🔜 Add MLflow section |
 | RAG / LLM | Qdrant collection queries; Ollama model pull/run; Open WebUI usage | 🔜 Add LLM section |
 | Serving (API) | FastAPI endpoints, auth, example requests | 🔜 Add API section |

@@ -33,9 +33,19 @@ The `airflow` PostgreSQL schema is created by
 
 ## DAGs & logs
 
-DAGs and logs are persisted on named volumes (`airflow-dags`, `airflow-logs`).
-Application DAG code is added in later phases (data ingestion / transformation);
-this phase only provisions the runtime.
+Logs are persisted on the named volume `airflow-logs`. DAG code is **not** on a
+named volume — it is bind-mounted read-only straight from the repo (live edits, no
+rebuild needed):
+
+| Repo path | Mounted at | DAGs |
+| --- | --- | --- |
+| `ingestion/batch/dags/` | `/opt/airflow/dags/ingestion` | Per-source scheduled ingestion DAGs (`ingest_nasa_power`, `ingest_openaq`, …) |
+| `transformation/orchestration/dags/` | `/opt/airflow/dags/transformation` | `transformation_medallion_batch` (daily Bronze→Silver→Gold) |
+| `pipelines/dags/` | `/opt/airflow/dags/pipelines` | `platform_batch_pipeline` / `platform_streaming_pipeline` / `platform_master_pipeline` (manual-trigger-only orchestration, logs to the `metadata` schema — see OPERATIONS.md §14) |
+
+The whole repo is additionally mounted read-only at `/opt/airflow/repo`
+(`PYTHONPATH=/opt/airflow/repo`), so all of `ingestion`, `transformation`, and
+`pipelines` import as regular Python packages inside the Airflow container.
 
 ## Scaling note
 

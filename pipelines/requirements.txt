@@ -1,0 +1,7 @@
+# Pipelines / orchestration layer — Airflow DAGs + run-logging client.
+# Installed inside the Airflow image (infrastructure/docker/airflow.Dockerfile);
+# this file also lets the offline test suite run in a plain venv.
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1
+requests==2.32.3
+pytest==8.2.2

@@ -52,6 +52,11 @@ services:
       # Live code mount (no docker cp) — edits are picked up without rebuilds.
       - ../../transformation:/opt/spark/work-dir/transformation
       - ../../ingestion:/opt/spark/work-dir/ingestion:ro
+      # Serving dbt project (Gold -> data products) — mounted read-write so
+      # `dbt run` can (re)build serving/dbt/serving.duckdb in place; the
+      # platform_batch_pipeline "serving" stage execs into this same container
+      # (docker exec, not a separate one-off container) to build it.
+      - ../../serving:/opt/spark/work-dir/serving
       # Persist the Ivy jar cache so hadoop-aws / kafka connectors download once.
       - spark-ivy:/tmp/.ivy2
     networks:
@@ -111,18 +116,46 @@ services:
       postgres:
         condition: service_healthy
     # 'standalone' runs webserver + scheduler in one process (LocalExecutor)
-    # to conserve memory on a 16 GB laptop.
-    command: ["bash", "-c", "airflow db migrate && airflow standalone"]
+    # to conserve memory on a 16 GB laptop. The admin user is created (or, if it
+    # already exists from a prior run, its password is reset) from
+    # AIRFLOW_ADMIN_USER/AIRFLOW_ADMIN_PASSWORD on every start — `airflow
+    # standalone`'s own auto-generated-password file lives outside any
+    # persisted volume, so relying on it is a dead end after the first boot.
+    # This makes the login credential declarative (same pattern as Superset's
+    # ADMIN_USERNAME/ADMIN_PASSWORD bootstrap in docker-compose.bi.yml).
+    # NOTE: `airflow users create` exits 0 even when the user already exists
+    # (it just logs "admin already exist in the db" and does NOT touch the
+    # password), so `reset-password` must run unconditionally afterwards —
+    # not as a `||` fallback — to actually converge the password to .env.
+    command:
+      - bash
+      - -c
+      - >-
+        airflow db migrate &&
+        airflow users create
+        --username "$${AIRFLOW_ADMIN_USER}"
+        --firstname Admin --lastname User
+        --role Admin
+        --email admin@space-platform.local
+        --password "$${AIRFLOW_ADMIN_PASSWORD}" || true;
+        airflow users reset-password
+        --username "$${AIRFLOW_ADMIN_USER}"
+        --password "$${AIRFLOW_ADMIN_PASSWORD}" || true;
+        airflow standalone
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?options=-csearch_path%3Dairflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "false"
       AIRFLOW__METRICS__STATSD_ON: "false"
+      # Admin login, read by the bootstrap command above (see infrastructure/env/.env).
+      AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER:-admin}
+      AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
       # --- Platform DAG runtime wiring ---
-      # Repo mount on PYTHONPATH -> `ingestion` / `transformation` importable.
-      # ingestion.config.settings auto-loads the mounted infrastructure/env/.env,
-      # so API keys (FIRMS_MAP_KEY, NASA_API_KEY, …) resolve without env_file.
+      # Repo mount on PYTHONPATH -> `ingestion` / `transformation` / `pipelines`
+      # importable. ingestion.config.settings auto-loads the mounted
+      # infrastructure/env/.env, so API keys (FIRMS_MAP_KEY, NASA_API_KEY, …)
+      # resolve without env_file.
       PYTHONPATH: /opt/airflow/repo
       # Ingestion connectors land Bronze in MinIO (in-process PythonOperator).
       MINIO_ENDPOINT: http://minio:9000
@@ -130,15 +163,34 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       AWS_REGION: ${AWS_REGION:-us-east-1}
       KAFKA_BOOTSTRAP: kafka:9092
+      # Google Earth Engine key file lives inside the repo (secrets/, git-ignored);
+      # override the .env default (which is written for the /work-mounted ingest
+      # runner) to this container's own repo mount path.
+      GEE_KEY_FILE: /opt/airflow/repo/secrets/earth-observation-learning-1f414c383570.json
       # Transformation tasks are dispatched into this container via docker exec.
       SPARK_CONTAINER: ${SPARK_CONTAINER:-space-platform-spark-master-1}
+      # --- pipelines/ run-logging + BI-refresh wiring ---
+      # metadata.* run-logging tables live in the shared Postgres instance.
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # BI-refresh stage calls the Superset API over the internal network
+      # (container port 8088, not the host-mapped SUPERSET_PORT).
+      SUPERSET_INTERNAL_URL: http://superset:8088
+      SUPERSET_ADMIN_USER: ${SUPERSET_ADMIN_USER}
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
     ports:
       - "${AIRFLOW_PORT:-8082}:8080"
     volumes:
       # DAG definitions (read-only) — these are what appear in the UI at :8082.
       - ../../ingestion/batch/dags:/opt/airflow/dags/ingestion:ro
       - ../../transformation/orchestration/dags:/opt/airflow/dags/transformation:ro
-      # Repo code (read-only) so DAGs import the platform packages live.
+      - ../../pipelines/dags:/opt/airflow/dags/pipelines:ro
+      # Repo code (read-only) so DAGs import the platform packages live. Also
+      # gives the pipelines DAGs read access to serving/dbt/serving.duckdb (row
+      # counts) and secrets/ (GEE key file) without extra mounts.
       - ../../:/opt/airflow/repo:ro
       # Docker socket so the transformation DAG can exec into spark-master.
       - /var/run/docker.sock:/var/run/docker.sock

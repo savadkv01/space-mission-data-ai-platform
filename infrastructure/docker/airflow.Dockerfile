@@ -3,14 +3,20 @@
 # Airflow 2.9.2 + platform DAG runtime
 # ----------------------------------------------------------------------------
 # Extends stock Airflow so the scheduler can actually RUN the platform DAGs:
-#   * ingestion batch DAGs  -> in-process (PythonOperator): API -> Bronze/MinIO
+#   * ingestion batch DAGs   -> in-process (PythonOperator): API -> Bronze/MinIO
 #   * transformation DAG     -> dispatched into the spark-master container
 #                               (docker exec via the mounted Docker socket)
+#   * pipelines/ DAGs (batch/streaming/master) -> orchestrate the above +
+#                               serving + BI, logging run/row metrics to the
+#                               shared Postgres `metadata` schema (psycopg2)
+#                               and reading Silver/Gold/serving row counts via
+#                               DuckDB httpfs (no Spark/dbt needed in-image).
 #
 # The repo is bind-mounted at runtime (PYTHONPATH=/opt/airflow/repo) so the
-# `ingestion` / `transformation` packages import without a rebuild. Only the
-# third-party runtime deps + the docker CLI are baked into the image, mirroring
-# the spark-transform.Dockerfile pattern (build once, cache, no per-run pip).
+# `ingestion` / `transformation` / `pipelines` packages import without a
+# rebuild. Only the third-party runtime deps + the docker CLI are baked into
+# the image, mirroring the spark-transform.Dockerfile pattern (build once,
+# cache, no per-run pip).
 # ============================================================================
 FROM apache/airflow:2.9.2
 
@@ -31,4 +37,13 @@ RUN pip install --no-cache-dir \
       "boto3==1.34.131" \
       "kafka-python==2.0.2" \
       "sgp4==2.23" \
-      "python-dotenv==1.0.1"
+      "python-dotenv==1.0.1" \
+      "earthengine-api==1.1.2" \
+      "psycopg2-binary==2.9.9" \
+      "duckdb>=0.9,<0.11"
+
+# Pre-install DuckDB's httpfs extension at build time (pipelines.common.lake_metrics
+# reads Silver/Gold Parquet straight from MinIO for row-count logging) so no task
+# pays a runtime download; mirrors the dbt-duckdb pre-install in spark-transform.Dockerfile.
+RUN python3 -c "import duckdb; con = duckdb.connect(); con.execute('install httpfs')"
+

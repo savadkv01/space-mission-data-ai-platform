@@ -2,8 +2,8 @@
 
 A single, consolidated inventory of every physical/logical data object across the platform's
 medallion layers and serving surfaces — Bronze → Silver → Gold → Serving → BI, plus Feature Store,
-ML, and Vector/RAG. Use this as the day-to-day map of "what tables/products/reports exist and what
-each contains."
+ML, Vector/RAG, and orchestration run-logging metadata. Use this as the day-to-day map of
+"what tables/products/reports exist and what each contains."
 
 For operator commands (start/stop, querying Postgres/MinIO), see [OPERATIONS.md](OPERATIONS.md).
 For phase status, see [README.md](README.md).
@@ -231,6 +231,29 @@ Chunk schema: `chunk_id`, `embedding`, `source_ref` (grounding key), `text`, `me
 | Mission knowledge base | Mission docs, ADRs, reports, specs | Analyst Q&A RAG | 📐 ⭐ |
 | Geo-event cards | Fire/flood/change-detection event cards | Situational Q&A over events | 📐 ⭐ |
 | Telemetry anomaly summaries | Anomaly descriptions + context | Semantic search on telemetry events | 📐 🔄 |
+
+---
+
+## 9. Orchestration — Run-Logging Metadata (`metadata` schema)
+
+Airflow-orchestrated pipeline runs (see [OPERATIONS.md §14](OPERATIONS.md#14-airflow-orchestrated-pipelines--run-logging-pipelines))
+log run/row-level metrics to PostgreSQL — **not** part of the medallion data flow itself,
+but the operational record of it. Lives in the `metadata` schema (ADR-007), reserved for
+exactly this purpose. Every stage gets a header table (one row per `run_id`, Airflow's own
+`dag_run_id`) and, except the two roll-ups, a detail table (one row per source / Silver
+entity / Gold mart / serving model / BI dataset processed in that run). All writes are
+idempotent upserts (`INSERT ... ON CONFLICT DO UPDATE`). Source:
+`infrastructure/configs/postgres/init/02-pipeline-run-logging.sql`, `pipelines/common/run_logger.py`.
+
+| Table | Grain | Contains | Status |
+| --- | --- | --- | --- |
+| `master_run` | 1 / `platform_master_pipeline` run | Rollup: status, timing, the `batch_run_id`/`streaming_run_id` it triggered | ✅ Built |
+| `batch_run` | 1 / `platform_batch_pipeline` run | Rollup: status, timing, `total_rows` summed across its 4 stage headers | ✅ Built |
+| `ingestion_run` / `ingestion_run_detail` | 1 / run; 1 / API source per run | Batch-ingestion stage header + per-source status/rows/error (`SWPC`, `FIRMS`, `OPENAQ:AOI-DXB`, `TROPOMI:AOI-UAE-NAT:NO2`, …) | ✅ Built |
+| `transformation_run` / `transformation_run_detail` | 1 / run; 1 / Silver entity or Gold mart per run | Bronze→Silver→Gold stage header + per-unit row counts (`silver_fire`, `gold_kpi_wildfire_aoi_daily`, `gold_dbt_demonstrator`, …) | ✅ Built |
+| `serving_run` / `serving_run_detail` | 1 / run; 1 / serving dbt model per run | Gold→serving stage header + per-model row counts (`serving_wildfire_daily`, `mv_kpi_platform_daily`, …) | ✅ Built |
+| `bi_run` / `bi_run_detail` | 1 / run; 1 / Superset dataset per run | BI-refresh stage header + per-dataset refresh status | ✅ Built |
+| `streaming_run` / `streaming_run_detail` | 1 / run; 1 / streaming unit per run | Streaming-pipeline header + per-unit status/rows (`telemetry_produce`, `raw_ingest_consumer`, `validation_consumer`, `stream_sat_health_1m`) | ✅ Built |
 
 ---
 

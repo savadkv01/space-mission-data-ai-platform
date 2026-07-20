@@ -43,7 +43,8 @@ Phase numbering aligns with the authored phase prompts in [.github/prompts/](.gi
 ## Operations
 
 Day-to-day operator commands — start/stop, status & health, service URLs and login,
-querying PostgreSQL, browsing MinIO, and viewing Bronze/Silver/Gold — live in the
+querying PostgreSQL, browsing MinIO, viewing Bronze/Silver/Gold, and triggering/monitoring
+the Airflow-orchestrated pipelines (`pipelines/`) — live in the
 [Operations Runbook](OPERATIONS.md). It is a living document, extended each phase.
 
 Two operator references complement the runbook:
@@ -69,6 +70,7 @@ Two operator references complement the runbook:
 | `infrastructure/` | Docker Compose stacks, configs (Kafka, MinIO, Spark, Postgres, Prometheus, Grafana, OpenTelemetry) |
 | `ingestion/` | Ingestion layer implementation — Kafka producers/consumers, Airflow DAGs, API/file connectors, synthetic data generators, quality/quarantine |
 | `transformation/` | Transformation layer implementation — Bronze→Silver→Gold (PySpark + dbt/DuckDB), geospatial/time-series/feature engineering, Spark streaming, Airflow orchestration |
+| `pipelines/` | Airflow orchestration layer — `platform_batch_pipeline` / `platform_streaming_pipeline` / `platform_master_pipeline` DAGs (manual trigger) chaining ingestion→transformation→serving→BI, plus run/row-level logging to the PostgreSQL `metadata` schema |
 | `quality/` | Data-quality framework — validation rules, profiling, monitoring, governance, and incident records |
 | `serving/` | Serving layer — Gold data products, semantic layer, dbt marts, REST API design, and LLM/RAG serving models |
 | `bi/` | Business intelligence — Apache Superset dashboards, certified datasets, KPI catalog, alerts, and reporting strategy |

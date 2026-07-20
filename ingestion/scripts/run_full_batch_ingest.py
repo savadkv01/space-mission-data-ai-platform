@@ -43,28 +43,46 @@ def main() -> dict:
 
     # --- real-time / anonymous sources (Phase 8) -----------------------------
     from ingestion.api.noaa_swpc import SwpcConnector
-    results["SWPC"] = run_connector_to_bronze(SwpcConnector())
+    try:
+        results["SWPC"] = run_connector_to_bronze(SwpcConnector())
+    except Exception as exc:  # noqa: BLE001 - report and continue (one bad source
+        results["SWPC"] = {"error": str(exc)}  # shouldn't abort the whole run
 
     from ingestion.api.celestrak import CelestrakConnector
-    results["CELESTRAK"] = run_connector_to_bronze(CelestrakConnector())
+    try:
+        results["CELESTRAK"] = run_connector_to_bronze(CelestrakConnector())
+    except Exception as exc:  # noqa: BLE001
+        results["CELESTRAK"] = {"error": str(exc)}
 
     from ingestion.api.nasa_power import PowerConnector
-    results["POWER"] = run_connector_to_bronze(
-        PowerConnector(), latitude=25.2, longitude=55.3,
-        start=hist_start.replace("-", ""), end=hist_end.replace("-", ""),
-    )
+    try:
+        results["POWER"] = run_connector_to_bronze(
+            PowerConnector(), latitude=25.2, longitude=55.3,
+            start=hist_start.replace("-", ""), end=hist_end.replace("-", ""),
+        )
+    except Exception as exc:  # noqa: BLE001
+        results["POWER"] = {"error": str(exc)}
 
     # --- keyed MVP Earth-observation sources (Phase 8) -----------------------
     from ingestion.api.nasa_firms import FirmsConnector
-    results["FIRMS"] = run_connector_to_bronze(
-        FirmsConnector(), source="VIIRS_SNPP_NRT", area="-124.5,32.5,-114.5,42", days=1,
-    )
+    try:
+        results["FIRMS"] = run_connector_to_bronze(
+            FirmsConnector(), source="VIIRS_SNPP_NRT", area="-124.5,32.5,-114.5,42", days=1,
+        )
+    except Exception as exc:  # noqa: BLE001
+        results["FIRMS"] = {"error": str(exc)}
 
     from ingestion.api.gfw import GfwConnector
-    results["GFW"] = run_connector_to_bronze(GfwConnector())
+    try:
+        results["GFW"] = run_connector_to_bronze(GfwConnector())
+    except Exception as exc:  # noqa: BLE001
+        results["GFW"] = {"error": str(exc)}
 
     from ingestion.api.sentinelhub import SentinelHubConnector
-    results["SENTINELHUB"] = run_connector_to_bronze(SentinelHubConnector())
+    try:
+        results["SENTINELHUB"] = run_connector_to_bronze(SentinelHubConnector())
+    except Exception as exc:  # noqa: BLE001
+        results["SENTINELHUB"] = {"error": str(exc)}
 
     # NDVI stats over the Dubai AOI feeds the Silver "index" entity (UC-14/15/16).
     from ingestion.api.sentinelhub_stats import SentinelHubStatsConnector

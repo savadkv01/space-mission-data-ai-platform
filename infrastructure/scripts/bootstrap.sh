@@ -52,6 +52,12 @@ for schema in "${SCHEMAS[@]}"; do
   echo "    schema ready: ${schema}"
 done
 
+echo "==> [3b/5] Applying pipeline run-logging tables (metadata schema, idempotent)"
+docker compose "${STORAGE_CTX[@]}" exec -T -e PGPASSWORD="$POSTGRES_PASSWORD" postgres \
+  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  < "$INFRA_DIR/configs/postgres/init/02-pipeline-run-logging.sql"
+echo "    run-logging tables ready (master_run, batch_run, streaming_run, {ingestion,transformation,serving,bi}_run[_detail])"
+
 echo "==> [4/5] Creating MinIO buckets (one-off minio/mc client on data-net)"
 docker run --rm --network space-data-net \
   -e MC_HOST_local="http://${MINIO_ROOT_USER}:${MINIO_ROOT_PASSWORD}@minio:9000" \

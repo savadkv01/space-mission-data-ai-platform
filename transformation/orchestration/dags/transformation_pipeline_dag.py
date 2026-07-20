@@ -127,8 +127,18 @@ def build_dag() -> "DAG | None":
             bash_command=_in_spark("cd transformation/dbt && dbt deps && dbt run && dbt test"),
         )
 
-        # All Silver jobs (sim + EO + climate) must succeed before Gold is built.
-        (silver_tasks + climate_silver_tasks) >> gold_lakehouse >> gold_dbt
+        # IMPORTANT: chain every Spark job STRICTLY sequentially, not just
+        # "all Silver before Gold". All of these exec into the SAME
+        # spark-master container (2g mem_limit, local[*] driver) — running
+        # Silver entities concurrently (Airflow's default for a list of
+        # independent tasks) starves that single JVM and OOMs it (verified
+        # live: 10 concurrent spark-submits pinned the container at 99.99% of
+        # 2GiB). Matches transformation/scripts/run_pipeline.sh's documented
+        # constraint ("Run entities ONE at a time").
+        all_silver_tasks = silver_tasks + climate_silver_tasks
+        for previous_task, next_task in zip(all_silver_tasks, all_silver_tasks[1:]):
+            previous_task >> next_task
+        all_silver_tasks[-1] >> gold_lakehouse >> gold_dbt
 
     return dag
 
