@@ -19,7 +19,7 @@ class SentinelHubConnector(ApiConnector):
     source_code = "SENTINELHUB"
     rate_limit_per_s = 2
 
-    TOKEN_URL = "https://services.sentinel-hub.com/oauth/token"
+    TOKEN_URL = "https://services.sentinel-hub.com/auth/realms/main/protocol/openid-connect/token"
     CATALOG_URL = "https://services.sentinel-hub.com/api/v1/catalog/1.0.0/search"
 
     def __init__(self, http=None, client_id: str | None = None,

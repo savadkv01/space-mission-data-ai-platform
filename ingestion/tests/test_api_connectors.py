@@ -25,11 +25,13 @@ class FakeHttp:
     def __init__(self, *, json_data=None, text=""):
         self._json = json_data
         self._text = text
+        self.calls = []
 
     def get(self, url, **kwargs):
         return FakeResponse(json_data=self._json, text=self._text)
 
     def get_json(self, url, **kwargs):
+        self.calls.append((url, kwargs))
         return self._json
 
 
@@ -53,19 +55,33 @@ class SequencedHttp:
 def test_power_connector_flattens_records():
     payload = {"properties": {"parameter": {"T2M": {"20240101": 20.0, "20240102": 21.0}}}}
     conn = PowerConnector(http=FakeHttp(json_data=payload))
-    envelopes = conn.ingest(latitude=25.2, longitude=55.27)
+    envelopes = conn.ingest(latitude=25.2, longitude=55.27, aoi_id="AOI-DXB")
     assert len(envelopes) == 2
     assert envelopes[0]._source == "POWER"
     assert envelopes[0].payload["parameter"] == "T2M"
+    assert envelopes[0].payload["aoi_id"] == "AOI-DXB"
     assert envelopes[0]._event_ts == "2024-01-01T00:00:00Z"
+    assert "WD2M" in conn.http.calls[0][1]["params"]["parameters"]
 
 
-def test_swpc_connector_zips_header():
-    payload = [["time_tag", "kp"], ["2024-01-01 00:00:00", "3"], ["2024-01-01 03:00:00", "4"]]
+def test_swpc_connector_normalizes_current_object_response():
+    payload = [
+        {"time_tag": "2024-01-01T00:00:00", "Kp": 3.0, "station_count": 8},
+        {"time_tag": "2024-01-01T03:00:00", "Kp": 4.0, "station_count": 8},
+    ]
     conn = SwpcConnector(http=FakeHttp(json_data=payload))
     envelopes = conn.ingest()
     assert len(envelopes) == 2
-    assert envelopes[0].payload == {"time_tag": "2024-01-01 00:00:00", "kp": "3"}
+    assert envelopes[0].payload["time_tag"] == "2024-01-01T00:00:00"
+    assert envelopes[0].payload["kp_index"] == 3.0
+    assert envelopes[0].payload["station_count"] == 8
+    assert envelopes[0]._event_ts == "2024-01-01T00:00:00Z"
+
+
+def test_swpc_connector_keeps_legacy_header_response_compatibility():
+    payload = [["time_tag", "kp"], ["2024-01-01 00:00:00", "3"]]
+    envelopes = SwpcConnector(http=FakeHttp(json_data=payload)).ingest()
+    assert envelopes[0].payload["kp_index"] == "3"
     assert envelopes[0]._event_ts == "2024-01-01T00:00:00Z"
 
 
@@ -76,6 +92,18 @@ def test_gfw_connector_extracts_entries():
     assert len(envelopes) == 2
     assert envelopes[0]._source == "GFW"
     assert envelopes[0].payload == {"id": "a"}
+
+
+def test_gfw_event_time_uses_latest_transmission_date():
+    record = {
+        "registryInfo": [{
+            "transmissionDateFrom": "2021-01-01T00:00:00Z",
+            "transmissionDateTo": "2026-10-30T00:00:00Z",
+        }]
+    }
+    envelope = GfwConnector(http=FakeHttp(json_data={"entries": [record]}),
+                            token="fake-token").ingest()[0]
+    assert envelope._event_ts == "2026-10-30T00:00:00Z"
 
 
 def test_gfw_connector_requires_token():
@@ -150,4 +178,3 @@ def test_landsat_connector_parses_features():
     assert len(envelopes) == 1
     assert envelopes[0]._source == "LANDSAT"
     assert envelopes[0]._event_ts == "2024-01-01T07:00:00Z"
-

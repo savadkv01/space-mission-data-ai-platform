@@ -45,9 +45,15 @@ class GfwConnector(ApiConnector):
 
     def _event_ts(self, record: dict[str, Any]) -> str | None:
         # Vessel identity records carry transmission date ranges, not a single
-        # event time; surface the latest first-transmission date when present.
-        reg = record.get("registryInfo") or record.get("selfReportedInfo") or []
-        if isinstance(reg, list) and reg:
-            ts = reg[0].get("transmissionDateFrom") or reg[0].get("firstTransmissionDate")
-            return ts
+        # event time; use the range end to represent the latest observed activity.
+        for key in ("registryInfo", "selfReportedInfo", "combinedSourcesInfo"):
+            entries = record.get(key)
+            if isinstance(entries, list) and entries and isinstance(entries[0], dict):
+                entry = entries[0]
+                return (
+                    entry.get("transmissionDateTo")
+                    or entry.get("lastTransmissionDate")
+                    or entry.get("transmissionDateFrom")
+                    or entry.get("firstTransmissionDate")
+                )
         return None

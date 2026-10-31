@@ -28,7 +28,9 @@ AOIS = ["AOI-UAE-NAT", "AOI-DESERT", "AOI-ARABIA", "AOI-IRAQ", "AOI-IRAN"]
 
 def _ingest(aoi_id: str, **context) -> dict:
     end = context.get("ds") or datetime.utcnow().strftime("%Y-%m-%d")
-    start = (datetime.strptime(end, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
+    # MAIAC publication can lag several days; re-fetch a bounded window so late
+    # imagery is picked up by later runs and downstream Silver dedupes by key.
+    start = (datetime.strptime(end, "%Y-%m-%d") - timedelta(days=7)).strftime("%Y-%m-%d")
     datetime_range = f"{start}T00:00:00Z/{end}T23:59:59Z"
     return run_connector_to_bronze(
         GeeAodConnector(), aoi_id=aoi_id, sensor="MODIS", datetime_range=datetime_range
@@ -43,6 +45,7 @@ if DAG is not None:
         start_date=datetime(2024, 1, 1),
         schedule="@daily",
         catchup=False,
+        is_paused_upon_creation=False,
         tags=["ingestion", "api", "climate", "dust", "earth-engine"],
     ) as dag:
         for _aoi in AOIS:

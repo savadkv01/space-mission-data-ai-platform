@@ -18,7 +18,8 @@ class PowerConnector(ApiConnector):
 
     def fetch_raw(self, *, latitude: float = 25.20, longitude: float = 55.27,
                   start: str = "20240101", end: str = "20240107",
-                  parameters: str = "T2M,RH2M,WS2M,PRECTOTCORR", **_: Any
+                  parameters: str = "T2M,RH2M,WS2M,WD2M,PRECTOTCORR",
+                  aoi_id: str | None = None, **_: Any
                   ) -> tuple[list[dict[str, Any]], str]:
         params = {
             "parameters": parameters,
@@ -35,13 +36,16 @@ class PowerConnector(ApiConnector):
         records: list[dict[str, Any]] = []
         for param, series in props.items():
             for date, value in series.items():
-                records.append({
+                record = {
                     "date": date,
                     "parameter": param,
                     "value": value,
                     "latitude": latitude,
                     "longitude": longitude,
-                })
+                }
+                if aoi_id is not None:
+                    record["aoi_id"] = aoi_id
+                records.append(record)
         return records, "json"
 
     def _event_ts(self, record: dict[str, Any]) -> str | None:

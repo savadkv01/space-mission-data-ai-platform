@@ -34,6 +34,7 @@ if DAG is not None:
         start_date=datetime(2024, 1, 1),
         schedule="0 */6 * * *",
         catchup=False,
+        is_paused_upon_creation=False,
         tags=["ingestion", "api", "celestrak", "orbital"],
     ) as dag:
         for _group in GROUPS:

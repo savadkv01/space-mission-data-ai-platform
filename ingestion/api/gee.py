@@ -147,17 +147,21 @@ class EarthEngineStatsConnector(ApiConnector):
         if not coll.size().getInfo():
             return None
         img = coll.mean().rename("index")
+        return self._summarize_image(img, geom, ee)
+
+    def _summarize_image(self, image: Any, geometry: Any, ee: Any) -> dict[str, Any] | None:
+        """Reduce a one-band image to the common daily statistics contract."""
         reducer = (ee.Reducer.mean()
                    .combine(ee.Reducer.minMax(), sharedInputs=True)
                    .combine(ee.Reducer.stdDev(), sharedInputs=True)
                    .combine(ee.Reducer.count(), sharedInputs=True))
-        raw = img.reduceRegion(reducer=reducer, geometry=geom, scale=self.SCALE_M,
-                               bestEffort=True, maxPixels=self.MAX_PIXELS).getInfo() or {}
+        raw = image.reduceRegion(reducer=reducer, geometry=geometry, scale=self.SCALE_M,
+                                 bestEffort=True, maxPixels=self.MAX_PIXELS).getInfo() or {}
         mean = raw.get("index_mean")
         if mean is None:
             return None
         total = (ee.Image.constant(1).reduceRegion(
-            reducer=ee.Reducer.count(), geometry=geom, scale=self.SCALE_M,
+            reducer=ee.Reducer.count(), geometry=geometry, scale=self.SCALE_M,
             bestEffort=True, maxPixels=self.MAX_PIXELS).getInfo() or {})
         valid = int(raw.get("index_count") or 0)
         total_px = int(total.get("constant") or 0)

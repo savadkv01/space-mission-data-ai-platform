@@ -32,6 +32,7 @@ if DAG is not None:
         start_date=datetime(2024, 1, 1),
         schedule="*/15 * * * *",
         catchup=False,
+        is_paused_upon_creation=False,
         tags=["ingestion", "api", "noaa", "space-weather"],
     ) as dag:
         PythonOperator(task_id="swpc_kp", python_callable=_ingest)

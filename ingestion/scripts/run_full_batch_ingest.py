@@ -8,38 +8,30 @@ everything now" helper used when validating the whole platform end to end.
 Run inside the ingestion runner container (needs Kafka+MinIO+internet):
     docker exec ingest-runner python -m ingestion.scripts.run_full_batch_ingest
 
-Historical/settled date windows are used for sources with multi-day
-processing latency (NASA POWER, OpenAQ, TROPOMI, MODIS/VIIRS AOD) so a request
-for "yesterday" doesn't 404/422 against real upstream APIs. Real-time feeds
-(SWPC, CelesTrak, FIRMS NRT, GFW, Sentinel Hub Catalog) use live "now" data.
+The driver uses rolling recent windows for latency-sensitive sources
+(NASA POWER, OpenAQ, TROPOMI, MODIS/VIIRS AOD). Real-time feeds (SWPC,
+CelesTrak, FIRMS NRT, GFW) use live data. Optical scene metadata and indices
+use Google Earth Engine.
 """
 
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from ingestion.batch.ingest_task import run_connector_to_bronze
-from ingestion.common.http import HttpClient, RateLimiter
 from ingestion.config.settings import settings
-
-
-def _fast_fail_http() -> HttpClient:
-    """HttpClient tuned for the Sentinel Hub Statistical API.
-
-    That endpoint occasionally read-times-out under load; the default client
-    (4 retries x 30s) can then block for minutes on a single call. Use 1 retry
-    and a 15s timeout so a bad call fails fast and the run keeps moving.
-    """
-    return HttpClient(rate_limit=RateLimiter(2, 1.0), total_retries=1)
 
 
 def main() -> dict:
     results: dict[str, dict] = {}
 
-    # Settled historical window: avoids POWER/OpenAQ/SentinelHub processing latency.
-    hist_start, hist_end = "2024-06-01", "2024-06-07"
-    hist_range = f"{hist_start}T00:00:00Z/{hist_end}T23:59:59Z"
+    # Keep recurring full runs operational; sources with publication latency
+    # can still return their latest available observations within this window.
+    today = datetime.now(timezone.utc).date()
+    recent_start = (today - timedelta(days=14)).isoformat()
+    recent_end = (today - timedelta(days=1)).isoformat()
+    recent_range = f"{recent_start}T00:00:00Z/{recent_end}T23:59:59Z"
 
     # --- real-time / anonymous sources (Phase 8) -----------------------------
     from ingestion.api.noaa_swpc import SwpcConnector
@@ -55,19 +47,23 @@ def main() -> dict:
         results["CELESTRAK"] = {"error": str(exc)}
 
     from ingestion.api.nasa_power import PowerConnector
-    try:
-        results["POWER"] = run_connector_to_bronze(
-            PowerConnector(), latitude=25.2, longitude=55.3,
-            start=hist_start.replace("-", ""), end=hist_end.replace("-", ""),
-        )
-    except Exception as exc:  # noqa: BLE001
-        results["POWER"] = {"error": str(exc)}
+    for aoi_id, bbox in settings.climate.aois.items():
+        latitude = (bbox[1] + bbox[3]) / 2
+        longitude = (bbox[0] + bbox[2]) / 2
+        result_key = "POWER" if aoi_id == "AOI-DXB" else f"POWER:{aoi_id}"
+        try:
+            results[result_key] = run_connector_to_bronze(
+                PowerConnector(), latitude=latitude, longitude=longitude, aoi_id=aoi_id,
+                start=recent_start.replace("-", ""), end=recent_end.replace("-", ""),
+            )
+        except Exception as exc:  # noqa: BLE001
+            results[result_key] = {"error": str(exc)}
 
     # --- keyed MVP Earth-observation sources (Phase 8) -----------------------
     from ingestion.api.nasa_firms import FirmsConnector
     try:
         results["FIRMS"] = run_connector_to_bronze(
-            FirmsConnector(), source="VIIRS_SNPP_NRT", area="-124.5,32.5,-114.5,42", days=1,
+            FirmsConnector(), source="VIIRS_SNPP_NRT", area="30,10,60,40", days=1,
         )
     except Exception as exc:  # noqa: BLE001
         results["FIRMS"] = {"error": str(exc)}
@@ -78,27 +74,31 @@ def main() -> dict:
     except Exception as exc:  # noqa: BLE001
         results["GFW"] = {"error": str(exc)}
 
-    from ingestion.api.sentinelhub import SentinelHubConnector
+    from ingestion.api.gee_sentinel2 import GeeSentinel2SceneConnector
     try:
-        results["SENTINELHUB"] = run_connector_to_bronze(SentinelHubConnector())
+        results["SENTINELHUB"] = run_connector_to_bronze(
+            GeeSentinel2SceneConnector(), bbox=settings.climate.bbox("AOI-DXB"),
+            datetime_range=recent_range, limit=20,
+        )
     except Exception as exc:  # noqa: BLE001
         results["SENTINELHUB"] = {"error": str(exc)}
 
     # NDVI stats over the Dubai AOI feeds the Silver "index" entity (UC-14/15/16).
-    from ingestion.api.sentinelhub_stats import SentinelHubStatsConnector
+    from ingestion.api.gee_sentinel2 import GeeSentinel2IndexConnector
     try:
         results["SENTINELHUB_STATS:NDVI"] = run_connector_to_bronze(
-            SentinelHubStatsConnector(http=_fast_fail_http()), index="NDVI", datetime_range=hist_range,
+            GeeSentinel2IndexConnector(), index="NDVI",
+            bbox=settings.climate.bbox("AOI-DXB"), datetime_range=recent_range,
         )
     except Exception as exc:  # noqa: BLE001 - report and continue
         results["SENTINELHUB_STATS:NDVI"] = {"error": str(exc)}
 
     # NDWI stats over the same Dubai AOI feed the flood mart (kpi_flood_aoi_daily,
-    # UC-16). Same Sentinel-2 L2A collection as NDVI (entitled on the free plan),
-    # so no extra source is needed — the flood path only lacked NDWI ingestion.
+    # UC-16). Both index requests use the same Sentinel-2 L2A collection.
     try:
         results["SENTINELHUB_STATS:NDWI"] = run_connector_to_bronze(
-            SentinelHubStatsConnector(http=_fast_fail_http()), index="NDWI", datetime_range=hist_range,
+            GeeSentinel2IndexConnector(), index="NDWI",
+            bbox=settings.climate.bbox("AOI-DXB"), datetime_range=recent_range,
         )
     except Exception as exc:  # noqa: BLE001 - report and continue
         results["SENTINELHUB_STATS:NDWI"] = {"error": str(exc)}
@@ -112,8 +112,9 @@ def main() -> dict:
     for aoi in ("AOI-DXB", "AOI-AUH", "AOI-UAE-NAT"):
         try:
             results[f"OPENAQ:{aoi}"] = run_connector_to_bronze(
-                OpenAqConnector(), aoi_id=aoi, date_from=hist_start, date_to=hist_end,
-                limit=200, max_pages=1, max_locations=3,
+                OpenAqConnector(), aoi_id=aoi, date_from=recent_start,
+                date_to=today.isoformat(), limit=200, max_pages=5,
+                max_locations=100,
             )
         except Exception as exc:  # noqa: BLE001
             results[f"OPENAQ:{aoi}"] = {"error": str(exc)}
@@ -126,7 +127,7 @@ def main() -> dict:
         for product in settings.climate.tropomi_products:
             try:
                 results[f"TROPOMI:{aoi}:{product}"] = run_connector_to_bronze(
-                    GeeS5pConnector(), aoi_id=aoi, product=product, datetime_range=hist_range,
+                    GeeS5pConnector(), aoi_id=aoi, product=product, datetime_range=recent_range,
                 )
             except Exception as exc:  # noqa: BLE001
                 results[f"TROPOMI:{aoi}:{product}"] = {"error": str(exc)}
@@ -135,7 +136,7 @@ def main() -> dict:
     for aoi in ("AOI-UAE-NAT", "AOI-DESERT", "AOI-ARABIA", "AOI-IRAQ", "AOI-IRAN"):
         try:
             results[f"MODIS_AOD:{aoi}"] = run_connector_to_bronze(
-                GeeAodConnector(), aoi_id=aoi, sensor="MODIS", datetime_range=hist_range,
+                GeeAodConnector(), aoi_id=aoi, sensor="MODIS", datetime_range=recent_range,
             )
         except Exception as exc:  # noqa: BLE001
             results[f"MODIS_AOD:{aoi}"] = {"error": str(exc)}

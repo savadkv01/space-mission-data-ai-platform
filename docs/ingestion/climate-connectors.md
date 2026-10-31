@@ -11,11 +11,28 @@ budget). Design contracts: [docs/data-modeling/climate/](../data-modeling/climat
 | Source | Connector | Auth | Grain landed | Bronze `_source` |
 | --- | --- | --- | --- | --- |
 | OpenAQ (ground air quality) | [ingestion/api/openaq.py](../../ingestion/api/openaq.py) | `OPENAQ_API_KEY` | 1 record / (station, parameter, timestamp) | `OPENAQ` |
+| NASA POWER (weather/wind) | [ingestion/api/nasa_power.py](../../ingestion/api/nasa_power.py) | None | 1 record / (AOI, parameter, day) at representative point | `POWER` |
 | Sentinel-5P / TROPOMI (trace gases) | [ingestion/api/gee_s5p.py](../../ingestion/api/gee_s5p.py) | Google Earth Engine service account | 1 record / (AOI, product, day bucket) | `TROPOMI` |
 | MODIS / VIIRS AOD | [ingestion/api/gee_aod.py](../../ingestion/api/gee_aod.py) | Google Earth Engine service account | 1 record / (AOI, day bucket) | `MODIS_AOD` |
 
 OpenAQ subclasses the Phase 8 base classes and reuses the resilient
 [`HttpClient`](../../ingestion/common/http.py) (retry/backoff + `RateLimiter`).
+The full-run request includes the current UTC date and permits up to five
+measurement pages per sensor; live inspection showed page 2 can contain newer
+observations than page 1.
+
+### Sentinel-2 scenes and indices
+
+The full-run ingestion driver uses Google Earth Engine's
+`COPERNICUS/S2_SR_HARMONIZED` collection for AOI-bounded Sentinel-2 scene
+metadata and daily NDVI/NDWI/NBR statistics. The connectors preserve the
+existing `SENTINELHUB` and `SENTINELHUB_STATS` Bronze source codes and
+Silver-compatible record shapes, so downstream schemas remain unchanged.
+Index statistics use a 250 m reduction scale and mask no-data, saturated,
+cloud-shadow, cloud, cirrus, and snow SCL classes. GEE access was confirmed
+live; the Sentinel Hub OAuth token endpoint issues a token, but the account's
+Catalog API returns `403 Invalid or expired account`. Sentinel Hub remains
+available as an optional backend after account access is restored.
 
 ### Atmospheric backend: Google Earth Engine (free) vs Sentinel Hub
 
@@ -49,6 +66,15 @@ AOIs, pollutant lists, and product lists are centralized in
   [Phase 5b AOI strategy](../source-data-analysis/climate/02-aoi-strategy.md)).
 - **`openaq_pollutants`** — `pm25, pm10, o3, no2, co, so2`.
 - **`tropomi_products`** — `NO2, SO2, CO, O3, CH4, AER_AI`.
+- OpenAQ location discovery paginates within a configurable location cap; cap
+  and measurement-page truncation are logged so station coverage is observable.
+- NASA POWER tasks request daily `WS2M` and `WD2M` at each configured AOI
+  bounding-box centroid. These are representative point observations, not AOI
+  spatial averages.
+- The daily POWER DAG defaults to the trailing seven days. For a historical
+  backfill, trigger it with `dag_run.conf` containing ISO or compact dates, for
+  example `{"start":"2024-06-01","end":"2024-06-30"}`; Silver deduplication
+  retains one row per AOI, parameter, and date.
 
 Credentials (no secrets in code — set in `.env` / `infrastructure/env/.env`):
 
@@ -72,8 +98,18 @@ SENTINELHUB_CLIENT_SECRET=
 > **AOD collection note.** `GeeAodConnector` defaults to
 > `MODIS/061/MCD19A2_GRANULES` band `Optical_Depth_055` (scaled ×0.001 to the
 > physical 0–5 range); `COLLECTION` / `BAND` are configurable per account /
-> sensor. Sentinel-5P products map to the `COPERNICUS/S5P/OFFL/L3_*`
-> collections in `GeeS5pConnector.PRODUCTS`.
+> sensor. Sentinel-5P products map to their NRTI/OFFL collections in
+> `GeeS5pConnector.PRODUCTS`.
+
+> **Freshness and late arrivals.** NO₂ uses the faster
+> `COPERNICUS/S5P/NRTI/L3_NO2` collection and falls back to the OFFL collection
+> for days without NRTI imagery. Other configured Sentinel-5P products use
+> OFFL; CH₄ is OFFL-only. The MODIS AOD DAG re-queries the preceding seven days
+> to capture late-published granules; downstream Silver deduplicates by its
+> natural key. OpenAQ sensor queries use the v3 `datetime_from` /
+> `datetime_to` filters. These policies improve ingestion coverage but do not
+> waive the source freshness SLAs in
+> [quality-kpis.md](../../quality/monitoring/quality-kpis.md).
 
 ## Pre-flight verification
 
@@ -124,11 +160,14 @@ Daily DAGs (retry + exponential backoff via `_defaults.DEFAULT_ARGS`):
 | DAG id | Connector | Tasks |
 | --- | --- | --- |
 | `ingest_openaq` | OpenAQ | one per urban AOI |
+| `ingest_nasa_power` | NASA POWER | one per configured AOI representative point |
 | `ingest_tropomi` | TROPOMI | one per (AOI × product) |
 | `ingest_modis_aod` | MODIS/VIIRS AOD | one per AOI (incl. dust corridors) |
+| `ingest_gee_sentinel2` | Sentinel-2 via GEE | scenes, NDVI, then NDWI over the Dubai AOI |
 
 Files: [ingestion/batch/dags/](../../ingestion/batch/dags/) —
-`openaq_ingest_dag.py`, `tropomi_ingest_dag.py`, `modis_aod_ingest_dag.py`.
+`openaq_ingest_dag.py`, `tropomi_ingest_dag.py`, `modis_aod_ingest_dag.py`,
+`gee_sentinel2_ingest_dag.py`.
 
 ## Tests
 

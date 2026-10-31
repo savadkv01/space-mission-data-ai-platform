@@ -38,6 +38,20 @@ def test_s5p_stamps_product_unit_collection_aoi():
     assert rec["unit"] == "mol/m2"
     assert rec["aoi_id"] == "AOI-UAE-NAT"
     assert rec["bbox"] == [51.0, 22.5, 56.5, 26.2]  # UAE national AOI
+    assert rec["collection"] == "COPERNICUS/S5P/NRTI/L3_NO2"
+
+
+def test_s5p_falls_back_to_offline_no2_collection_when_nrt_has_no_data():
+    def stats_for_collection(**kwargs):
+        if "NRTI" in kwargs["collection"]:
+            return None
+        return _canned_stats()
+
+    conn = GeeS5pConnector(stats_fn=stats_for_collection)
+    rec = conn.ingest(
+        product="NO2", aoi_id="AOI-DXB",
+        datetime_range="2026-10-30T00:00:00Z/2026-10-30T23:59:59Z",
+    )[0].payload
     assert rec["collection"] == "COPERNICUS/S5P/OFFL/L3_NO2"
 
 

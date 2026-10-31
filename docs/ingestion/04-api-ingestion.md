@@ -12,12 +12,19 @@ Design ingestion from external REST APIs: pagination, rate limiting, retry/backo
 | --- | --- | --- | --- |
 | `FirmsConnector` | NASA FIRMS / VIIRS | `FIRMS_MAP_KEY` | ✅ pre-flight |
 | `PowerConnector` | NASA POWER | anonymous | ✅ |
-| `SwpcConnector` | NOAA SWPC | anonymous | ✅ |
+| `SwpcConnector` | NOAA SWPC planetary K-index | anonymous | ✅ live JSON objects normalized for Silver |
 | `CelestrakConnector` | CelesTrak GP/TLE | anonymous | ✅ |
 | `GfwConnector` | Global Fishing Watch (vessel identity) | `GFW_API_TOKEN` | ✅ live |
-| `SentinelHubConnector` | Sentinel Hub Catalog (STAC scene metadata) | OAuth2 (`SENTINELHUB_CLIENT_ID`/`SECRET`) | ⚠️ implemented; OAuth host read-timeout from current network |
+| `GeeSentinel2SceneConnector` | Sentinel-2 scene metadata (GEE) | Google Earth Engine service account | ✅ recent Dubai scenes verified |
+| `GeeSentinel2IndexConnector` | Sentinel-2 NDVI / NDWI / NBR statistics (GEE) | Google Earth Engine service account | ✅ AOI-bounded fallback |
+| `SentinelHubConnector` | Sentinel Hub Catalog (optional STAC backend) | OAuth2 (`SENTINELHUB_CLIENT_ID`/`SECRET`) | ⚠️ configured account returns `Invalid or expired account`; full-run uses GEE |
 
-All credentials are resolved from settings — never hard-coded. Access prerequisites are catalogued in [docs/source-data-analysis/14-references.md](../source-data-analysis/14-references.md) and verified by [tools/datasource-preflight](../../tools/datasource-preflight/).
+NOAA's current planetary K-index JSON objects are normalized to `timestamp`
+and `kp_index` before Bronze landing; the Silver space-weather transform reads
+both the synthetic and `SWPC` Bronze prefixes. All credentials are resolved
+from settings — never hard-coded. Access prerequisites are catalogued in
+[docs/source-data-analysis/14-references.md](../source-data-analysis/14-references.md)
+and verified by [tools/datasource-preflight](../../tools/datasource-preflight/).
 
 ## Connector Contract
 

@@ -43,6 +43,7 @@ if DAG is not None:
         start_date=datetime(2024, 1, 1),
         schedule="@daily",
         catchup=False,
+        is_paused_upon_creation=False,
         tags=["ingestion", "api", "climate", "air-quality", "earth-engine"],
     ) as dag:
         for _aoi in AOIS:

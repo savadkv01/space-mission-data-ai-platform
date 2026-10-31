@@ -35,6 +35,7 @@ if DAG is not None:
         start_date=datetime(2024, 1, 1),
         schedule="@hourly",
         catchup=False,
+        is_paused_upon_creation=False,
         tags=["ingestion", "api", "nasa", "fire"],
     ) as dag:
         for _region, _area in REGIONS.items():
