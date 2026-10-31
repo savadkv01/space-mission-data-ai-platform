@@ -1,10 +1,41 @@
 from __future__ import annotations
 
 from transformation.batch.bronze_to_silver import (
+    clean_fire,
     silver_orbit,
     silver_space_weather,
     silver_telemetry,
 )
+
+
+def test_fire_preserves_viirs_channel_temperature_and_provenance():
+    row = clean_fire({"latitude": 25, "longitude": 55, "acq_date": "2026-10-31",
+                      "acq_time": "1100", "instrument": "VIIRS", "bright_ti4": "330.2",
+                      "bright_ti5": "290.1", "frp": "12.5", "confidence": "n",
+                      "_ingest_id": "id", "_batch_id": "batch"}).record
+    assert row is not None
+    assert row["brightness"] == 330.2 and row["brightness_unit"] == "K"
+    assert row["brightness_source_field"] == "bright_ti4"
+    assert row["brightness_status"] == "present"
+    assert row["bright_ti5"] == 290.1
+    assert row["frp"] == 12.5 and row["confidence"] == 66
+    assert row["_ingest_id"] == "id" and row["_batch_id"] == "batch"
+
+
+def test_fire_modis_missing_and_invalid_brightness_are_distinct():
+    base = {"latitude": 25, "longitude": 55, "acq_date": "2026-10-31",
+            "instrument": "MODIS", "bright_ti4": "330", "bright_t31": "290"}
+    missing = clean_fire(base).record
+    invalid = clean_fire({**base, "brightness": "invalid"}).record
+    present = clean_fire({**base, "brightness": "335"}).record
+    assert missing is not None and invalid is not None and present is not None
+    assert missing["brightness"] is None and missing["brightness_status"] == "source_absent"
+    assert invalid["brightness"] is None and invalid["brightness_status"] == "source_invalid"
+    assert present["brightness"] == 335 and present["brightness_source_field"] == "brightness"
+    assert present["bright_t31"] == 290
+    nonfinite = clean_fire({**base, "brightness": "NaN"}).record
+    assert nonfinite is not None
+    assert nonfinite["brightness"] is None and nonfinite["brightness_status"] == "source_invalid"
 
 
 def test_silver_telemetry_flattens_and_labels(telemetry_records):

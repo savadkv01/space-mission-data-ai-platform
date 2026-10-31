@@ -17,6 +17,7 @@ cluster job and the offline path share one definition of "clean".
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from math import isfinite
 from typing import Any, Callable
 
 from transformation.cleaning.cleaning_rules import (
@@ -226,13 +227,29 @@ def clean_fire(record: dict[str, Any]) -> CleanResult:
     })
     satellite = str(record.get("satellite", "unknown"))
     daynight = str(record.get("daynight", "")).upper()[:1] or None
+    brightness_field = "brightness"
+    if record.get("brightness") in (None, "") and _fire_source(record) == "VIIRS":
+        brightness_field = "bright_ti4"
+    native_brightness = record.get(brightness_field)
+    brightness = to_float(native_brightness)
+    if brightness is not None and not isfinite(brightness):
+        brightness = None
+    brightness_status = (
+        "source_absent" if native_brightness in (None, "")
+        else "source_invalid" if brightness is None else "present"
+    )
     out = {
         "fire_key": stable_key(base["latitude"], base["longitude"], ts, satellite),
         "event_ts": ts,
         "latitude": base["latitude"],
         "longitude": base["longitude"],
         "geo_key": base["geo_key"],
-        "brightness": to_float(record.get("brightness")),
+        "brightness": brightness,
+        "brightness_source_field": brightness_field if native_brightness not in (None, "") else None,
+        "brightness_status": brightness_status,
+        "brightness_unit": "K",
+        "bright_ti5": to_float(record.get("bright_ti5")),
+        "bright_t31": to_float(record.get("bright_t31")),
         "frp": frp,
         "confidence": _normalize_confidence(record.get("confidence")),
         "satellite": satellite,
@@ -240,6 +257,8 @@ def clean_fire(record: dict[str, Any]) -> CleanResult:
         "source": _fire_source(record),
         "_ingest_id": record.get("_ingest_id"),
         "_batch_id": record.get("_batch_id"),
+        "_source": record.get("_source"),
+        "_ingest_ts": record.get("_ingest_ts"),
     }
     return CleanResult.keep(out)
 
@@ -606,9 +625,12 @@ def _silver_spark_schema(entity: str):  # pragma: no cover - needs Spark
         "fire": StructType([
             _s("fire_key"), _s("event_ts"), _d("latitude"), _d("longitude"),
             _s("geo_key"), _d("brightness"), _d("frp"),
+            _s("brightness_source_field"), _s("brightness_status"),
+            _s("brightness_unit"), _d("bright_ti5"), _d("bright_t31"),
             StructField("confidence", IntegerType(), True),
             _s("satellite"), _s("daynight"), _s("source"),
             _s("_ingest_id"), _s("_batch_id"),
+            _s("_source"), _s("_ingest_ts"),
         ]),
         "vessel": StructType([
             _s("vessel_key"), _s("mmsi"), _s("imo"), _s("shipname"), _s("flag"),
@@ -649,7 +671,7 @@ def run_spark(entity: str) -> None:  # pragma: no cover - needs Spark/MinIO
     transforms = {
         "telemetry": (["satellite_telemetry"], silver_telemetry),
         "orbit": (["orbit_position"], silver_orbit),
-        "space_weather": (["space_weather"], silver_space_weather),
+        "space_weather": (["space_weather", "SWPC"], silver_space_weather),
         "fire": (["FIRMS"], silver_fire),
         "vessel": (["GFW"], silver_vessel),
         # Imagery metadata from every source unions into one obs_scene entity.
@@ -681,6 +703,13 @@ def run_spark(entity: str) -> None:  # pragma: no cover - needs Spark/MinIO
         records.extend(r.asDict(recursive=True) for r in bronze.collect())
 
     result = fn([unwrap_bronze(r) for r in records])
+    if entity == "fire":
+        deduplicated = len(records) - len(result.rows) - len(result.quarantine)
+        print(
+            "[run_silver] fire reconciliation: "
+            f"bronze_rows={len(records)}, silver_rows={len(result.rows)}, "
+            f"quarantined={len(result.quarantine)}, deduplicated={deduplicated}"
+        )
     schema = _silver_spark_schema(entity)
     if not result.rows and schema is None:
         print(f"[run_silver] no rows for entity={entity}; nothing written")

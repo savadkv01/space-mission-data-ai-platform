@@ -63,3 +63,22 @@ make stream                     # structured streaming (needs Kafka)
 ## Documentation
 
 Full design spec: [docs/transformation/](../docs/transformation/README.md) (documents 01–19).
+
+## Live readiness verification (WP0 / WP1 / WP6)
+
+From the repository root, with MinIO reachable and the serving DuckDB refreshed:
+
+```powershell
+python -m transformation.scripts.readiness_snapshot --output docs\source-data-analysis\live-readiness-snapshot.json
+```
+
+The live command additionally uses `boto3` and `duckdb`, already declared in
+the ingestion and serving dependency manifests. It inventories all documented
+sources and observed Bronze/Silver/Gold families, profiles serving products,
+and checks the persisted fire attribution ledger against actual Silver, Gold,
+and serving data. It exits non-zero on a failed technical/freshness gate;
+unknown upstream access and pending domain approval remain explicit.
+It does not ingest, modify lake data, or certify a product.
+
+See the [live readiness and fire contract](../docs/source-data-analysis/16-live-readiness-and-fire-contract.md)
+for rebuild commands, budgets, matching rules, and release limitations.

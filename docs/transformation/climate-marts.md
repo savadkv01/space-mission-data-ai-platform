@@ -22,6 +22,7 @@ new frameworks.
 flowchart LR
     subgraph Bronze
       OA["OPENAQ"]:::src
+      PW["POWER"]:::src
       TR["TROPOMI"]:::src
       AO["MODIS_AOD"]:::src
       IX["SENTINELHUB_STATS<br/>(obs_index NDVI/NDWI)"]:::src
@@ -30,6 +31,7 @@ flowchart LR
       SAQ["obs_air_quality"]
       SAT["obs_atmos_column"]
       SAE["obs_aerosol"]
+      SW["obs_wind"]
     end
     subgraph Gold["Gold marts (s3://gold, AOI-date grain)"]
       FAQ["fact_air_quality_daily"]
@@ -38,6 +40,7 @@ flowchart LR
       FVH["fact_vegetation_health_daily"]
     end
     OA --> SAQ --> FAQ
+    PW --> SW --> FDU
     TR --> SAT --> FAQ
     AO --> SAE --> FDU
     SAT --> FDU
@@ -58,6 +61,7 @@ driver [`transformation/batch/climate_bronze_to_silver.py`](../../transformation
 | `obs_air_quality` | station/pollutant/reading | OpenAQ | canonical `pollutant_code`, unit standardization (→ µg/m³, CO → mg/m³), quality-flag, dedup, **station → AOI point-in-polygon tagging** |
 | `obs_aerosol` | AOI/sensor/day | MODIS/VIIRS AOD | AOD validity `[0,5]`, valid-fraction / bright-surface `suspect` flag |
 | `obs_atmos_column` | AOI/gas/day | TROPOMI | column-density harmonization, `low_coverage` flag below valid-pixel threshold |
+| `obs_wind` | AOI/parameter/day | NASA POWER | validated WS2M (m/s) and WD2M (degrees), AOI/date key, point-sampled at AOI centroid |
 
 **Unit standardization** ([`units.py`](../../transformation/cleaning/climate/units.py)):
 volumetric ppm/ppb → mass concentration via the ideal-gas relation at 25 °C /
@@ -91,13 +95,17 @@ Surface PM/pollutants (AOI-tagged OpenAQ) + TROPOMI column means joined on
 `aoi_id` + `stat_date`. KPIs: `aqi_pm25` / `aqi_pm10` (EPA piecewise-linear),
 `aqi_band` (category of the worst pollutant), `exceedance_flag` (WHO 2021
 guideline). AQI computed only where `station_count ≥ 1`.
+Suspect-unit OpenAQ readings are excluded from PM means and do not count as
+contributing stations.
 
 ### `fact_dust_event_daily`
 AOD mean/max from `obs_aerosol`; UV aerosol index from the aerosol row or
 denormalized from TROPOMI `AER_AI`. `dust_severity_band` (AOD bands),
 `dust_flag` = AOD ≥ 0.5 **and** UV AI ≥ 1.0, `corridor_aod_max` = strongest AOD
-over other AOIs same day (upwind source signal), `wind_*` / `transport_flag`
-from NASA POWER when the wind join is supplied.
+over other AOIs same day (upwind source signal), `wind_*` / `transport_flag` from NASA POWER Silver measurements joined on
+AOI and UTC date. POWER wind is sampled at each AOI bounding-box centroid; it is
+point context, not a spatially averaged AOI measurement. Missing wind remains
+null, and transport remains false unless the same-day wind speed is valid.
 
 ### `fact_climate_indicator_daily`
 LST/SST + anomalies (same-DOY baseline), NDWI, desertification proxy.
@@ -117,8 +125,9 @@ the WHO exceedance guideline.
 
 ## AOI attribution & dbt parity (ADR-SV-01)
 
-`obs_air_quality` / `obs_aerosol` / `obs_atmos_column` carry `aoi_id` (OpenAQ
-tagged at Silver by point-in-polygon; TROPOMI/AOD from the Bronze request), so
+`obs_air_quality` / `obs_aerosol` / `obs_atmos_column` / `obs_wind` carry
+`aoi_id` (OpenAQ tagged at Silver by point-in-polygon; TROPOMI/AOD/POWER carry
+the Bronze request AOI), so
 **`fact_air_quality_daily` and `fact_dust_event_daily` are expressible in dbt
 SQL** — see
 [`transformation/dbt/models/climate/`](../../transformation/dbt/models/climate/).
@@ -137,11 +146,16 @@ as additive rows (`tier`, `aoi_role`) — no dimension fork.
 ## Orchestration
 
 [`transformation_pipeline_dag.py`](../../transformation/orchestration/dags/transformation_pipeline_dag.py)
-adds `silver_{air_quality,aerosol,atmos_column}` tasks (SLA `SILVER_SLA`),
-dependent on the Phase 8b ingestion DAGs (`openaq_ingest`, `tropomi_ingest`,
-`modis_aod_ingest`), feeding the single `gold_lakehouse` task. Mirrored in
+adds `silver_{air_quality,aerosol,atmos_column,wind}` tasks (SLA `SILVER_SLA`),
+dependent on the Phase 8b ingestion DAGs (`ingest_openaq`, `ingest_nasa_power`,
+`ingest_tropomi`, `ingest_modis_aod`), feeding the single `gold_lakehouse` task. Mirrored in
 [`scripts/run_pipeline.sh`](../../transformation/scripts/run_pipeline.sh) and
 [`scripts/run_climate_silver.py`](../../transformation/scripts/run_climate_silver.py).
+
+The `fire_aoi_attribution` Gold audit mart retains one row per Silver fire
+detection, including match status, ingestion provenance, FRP, and brightness
+source fields. AOI/day sums can differ from Silver totals when detections are
+unmatched; overlapping AOIs can also cause AOI/day sums to exceed matched rows.
 
 ## Tests
 

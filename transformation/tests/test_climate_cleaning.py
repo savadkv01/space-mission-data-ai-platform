@@ -6,6 +6,7 @@ from transformation.batch.climate_bronze_to_silver import (
     silver_aerosol,
     silver_air_quality,
     silver_atmos_column,
+    silver_wind,
 )
 from transformation.cleaning.climate.units import (
     canonical_pollutant_code,
@@ -161,3 +162,25 @@ def test_silver_atmos_column_rejects_unknown_gas():
     result = silver_atmos_column([_bucket(0.1, "XYZ", "TROPOMI")])
     assert not result.rows
     assert "unknown:gas" in result.quarantine[0]["_reasons"]
+
+
+def test_silver_wind_conforms_power_speed_and_direction():
+    result = silver_wind([
+        {"date": "20240601", "parameter": "WS2M", "value": 4.5, "aoi_id": "AOI-DXB",
+         "latitude": 25.1, "longitude": 55.2, "_ingest_id": "speed"},
+        {"date": "20240601", "parameter": "WD2M", "value": 275.0, "aoi_id": "AOI-DXB",
+         "latitude": 25.1, "longitude": 55.2, "_ingest_id": "direction"},
+        {"date": "20240601", "parameter": "T2M", "value": 35.0, "aoi_id": "AOI-DXB"},
+        {"date": "20240601", "parameter": "WD2M", "value": -999, "aoi_id": "AOI-DXB"},
+        {"date": "20240601", "parameter": "WS2M", "value": 151, "aoi_id": "AOI-DXB"},
+    ])
+
+    by_parameter = {row["parameter"]: row for row in result.rows}
+    assert by_parameter["WS2M"]["value_std"] == 4.5
+    assert by_parameter["WS2M"]["unit_std"] == "m/s"
+    assert by_parameter["WD2M"]["value_std"] == 275.0
+    assert by_parameter["WD2M"]["unit_std"] == "degree"
+    assert len(result.quarantine) == 2
+    reasons = [reason for row in result.quarantine for reason in row["_reasons"]]
+    assert "range:wind_direction" in reasons
+    assert "range:wind_speed" in reasons

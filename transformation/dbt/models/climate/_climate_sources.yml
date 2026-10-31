@@ -17,3 +17,5 @@ sources:
         description: "MODIS/VIIRS AOD per AOI per day (QA-filtered)."
       - name: silver_atmos_column
         description: "TROPOMI trace-gas column densities per AOI per day."
+      - name: silver_wind
+        description: "Validated NASA POWER WS2M and WD2M values at AOI representative points."

@@ -12,6 +12,7 @@ with surface as (
         location_id
     from {{ source('silver_climate', 'silver_air_quality') }}
     where aoi_id is not null
+      and quality_flag = 'valid'
 ),
 agg_surface as (
     select
@@ -21,7 +22,9 @@ agg_surface as (
         max(case when pollutant_code = 'PM25' then value_std end) as pm25_max,
         avg(case when pollutant_code = 'PM10' then value_std end) as pm10_mean,
         max(case when pollutant_code = 'PM10' then value_std end) as pm10_max,
-        count(distinct location_id)                              as station_count
+        count(distinct case
+            when pollutant_code in ('PM25', 'PM10') then location_id
+        end)                                                     as station_count
     from surface
     group by aoi_key, date_key
 ),

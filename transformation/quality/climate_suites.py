@@ -16,7 +16,7 @@ expectations log a signal but allow promotion.
 
 In-scope entities (Phase 6b/9b):
 
-* Silver — ``obs_air_quality``, ``obs_aerosol``, ``obs_atmos_column``
+* Silver — ``obs_air_quality``, ``obs_aerosol``, ``obs_atmos_column``, ``obs_wind``
 * Gold   — ``fact_air_quality_daily``, ``fact_dust_event_daily``,
   ``fact_climate_indicator_daily``, ``fact_vegetation_health_daily``
 """
@@ -48,7 +48,10 @@ GAS_CODES = {"NO2", "SO2", "CO", "O3", "CH4", "AER_AI"}
 #: Canonical atmospheric-column units (``obs_atmos_column.unit_std``).
 COLUMN_UNITS = {"mol/m2", "ppb", "unitless"}
 
-#: Silver quality-flag vocabulary across the three climate entities.
+#: NASA POWER daily wind parameters and units.
+WIND_UNITS = {"WS2M": "m/s", "WD2M": "degree"}
+
+#: Silver quality-flag vocabulary across climate entities.
 QUALITY_FLAGS = {"valid", "suspect", "low_coverage"}
 
 #: AQI category labels (``fact_air_quality_daily.aqi_band``).
@@ -190,6 +193,45 @@ def silver_atmos_column_suite() -> list[Expectation]:
     ]
 
 
+def silver_wind_suite() -> list[Expectation]:
+    """``obs_wind`` — NASA POWER daily wind at AOI representative points."""
+    return [
+        expect_row_count_min(1),
+        expect_not_null("wind_key"),
+        expect_not_null("event_ts"),
+        expect_not_null("stat_date"),
+        expect_not_null("aoi_id"),
+        expect_not_null("parameter"),
+        expect_not_null("value_std"),
+        expect_not_null("unit_std"),
+        expect_not_null("quality_flag"),
+        expect_unique(["wind_key"]),
+        expect_unique(["aoi_id", "parameter", "stat_date"]),
+        expect_value_in_set("parameter", set(WIND_UNITS)),
+        expect_value_in_set("unit_std", set(WIND_UNITS.values())),
+        expect_value_in_set("quality_flag", QUALITY_FLAGS),
+        expect_predicate(
+            "consistency:wind_parameter_unit",
+            lambda rows: all(
+                WIND_UNITS.get(r.get("parameter")) == r.get("unit_std")
+                for r in rows
+            ),
+            description="WS2M is m/s and WD2M is degree.",
+        ),
+        expect_predicate(
+            "range:wind_measurement",
+            lambda rows: all(
+                r.get("value_std") is not None
+                and 0 <= float(r["value_std"]) <= (
+                    150 if r.get("parameter") == "WS2M" else 360
+                )
+                for r in rows
+            ),
+            description="WS2M in [0, 150] m/s; WD2M in [0, 360] degrees.",
+        ),
+    ]
+
+
 # ===========================================================================
 # Gold suites
 # ===========================================================================
@@ -293,6 +335,7 @@ CLIMATE_SILVER_SUITES: dict[str, Callable[[], list[Expectation]]] = {
     "obs_air_quality": silver_air_quality_suite,
     "obs_aerosol": silver_aerosol_suite,
     "obs_atmos_column": silver_atmos_column_suite,
+    "obs_wind": silver_wind_suite,
 }
 
 CLIMATE_GOLD_SUITES: dict[str, Callable[[], list[Expectation]]] = {

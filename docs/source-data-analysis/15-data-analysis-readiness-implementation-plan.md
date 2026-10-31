@@ -205,3 +205,105 @@ This readiness improvement is complete when:
   gates, not pipeline completion alone.
 - The next downstream phase can identify which data products are safe to use
   and which remain exploratory, synthetic, or blocked.
+
+## 11. Phase 13 Handoff Tracker
+
+**Snapshot date:** 2026-10-31. This handoff records the effect of the
+readiness baseline on Feature Store eligibility; it does not claim that the
+upstream work packages below have been completed.
+
+| Work package | Phase 13 disposition | Current status | Closure evidence |
+|---|---|---|---|
+| WP0 — live-versus-designed inventory | Mission, orbit, launch, and weather views remain unavailable until eligible source state and lineage are established. | Snapshot tooling implemented and live-verified for all 45 catalog entries, 40 observed lake families, and 9 serving products. Unimplemented/unprobed source states remain explicit; no certification inferred. | [Generated inventory](./live-readiness-snapshot.json) with paths, counts, UTC ranges, observed schemas, prior access evidence, and refresh state. |
+| WP1 — fire/AOI evidence | Fire/AOI features remain blocked pending domain review; unmatched detections remain explicit. | Engineering slice verified: VIIRS brightness restored, all 1,686 unique detections accounted for, 258 matched and 1,428 unmatched, 472 overlapping AOI assignments reconciled through serving. Domain completeness/coverage acceptance is pending. | Source-to-Silver regression tests, persisted per-detection ledger, exact grid/AOI/serving reconciliation, and [fire contract](./16-live-readiness-and-fire-contract.md). |
+| WP2 — spectral-index access | Flood, vegetation, NDVI, NDWI, and NBR features are blocked. No synthetic image features are generated. | Partial; the live GEE fallback now populates `silver_scene`, `silver_index`, and dependent Gold products, but index freshness breaches the ≤48-hour objective and quality/coverage still need domain approval. Features remain blocked. | Approved source access or alternative plus fresh, provenance-backed indices, cloud-mask/coverage validation, and derived-product tests. |
+| WP3 — air-quality integrity | Pollutant features are blocked. | Open; native/canonical units and per-measure coverage are unresolved. | O3 conversion tests, source/native-unit preservation, null and coverage profiles. |
+| WP4 — dust context | Wind-supported features are blocked; AOD and transport are not conflated. | Open; all 35 Gold wind measures remain null at baseline. | Evidence-backed temporal/spatial join and match-rate evidence, or explicit AOD-only use. |
+| WP5 — vessel event grain | Activity features are blocked; heuristic flags are not treated as behavior. | Open; activity rows do not establish repeated transmission tracks. | Payload-level event retention, aggregation tests, and documented screening semantics. |
+| WP6 — analysis-ready contracts | Phase 13 returns readiness state and limitations; the fire slice additionally publishes live lineage, freshness, completeness, coverage, and reconciliation gates. | Partial; fire technical gates pass, but domain approval is pending and other products are not globally certified. | Reviewed product contracts, approved thresholds, coverage reconciliation, and representative use-case review. |
+
+The implementation and per-view release state are documented in
+[docs/feature-store/03-readiness-and-blockers.md](../feature-store/03-readiness-and-blockers.md).
+The baseline above remains a historical snapshot; the live refresh below updates
+source and materialization status without certifying any product. **Feature
+registration, non-zero rows, or successful materialization do not close a
+readiness work package or certify an analytical product.**
+
+### 11.1 Live refresh and upstream remediation (2026-10-31)
+
+The event-time freshness snapshot was taken at approximately **2026-10-31
+14:13 UTC**. Ages are approximate and measure `snapshot time − max(event_ts)`,
+not ingestion time. Objectives are from the
+[freshness SLA register](../../quality/monitoring/quality-kpis.md); where no
+explicit SLA is registered, cadence observations are not represented as an SLA.
+
+| Source / entity | Latest observed event (UTC) | Approx. age | Objective / result |
+|---|---:|---:|---|
+| NOAA SWPC | 2026-10-31 09:00 | 5.2 h | No explicit project freshness SLA; live JSON parsing and Silver routing are fixed. |
+| CelesTrak TLE | 2026-10-31 04:14 | 9.9 h | Six-hour configured cadence; behind cadence, but no explicit freshness SLA was found. |
+| NASA POWER | 2026-10-30 00:00 | 38 h | No explicit project freshness SLA found. |
+| FIRMS MENA | 2026-10-31 10:56 | 3.2 h | ≤6 h; within objective. |
+| GFW | 2026-10-29 23:59 | 38 h | ≤24 h objective breached; the connector remains a vessel-identity sample, not a live AIS track feed. |
+| OpenAQ | 2026-10-31 12:00 | 2.2 h | ≤3 h; within objective after current-date filtering and up to five pages per sensor. |
+| Sentinel-2 scenes | 2026-10-29 07:02 | 55 h | ≤12 h objective breached; source revisit is approximately five days. |
+| Sentinel-2 indices | 2026-10-29 00:00 | 62 h | ≤48 h objective breached; no newer qualifying scene was available in the query window. |
+| TROPOMI | 2026-10-30 00:00 | 38 h | ≤24 h objective breached; source publication latency remains. |
+| MODIS AOD | 2026-10-27 00:00 | 110 h | ≤24 h objective breached; source publication latency remains. |
+
+Remediation removed confirmed access and transformation blockers: SWPC object
+responses now normalize `time_tag`/`Kp` and route through the space-weather
+Silver cleaner; the full-run driver now uses recent windows and the MENA FIRMS
+area; OpenAQ includes the current date and paginates beyond page one; and
+Sentinel-2 scene/index ingestion uses the live GEE fallback while preserving
+the existing Bronze source codes and downstream shapes. Sentinel Hub OAuth is
+corrected, but its Catalog API still rejects this account with HTTP 403, so
+restoring that account remains an external action. The existing Airflow
+records for the eight source DAGs (SWPC, CelesTrak, POWER, FIRMS, OpenAQ,
+TROPOMI, MODIS AOD, and GEE Sentinel-2) are now unpaused; both the CLI listing
+and persisted `DagModel` states report `is_paused=False`.
+
+The subsequent full Bronze-to-Silver-to-Gold/dbt run completed. It wrote 80
+`silver_space_weather`, 60 `silver_scene`, 14 `silver_index`, 5,047
+`silver_air_quality`, 50 `silver_aerosol`, and 140 `silver_atmos_column` rows;
+the flood and vegetation Gold products contain 35 rows each. The dbt run passed
+5/5 models and dbt tests passed 18/18. This verifies the processing path, not
+data fitness: WP2 remains partial, and GFW, Sentinel-2, TROPOMI, and MODIS
+freshness breaches remain open. Other work packages retain their documented
+coverage, measurement, lineage, and domain-approval blockers.
+
+### 11.2 WP0 / WP1 / fire-WP6 implementation verification
+
+**2026-10-31 19:52 UTC snapshot:** the repeatable
+[live inventory command](../../transformation/scripts/readiness_snapshot.py)
+reconciled the 45-entry catalog with 40 observed Bronze/Silver/Gold families
+and 9 serving products. Twelve catalog entries have explicit implementation
+mappings and eleven have populated mapped paths; mappings are non-additive
+and do not establish complete dataset coverage or current source access.
+Supplemental families, unknown access, and partial/unknown profiling are explicit.
+
+FIRMS field inspection proved that the prior brightness nulls were
+transformation loss: the VIIRS payload supplies `bright_ti4` and `bright_ti5`,
+not generic `brightness`. Silver now preserves I4 temperature, I5 separately,
+selected native field, status, unit, and Bronze lineage. Source-absent and
+invalid temperatures are distinguished from valid measurements.
+
+The live rebuild retained 6,047 Bronze envelopes, removed 4,361 duplicate
+natural keys, and produced 1,686 Silver detections with no quarantine. The
+persisted Gold attribution ledger accounts for 258 matched and 1,428 unmatched
+detections; 140 detections intersect multiple AOIs, yielding 472 assignments
+and exactly 472 summed AOI Gold detections. All 10 serving wildfire rows
+reconcile to Gold. Brightness, FRP, confidence, ingestion-ID, and batch-ID
+null counts are zero. Grid FRP averaging was made order-invariant after live
+reconciliation exposed floating-point rounding sensitivity.
+
+All automated fire technical gates passed; serving dbt rebuilt 14 models
+and passed 58 tests. Source event time spans 2026-06-30 to 2026-10-31 14:20 UTC;
+freshness at this snapshot is approximately 5.53 hours, within the existing
+six-hour objective. See the [fire contract](./16-live-readiness-and-fire-contract.md)
+and [generated snapshot](./live-readiness-snapshot.json) for reproducible evidence.
+
+**Remaining closure gates:** domain review of grain, geographic coverage,
+completeness limits, severity interpretation, and the representative query.
+Curated rectangular AOIs are not independently validated EMS activation
+ground truth. WP6 remains partial, all analytical certification remains
+blocked, and Phase 13b has not started.

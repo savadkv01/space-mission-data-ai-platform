@@ -7,6 +7,7 @@ from transformation.batch.bronze_to_silver import (
     silver_vessel,
 )
 from transformation.batch.silver_to_gold import (
+    fire_aoi_attribution,
     gold_aoi_validation,
     gold_earth_observation,
     gold_flood_aoi,
@@ -17,6 +18,28 @@ from transformation.batch.silver_to_gold import (
     gold_vessel_activity,
     gold_wildfire_aoi,
 )
+
+
+def test_fire_attribution_accounts_for_overlap_unmatched_and_invalid_date():
+    rows = [
+        {"fire_key": "in", "event_ts": "2026-10-31T00:00:00Z", "latitude": 25,
+         "longitude": 55, "frp": 12.5, "brightness": 330.0,
+         "brightness_source_field": "bright_ti4", "brightness_status": "present",
+         "source": "VIIRS"},
+        {"fire_key": "out", "event_ts": "2026-10-31T00:00:00Z", "latitude": 0, "longitude": 0},
+        {"fire_key": "bad", "event_ts": "invalid", "latitude": 25, "longitude": 55},
+    ]
+    aois = [_FIRE_AOI, {**_FIRE_AOI, "aoi_key": "overlap"}]
+    ledger = fire_aoi_attribution(rows, aois)
+    assert len(ledger) == 3
+    assert ledger[0]["match_count"] == 2
+    assert ledger[0]["frp"] == 12.5
+    assert ledger[0]["brightness_source_field"] == "bright_ti4"
+    assert ledger[0]["brightness_status"] == "present"
+    assert ledger[0]["source"] == "VIIRS"
+    assert ledger[1]["match_status"] == "unmatched"
+    assert ledger[2]["match_status"] == "invalid_date" and ledger[2]["match_count"] == 0
+    assert sum(r["detections"] for r in gold_wildfire_aoi(rows, aois)) == 2
 
 
 def test_gold_satellite_health_grain(telemetry_records):
@@ -62,6 +85,17 @@ def test_gold_earth_observation():
     assert gold[0]["detections"] == 2
     assert gold[0]["max_frp"] == 50.0
     assert gold[0]["median_frp"] == 40.0
+
+
+def test_fire_frp_means_are_invariant_to_storage_row_order():
+    from itertools import permutations
+    rows = [{"event_ts": "2026-10-31T00:00:00Z", "geo_key": "G",
+             "latitude": 25, "longitude": 55, "frp": value}
+            for value in [0.1, 0.2, 14.5575]]
+    grids = [gold_earth_observation(list(order)) for order in permutations(rows)]
+    aois = [gold_wildfire_aoi(list(order), [_FIRE_AOI]) for order in permutations(rows)]
+    assert all(result == grids[0] for result in grids)
+    assert all(result == aois[0] for result in aois)
 
 
 def test_gold_vessel_activity_grain(vessel_records):

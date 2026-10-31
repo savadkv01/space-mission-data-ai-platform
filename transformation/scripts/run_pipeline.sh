@@ -37,9 +37,10 @@ for entity in telemetry orbit space_weather fire vessel scene index; do
 done
 
 echo "==================== Bronze -> Silver (climate, Phase 9b) =============="
-# Atmospheric domain: OpenAQ air quality, MODIS/VIIRS AOD, TROPOMI columns.
+# Atmospheric domain: OpenAQ air quality, MODIS/VIIRS AOD, TROPOMI columns,
+# and NASA POWER wind context.
 # An absent Bronze source is skipped inside climate run_spark.
-for entity in air_quality aerosol atmos_column; do
+for entity in air_quality aerosol atmos_column wind; do
   echo "--> climate silver: $entity"
   "${SPARK_SUBMIT[@]}" transformation/scripts/run_climate_silver.py "$entity"
 done

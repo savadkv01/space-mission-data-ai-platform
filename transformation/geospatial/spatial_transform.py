@@ -98,7 +98,7 @@ def ring_bbox(ring: list[list[float]]) -> tuple[float, float, float, float]:
 
 
 def point_in_ring(lon: float, lat: float, ring: list[list[float]]) -> bool:
-    """Ray-casting point-in-polygon test for a single ring."""
+    """Ray-casting test including ring edges (absolute tolerance 1e-10 degrees)."""
     n = len(ring)
     if n < 3:
         return False
@@ -107,6 +107,14 @@ def point_in_ring(lon: float, lat: float, ring: list[list[float]]) -> bool:
     for i in range(n):
         xi, yi = ring[i][0], ring[i][1]
         xj, yj = ring[j][0], ring[j][1]
+        dx, dy = xj - xi, yj - yi
+        length = math.hypot(dx, dy)
+        if length and (
+            abs((lon - xi) * dy - (lat - yi) * dx) <= 1e-10 * length
+            and min(xi, xj) - 1e-10 <= lon <= max(xi, xj) + 1e-10
+            and min(yi, yj) - 1e-10 <= lat <= max(yi, yj) + 1e-10
+        ):
+            return True
         if ((yi > lat) != (yj > lat)) and (
             lon < (xj - xi) * (lat - yi) / ((yj - yi) or 1e-12) + xi
         ):
@@ -181,4 +189,3 @@ def assign_aoi(lat: float | None, lon: float | None,
                 matched.append(aoi["aoi_key"])
                 break
     return matched
-

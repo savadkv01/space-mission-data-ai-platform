@@ -49,14 +49,15 @@ SILVER_ENTITIES = [
 ]
 
 # Climate/dust/air-quality entities (Phase 9b). Their Bronze is produced by the
-# Phase 8b ingestion DAGs (``openaq_ingest``, ``tropomi_ingest``,
-# ``modis_aod_ingest``); this pipeline consumes it Bronze->Silver->Gold. Run via
-# the climate launcher (climate_bronze_to_silver.run_spark).
-CLIMATE_ENTITIES = ["air_quality", "aerosol", "atmos_column"]
+# Phase 8b ingestion DAGs (OpenAQ, NASA POWER, TROPOMI, MODIS AOD); this
+# pipeline consumes them Bronze->Silver->Gold.
+CLIMATE_ENTITIES = ["air_quality", "aerosol", "atmos_column", "wind"]
 
 # Upstream Phase 8b ingestion DAGs the climate marts depend on (documented for
 # operators; wired below with a soft ExternalTaskSensor when Airflow is present).
-CLIMATE_UPSTREAM_DAGS = ["openaq_ingest", "tropomi_ingest", "modis_aod_ingest"]
+CLIMATE_UPSTREAM_DAGS = [
+    "ingest_openaq", "ingest_nasa_power", "ingest_tropomi", "ingest_modis_aod",
+]
 
 # Per-task SLA: Silver jobs should complete within this window of their start.
 SILVER_SLA = timedelta(minutes=45)

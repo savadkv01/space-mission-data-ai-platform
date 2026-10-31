@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections import Counter
 from typing import Any, Callable
 
 from transformation.batch.bronze_to_silver import (
@@ -39,6 +40,7 @@ from transformation.batch.climate_silver_to_gold import (
     gold_vegetation_health_daily,
 )
 from transformation.batch.silver_to_gold import (
+    fire_aoi_attribution,
     gold_aoi_validation, gold_earth_observation, gold_flood_aoi,
     gold_launch_performance, gold_satellite_health, gold_scene_catalog,
     gold_space_weather_impact, gold_vessel_activity, gold_wildfire_aoi,
@@ -95,11 +97,22 @@ def build_marts(silver: dict[str, list[dict[str, Any]]],
     air_quality = silver.get("air_quality", [])
     aerosol = silver.get("aerosol", [])
     atmos = silver.get("atmos_column", [])
+    wind_by_aoi_day: dict[tuple[str, str], dict[str, float]] = {}
+    for row in silver.get("wind", []):
+        if row.get("quality_flag") != "valid" or row.get("value_std") is None:
+            continue
+        key = (row["aoi_id"], row["stat_date"])
+        wind = wind_by_aoi_day.setdefault(key, {})
+        if row.get("parameter") == "WS2M":
+            wind["wind_speed_mean"] = float(row["value_std"])
+        elif row.get("parameter") == "WD2M":
+            wind["wind_dir_dominant"] = float(row["value_std"])
     wildfire = gold_wildfire_aoi(fire, aois)
     flood = gold_flood_aoi(index, aois)
     return {
         # --- MVP Earth-observation marts ---
         "kpi_wildfire_aoi_daily": wildfire,
+        "fire_aoi_attribution": fire_aoi_attribution(fire, aois),
         "kpi_flood_aoi_daily": flood,
         "fact_vessel_activity": gold_vessel_activity(silver.get("vessel", [])),
         "fact_scene_catalog": gold_scene_catalog(silver.get("scene", [])),
@@ -108,7 +121,8 @@ def build_marts(silver: dict[str, list[dict[str, Any]]],
         "ref_aoi": [_ref_aoi_row(a) for a in aois],
         # --- Climate / dust / air-quality marts (Phase 9b) ---
         "fact_air_quality_daily": gold_air_quality_daily(air_quality, atmos),
-        "fact_dust_event_daily": gold_dust_event_daily(aerosol, atmos),
+        "fact_dust_event_daily": gold_dust_event_daily(
+            aerosol, atmos, wind_by_aoi_day=wind_by_aoi_day),
         "fact_climate_indicator_daily": gold_climate_indicator_daily(index, aois),
         "fact_vegetation_health_daily": gold_vegetation_health_daily(index, aois),
         # --- Simulation-track marts (post-MVP demonstrator, ADR-09) ---
@@ -122,7 +136,7 @@ def build_marts(silver: dict[str, list[dict[str, Any]]],
 def _gold_spark_schemas():  # pragma: no cover - needs Spark
     """Explicit ``StructType`` per Gold mart (all marts are flat)."""
     from pyspark.sql.types import (
-        BooleanType, DoubleType, LongType, StringType, StructField, StructType,
+        ArrayType, BooleanType, DoubleType, LongType, StringType, StructField, StructType,
     )
 
     def _s(n: str) -> StructField:
@@ -138,6 +152,14 @@ def _gold_spark_schemas():  # pragma: no cover - needs Spark
         return StructField(n, BooleanType(), True)
 
     return {
+        "fire_aoi_attribution": StructType([
+            _s("fire_key"), _s("event_ts"), _s("date_key"),
+            StructField("aoi_keys", ArrayType(StringType()), True),
+            _l("match_count"), _s("match_status"), _s("match_method"),
+            _d("latitude"), _d("longitude"), _d("frp"), _d("brightness"),
+            _s("brightness_source_field"), _s("brightness_status"), _s("source"),
+            _s("_ingest_id"), _s("_batch_id"),
+        ]),
         "kpi_wildfire_aoi_daily": StructType([
             _s("aoi_key"), _s("date_key"), _l("detections"), _d("mean_frp"),
             _d("max_frp"),
@@ -232,10 +254,21 @@ def run_gold_spark(seed_path: str | None = None) -> None:  # pragma: no cover - 
     silver = {
         entity: _read_silver(entity)
         for entity in ("telemetry", "space_weather", "fire", "vessel", "scene",
-                       "index", "air_quality", "aerosol", "atmos_column")
+                       "index", "air_quality", "aerosol", "atmos_column", "wind")
     }
     aois = load_aoi_reference(seed_path)
     marts = build_marts(silver, aois)
+    attribution = marts["fire_aoi_attribution"]
+    match_status = Counter(row["match_status"] for row in attribution)
+    print(
+        "[run_gold] fire AOI reconciliation: "
+        f"silver_detections={len(attribution)}, "
+        f"matched={match_status['matched']}, "
+        f"unmatched={match_status['unmatched']}, "
+        f"invalid_date={match_status['invalid_date']}, "
+        f"aoi_attributions={sum(row['match_count'] for row in attribution)}, "
+        f"gold_aoi_detections={sum(row['detections'] for row in marts['kpi_wildfire_aoi_daily'])}"
+    )
 
     schemas = _gold_spark_schemas()
     for table, rows in marts.items():

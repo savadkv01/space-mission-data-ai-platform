@@ -20,6 +20,7 @@ Gold marts produced here:
 from __future__ import annotations
 
 from collections import defaultdict
+from math import fsum
 from typing import Any
 
 from transformation.cleaning.cleaning_rules import median
@@ -177,7 +178,7 @@ def gold_earth_observation(silver_fire: list[dict[str, Any]]) -> list[dict[str, 
             "geo_key": geo,
             "date_key": day,
             "detections": len(rows),
-            "mean_frp": round(sum(frps) / len(frps), 3) if frps else None,
+            "mean_frp": round(fsum(frps) / len(frps), 3) if frps else None,
             "median_frp": median(frps),
             "max_frp": round(max(frps), 3) if frps else None,
         })
@@ -261,6 +262,35 @@ def gold_scene_catalog(silver_scene: list[dict[str, Any]]) -> list[dict[str, Any
 
 # --- 7. Wildfire per-AOI Analytics -----------------------------------------
 
+def fire_aoi_attribution(silver_fire: list[dict[str, Any]],
+                         aois: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Account for every detection once, retaining all overlapping AOI matches."""
+    out = []
+    for r in silver_fire:
+        day = _day(r.get("event_ts"))
+        keys = sorted(set(assign_aoi(r.get("latitude"), r.get("longitude"), aois)))
+        status = "invalid_date" if day is None else "matched" if keys else "unmatched"
+        out.append({
+            "fire_key": r.get("fire_key"),
+            "event_ts": r.get("event_ts"),
+            "date_key": day,
+            "aoi_keys": keys,
+            "match_count": len(keys) if day else 0,
+            "match_status": status,
+            "match_method": "wgs84_point_in_polygon",
+            "latitude": r.get("latitude"),
+            "longitude": r.get("longitude"),
+            "frp": r.get("frp"),
+            "brightness": r.get("brightness"),
+            "brightness_source_field": r.get("brightness_source_field"),
+            "brightness_status": r.get("brightness_status"),
+            "source": r.get("source"),
+            "_ingest_id": r.get("_ingest_id"),
+            "_batch_id": r.get("_batch_id"),
+        })
+    return out
+
+
 def gold_wildfire_aoi(silver_fire: list[dict[str, Any]],
                       aois: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Daily wildfire KPIs per AOI (``kpi_wildfire_aoi_daily``).
@@ -270,11 +300,11 @@ def gold_wildfire_aoi(silver_fire: list[dict[str, Any]],
     AOI and day. A detection may count toward multiple overlapping AOIs.
     """
     groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
-    for r in silver_fire:
-        day = _day(r.get("event_ts"))
-        if not day:
+    for r, attribution in zip(silver_fire, fire_aoi_attribution(silver_fire, aois)):
+        day = attribution["date_key"]
+        if attribution["match_status"] != "matched":
             continue
-        for aoi_key in assign_aoi(r.get("latitude"), r.get("longitude"), aois):
+        for aoi_key in attribution["aoi_keys"]:
             groups[(aoi_key, day)].append(r)
 
     out = []
@@ -284,7 +314,7 @@ def gold_wildfire_aoi(silver_fire: list[dict[str, Any]],
             "aoi_key": aoi_key,
             "date_key": day,
             "detections": len(rows),
-            "mean_frp": round(sum(frps) / len(frps), 3) if frps else None,
+            "mean_frp": round(fsum(frps) / len(frps), 3) if frps else None,
             "max_frp": round(max(frps), 3) if frps else None,
         })
     return out

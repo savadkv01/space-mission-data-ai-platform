@@ -1,0 +1,1935 @@
+{
+  "report_version": 1,
+  "snapshot_started_at": "2026-10-31T19:55:56.418223+00:00",
+  "snapshot_completed_at": "2026-10-31T19:56:07.477473+00:00",
+  "catalog_count": 45,
+  "sources": [
+    {
+      "catalog_id": 1,
+      "name": "N2YO Tracking API",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 2,
+      "name": "Open Notify ISS Position",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 3,
+      "name": "ISS Lightstreamer Telemetry",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 4,
+      "name": "SatNOGS DB + Network",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 5,
+      "name": "CelesTrak SatCat (status)",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 6,
+      "name": "Sentinel-2",
+      "owner": "data-eng",
+      "implementation_path": "ingestion/api/gee_sentinel2.py",
+      "expected_paths": [
+        "s3://bronze/SENTINELHUB",
+        "s3://silver/silver_scene",
+        "s3://gold/fact_scene_catalog"
+      ],
+      "observed_paths": [
+        "s3://bronze/SENTINELHUB",
+        "s3://silver/silver_scene",
+        "s3://gold/fact_scene_catalog"
+      ],
+      "designed": true,
+      "implemented": true,
+      "populated": true,
+      "refreshable": true,
+      "source_access_status": "recent_landing_evidence",
+      "last_successful_landing": "2026-10-31T14:26:24.431283+00:00",
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 7,
+      "name": "Sentinel-1 SAR",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 8,
+      "name": "Landsat 8/9",
+      "owner": "data-eng",
+      "implementation_path": "ingestion/api/landsat.py",
+      "expected_paths": [
+        "s3://bronze/LANDSAT",
+        "s3://silver/silver_scene",
+        "s3://gold/fact_scene_catalog"
+      ],
+      "observed_paths": [
+        "s3://silver/silver_scene",
+        "s3://gold/fact_scene_catalog"
+      ],
+      "designed": true,
+      "implemented": true,
+      "populated": true,
+      "refreshable": null,
+      "source_access_status": "unknown",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 9,
+      "name": "NASA FIRMS active fire",
+      "owner": "data-eng",
+      "implementation_path": "ingestion/api/nasa_firms.py",
+      "expected_paths": [
+        "s3://bronze/FIRMS",
+        "s3://silver/silver_fire",
+        "s3://gold/fire_aoi_attribution",
+        "s3://gold/kpi_wildfire_aoi_daily",
+        "s3://gold/kpi_eo_daily"
+      ],
+      "observed_paths": [
+        "s3://bronze/FIRMS",
+        "s3://silver/silver_fire",
+        "s3://gold/fire_aoi_attribution",
+        "s3://gold/kpi_wildfire_aoi_daily",
+        "s3://gold/kpi_eo_daily"
+      ],
+      "designed": true,
+      "implemented": true,
+      "populated": true,
+      "refreshable": true,
+      "source_access_status": "recent_landing_evidence",
+      "last_successful_landing": "2026-10-31T19:35:15.935752+00:00",
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 10,
+      "name": "MODIS Terra/Aqua",
+      "owner": "data-eng",
+      "implementation_path": "ingestion/api/gee_aod.py",
+      "expected_paths": [
+        "s3://bronze/MODIS_AOD",
+        "s3://silver/silver_aerosol",
+        "s3://gold/fact_dust_event_daily"
+      ],
+      "observed_paths": [
+        "s3://bronze/MODIS_AOD",
+        "s3://silver/silver_aerosol",
+        "s3://gold/fact_dust_event_daily"
+      ],
+      "designed": true,
+      "implemented": true,
+      "populated": true,
+      "refreshable": true,
+      "source_access_status": "recent_landing_evidence",
+      "last_successful_landing": "2026-10-31T14:25:55.442218+00:00",
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 11,
+      "name": "VIIRS active fire",
+      "owner": "data-eng",
+      "implementation_path": "ingestion/api/nasa_firms.py",
+      "expected_paths": [
+        "s3://bronze/FIRMS",
+        "s3://silver/silver_fire",
+        "s3://gold/fire_aoi_attribution",
+        "s3://gold/kpi_wildfire_aoi_daily",
+        "s3://gold/kpi_eo_daily"
+      ],
+      "observed_paths": [
+        "s3://bronze/FIRMS",
+        "s3://silver/silver_fire",
+        "s3://gold/fire_aoi_attribution",
+        "s3://gold/kpi_wildfire_aoi_daily",
+        "s3://gold/kpi_eo_daily"
+      ],
+      "designed": true,
+      "implemented": true,
+      "populated": true,
+      "refreshable": true,
+      "source_access_status": "recent_landing_evidence",
+      "last_successful_landing": "2026-10-31T19:35:15.935752+00:00",
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 12,
+      "name": "Copernicus EMS",
+      "owner": "data-eng",
+      "implementation_path": "ingestion/file/file_loader.py",
+      "expected_paths": [
+        "s3://bronze/EMS",
+        "s3://silver/silver_ems_aoi"
+      ],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": true,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "unknown",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 13,
+      "name": "Sentinel Hub Stat/Process API",
+      "owner": "data-eng",
+      "implementation_path": "ingestion/api/gee_sentinel2.py",
+      "expected_paths": [
+        "s3://bronze/SENTINELHUB_STATS",
+        "s3://silver/silver_index",
+        "s3://gold/kpi_flood_aoi_daily",
+        "s3://gold/fact_vegetation_health_daily",
+        "s3://gold/fact_climate_indicator_daily"
+      ],
+      "observed_paths": [
+        "s3://bronze/SENTINELHUB_STATS",
+        "s3://silver/silver_index",
+        "s3://gold/kpi_flood_aoi_daily",
+        "s3://gold/fact_vegetation_health_daily",
+        "s3://gold/fact_climate_indicator_daily"
+      ],
+      "designed": true,
+      "implemented": true,
+      "populated": true,
+      "refreshable": true,
+      "source_access_status": "recent_landing_evidence",
+      "last_successful_landing": "2026-10-31T14:28:49.745306+00:00",
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 14,
+      "name": "NOAA SWPC products",
+      "owner": "data-eng",
+      "implementation_path": "ingestion/api/noaa_swpc.py",
+      "expected_paths": [
+        "s3://bronze/SWPC",
+        "s3://silver/silver_space_weather",
+        "s3://gold/fact_weather_impact"
+      ],
+      "observed_paths": [
+        "s3://bronze/SWPC",
+        "s3://silver/silver_space_weather",
+        "s3://gold/fact_weather_impact"
+      ],
+      "designed": true,
+      "implemented": true,
+      "populated": true,
+      "refreshable": true,
+      "source_access_status": "recent_landing_evidence",
+      "last_successful_landing": "2026-10-31T19:45:02.317688+00:00",
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 15,
+      "name": "NASA DONKI",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 16,
+      "name": "GOES X-ray flux",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 17,
+      "name": "Kp / planetary index (GFZ)",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 18,
+      "name": "OMNIWeb solar wind",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 19,
+      "name": "DSCOVR / ACE real-time",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 20,
+      "name": "CelesTrak TLE/GP",
+      "owner": "data-eng",
+      "implementation_path": "ingestion/api/celestrak.py",
+      "expected_paths": [
+        "s3://bronze/CELESTRAK"
+      ],
+      "observed_paths": [
+        "s3://bronze/CELESTRAK"
+      ],
+      "designed": true,
+      "implemented": true,
+      "populated": true,
+      "refreshable": true,
+      "source_access_status": "recent_landing_evidence",
+      "last_successful_landing": "2026-10-31T19:35:23.546997+00:00",
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 21,
+      "name": "Space-Track catalog",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 22,
+      "name": "CelesTrak SOCRATES conjunctions",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 23,
+      "name": "JPL Horizons ephemerides",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 24,
+      "name": "NASA GCN/CCSDS OEM samples",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 25,
+      "name": "TLE history archives",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 26,
+      "name": "Launch Library 2",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 27,
+      "name": "SpaceX public data",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 28,
+      "name": "RocketLaunch.Live",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 29,
+      "name": "NASA spaceflight reference",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 30,
+      "name": "NASA NeoWs (NEO)",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 31,
+      "name": "NASA APOD",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 32,
+      "name": "Minor Planet Center",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 33,
+      "name": "JPL Small-Body Database",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 34,
+      "name": "Heavens-Above pass data",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 35,
+      "name": "NASA POWER",
+      "owner": "data-eng",
+      "implementation_path": "ingestion/api/nasa_power.py",
+      "expected_paths": [
+        "s3://bronze/POWER"
+      ],
+      "observed_paths": [
+        "s3://bronze/POWER"
+      ],
+      "designed": true,
+      "implemented": true,
+      "populated": true,
+      "refreshable": true,
+      "source_access_status": "recent_landing_evidence",
+      "last_successful_landing": "2026-10-31T14:21:26.499479+00:00",
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 36,
+      "name": "ERA5 (Copernicus CDS)",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 37,
+      "name": "CAMS atmosphere",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 38,
+      "name": "NOAA Climate Data Online",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 39,
+      "name": "Global Forest Watch",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 40,
+      "name": "OpenAQ air quality",
+      "owner": "data-eng",
+      "implementation_path": "ingestion/api/openaq.py",
+      "expected_paths": [
+        "s3://bronze/OPENAQ",
+        "s3://silver/silver_air_quality",
+        "s3://gold/fact_air_quality_daily"
+      ],
+      "observed_paths": [
+        "s3://bronze/OPENAQ",
+        "s3://silver/silver_air_quality",
+        "s3://gold/fact_air_quality_daily"
+      ],
+      "designed": true,
+      "implemented": true,
+      "populated": true,
+      "refreshable": true,
+      "source_access_status": "recent_landing_evidence",
+      "last_successful_landing": "2026-10-31T14:21:55.127779+00:00",
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 41,
+      "name": "NOAA tides & currents",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 42,
+      "name": "OISST sea surface temp",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 43,
+      "name": "NASA SMAP/telemetry anomaly dataset",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 44,
+      "name": "Synthetic telemetry (sgp4-generated)",
+      "owner": "data-eng",
+      "implementation_path": "ingestion/simulation/telemetry_generator.py",
+      "expected_paths": [
+        "s3://bronze/satellite_telemetry",
+        "s3://silver/silver_telemetry",
+        "s3://gold/fact_sat_health"
+      ],
+      "observed_paths": [
+        "s3://bronze/satellite_telemetry",
+        "s3://silver/silver_telemetry",
+        "s3://gold/fact_sat_health"
+      ],
+      "designed": true,
+      "implemented": true,
+      "populated": true,
+      "refreshable": null,
+      "source_access_status": "unknown",
+      "last_successful_landing": "2026-07-13T11:32:36.798111+00:00",
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    },
+    {
+      "catalog_id": 45,
+      "name": "Open Notify ISS (streaming sim source)",
+      "owner": "data-eng",
+      "implementation_path": null,
+      "expected_paths": [],
+      "observed_paths": [],
+      "designed": true,
+      "implemented": false,
+      "populated": false,
+      "refreshable": null,
+      "source_access_status": "not_implemented",
+      "last_successful_landing": null,
+      "analysis_ready": false,
+      "limitations": "No active upstream probe or domain certification. Shared paths are not additive; catalog MODIS mapping covers AOD only, not all imagery."
+    }
+  ],
+  "datasets": [
+    {
+      "path": "s3://bronze/CELESTRAK",
+      "row_count": 34320,
+      "event_time_min": "2026-06-23T17:28:00.139296+00:00",
+      "event_time_max": "2026-11-02T21:20:17.560032+00:00",
+      "distinct_dates": 29,
+      "freshness_hours": -49.406,
+      "last_successful_landing": "2026-10-31T19:35:23.546997+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "143f32bfd9b9d26c"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 25,
+      "bytes": 27801517,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:35:26.744000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://bronze/FIRMS",
+      "row_count": 6047,
+      "event_time_min": "2026-06-30T01:28:00+00:00",
+      "event_time_max": "2026-10-31T14:20:00+00:00",
+      "distinct_dates": 4,
+      "freshness_hours": 5.599,
+      "last_successful_landing": "2026-10-31T19:35:15.935752+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "4a5d68a4c60c7911"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 12,
+      "bytes": 3815311,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:35:21.748000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://bronze/GFW",
+      "row_count": 365,
+      "event_time_min": "2012-01-01T00:08:58+00:00",
+      "event_time_max": "2026-10-29T23:59:54+00:00",
+      "distinct_dates": 99,
+      "freshness_hours": 43.934,
+      "last_successful_landing": "2026-10-31T14:02:49.747771+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "009b736d4c7e8724"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 18,
+      "bytes": 577827,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:02:49.784000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://bronze/MODIS_AOD",
+      "row_count": 225,
+      "event_time_min": "2024-06-01T00:00:00+00:00",
+      "event_time_max": "2026-10-27T00:00:00+00:00",
+      "distinct_dates": 18,
+      "freshness_hours": 115.932,
+      "last_successful_landing": "2026-10-31T14:25:55.442218+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "f576f490022d72fa"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 34,
+      "bytes": 174324,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:27:29.162000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://bronze/OPENAQ",
+      "row_count": 46699,
+      "event_time_min": "2022-04-11T14:00:00+00:00",
+      "event_time_max": "2026-10-31T12:00:00+00:00",
+      "distinct_dates": 66,
+      "freshness_hours": 7.932,
+      "last_successful_landing": "2026-10-31T14:21:55.127779+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "fccf940d33bfa0b2"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 28,
+      "bytes": 59049903,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:21:55.742000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://bronze/POWER",
+      "row_count": 596,
+      "event_time_min": "2024-01-01T00:00:00+00:00",
+      "event_time_max": "2026-10-30T00:00:00+00:00",
+      "distinct_dates": 28,
+      "freshness_hours": 43.932,
+      "last_successful_landing": "2026-10-31T14:21:26.499479+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "85b9317e40553660"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 20,
+      "bytes": 261709,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:21:27.022000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://bronze/SENTINELHUB",
+      "row_count": 340,
+      "event_time_min": "2024-01-23T07:02:25+00:00",
+      "event_time_max": "2026-10-29T07:02:45.794000+00:00",
+      "distinct_dates": 12,
+      "freshness_hours": 60.886,
+      "last_successful_landing": "2026-10-31T14:26:24.431283+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "3d6d12fdffe9391c",
+        "504277dc1455d13c"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 17,
+      "bytes": 796815,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:27:20.454000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://bronze/SENTINELHUB_STATS",
+      "row_count": 28,
+      "event_time_min": "2026-10-17T00:00:00+00:00",
+      "event_time_max": "2026-10-29T00:00:00+00:00",
+      "distinct_dates": 7,
+      "freshness_hours": 67.932,
+      "last_successful_landing": "2026-10-31T14:28:49.745306+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "d7a3e998c2023961"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 4,
+      "bytes": 20712,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:28:50.099000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://bronze/SWPC",
+      "row_count": 1477,
+      "event_time_min": "2026-10-24T00:00:00+00:00",
+      "event_time_max": "2026-10-31T15:00:00+00:00",
+      "distinct_dates": 8,
+      "freshness_hours": 4.932,
+      "last_successful_landing": "2026-10-31T19:45:02.317688+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 1051,
+      "observed_field_schema_versions": [
+        "8e5c9118f397a6e3",
+        "f6a8b8b0e1f76fa5"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 25,
+      "bytes": 653067,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:45:02.519000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://bronze/TROPOMI",
+      "row_count": 677,
+      "event_time_min": "2024-06-01T00:00:00+00:00",
+      "event_time_max": "2026-10-31T00:00:00+00:00",
+      "distinct_dates": 22,
+      "freshness_hours": 19.932,
+      "last_successful_landing": "2026-10-31T14:27:50.320519+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "a0a1909b493c96bd"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 101,
+      "bytes": 523922,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:27:53.258000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://bronze/orbit_position",
+      "row_count": 30,
+      "event_time_min": "2026-07-13T11:32:36.769161+00:00",
+      "event_time_max": "2026-07-13T11:39:36.769161+00:00",
+      "distinct_dates": 1,
+      "freshness_hours": 2648.272,
+      "last_successful_landing": "2026-07-13T11:32:36.805777+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "e4aeaa19cfed98cb"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 1,
+      "bytes": 15628,
+      "unsupported_objects": [],
+      "last_modified": "2026-07-13T11:33:04.072000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://bronze/satellite_telemetry",
+      "row_count": 120,
+      "event_time_min": "2026-06-01T00:00:00+00:00",
+      "event_time_max": "2026-06-01T00:00:39+00:00",
+      "distinct_dates": 1,
+      "freshness_hours": 3667.922,
+      "last_successful_landing": "2026-07-13T11:32:36.798111+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "657c3a5f518ed6b7"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 1,
+      "bytes": 122557,
+      "unsupported_objects": [],
+      "last_modified": "2026-07-13T11:33:02.841000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://bronze/space_weather",
+      "row_count": 20,
+      "event_time_min": "2026-07-13T11:32:36.780337+00:00",
+      "event_time_max": "2026-07-13T11:51:36.780337+00:00",
+      "distinct_dates": 1,
+      "freshness_hours": 2648.072,
+      "last_successful_landing": "2026-07-13T11:32:36.810192+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "3dc21849d86b1020"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 1,
+      "bytes": 11239,
+      "unsupported_objects": [],
+      "last_modified": "2026-07-13T11:33:05.446000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://bronze/telemetry",
+      "row_count": 2640,
+      "event_time_min": "2026-06-30T17:40:43.477096+00:00",
+      "event_time_max": "2026-10-31T11:19:20.950413+00:00",
+      "distinct_dates": 5,
+      "freshness_hours": 8.61,
+      "last_successful_landing": "2026-10-31T11:19:06.116650+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "657c3a5f518ed6b7"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 32,
+      "bytes": 2733474,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T11:19:07.923000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/fact_air_quality_daily",
+      "row_count": 102,
+      "event_time_min": "2022-04-11T00:00:00+00:00",
+      "event_time_max": "2026-10-31T00:00:00+00:00",
+      "distinct_dates": 73,
+      "freshness_hours": 19.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "cddf4191d18761ea"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 12957,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:51:05.165000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/fact_climate_indicator_daily",
+      "row_count": 35,
+      "event_time_min": "2026-10-17T00:00:00+00:00",
+      "event_time_max": "2026-10-29T00:00:00+00:00",
+      "distinct_dates": 7,
+      "freshness_hours": 67.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "b2140cb69a290554"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 6736,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:51:07.624000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/fact_dust_event_daily",
+      "row_count": 50,
+      "event_time_min": "2024-06-01T00:00:00+00:00",
+      "event_time_max": "2026-10-27T00:00:00+00:00",
+      "distinct_dates": 18,
+      "freshness_hours": 115.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "707f9215c1a25188"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 8706,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:51:06.337000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/fact_sat_health",
+      "row_count": 3,
+      "event_time_min": "2026-06-01T00:00:00+00:00",
+      "event_time_max": "2026-06-01T00:00:00+00:00",
+      "distinct_dates": 1,
+      "freshness_hours": 3667.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "281da27414b5bb33"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 5158,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:51:09.629000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/fact_scene_catalog",
+      "row_count": 60,
+      "event_time_min": "2024-01-23T00:00:00+00:00",
+      "event_time_max": "2026-10-29T00:00:00+00:00",
+      "distinct_dates": 12,
+      "freshness_hours": 67.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "6f8f3de80336032a"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 7647,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:51:01.180000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/fact_vegetation_health_daily",
+      "row_count": 35,
+      "event_time_min": "2026-10-17T00:00:00+00:00",
+      "event_time_max": "2026-10-29T00:00:00+00:00",
+      "distinct_dates": 7,
+      "freshness_hours": 67.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "69f17dd75512e48e"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 6307,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:51:08.684000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/fact_vessel_activity",
+      "row_count": 88,
+      "event_time_min": "2013-02-09T00:00:00+00:00",
+      "event_time_max": "2026-10-29T00:00:00+00:00",
+      "distinct_dates": 80,
+      "freshness_hours": 67.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "d54909aeff11a91f"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 6189,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:51:00.274000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/fact_weather_impact",
+      "row_count": 10,
+      "event_time_min": "2026-06-01T00:00:00+00:00",
+      "event_time_max": "2026-10-31T00:00:00+00:00",
+      "distinct_dates": 10,
+      "freshness_hours": 19.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "ee9d28c0f1eb95e6"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 4738,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:51:11.319000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/fire_aoi_attribution",
+      "row_count": 1686,
+      "event_time_min": "2026-06-30T01:28:00+00:00",
+      "event_time_max": "2026-10-31T14:20:00+00:00",
+      "distinct_dates": 4,
+      "freshness_hours": 5.599,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "819d1cab980e2bbf"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 99067,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:50:58.183000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/kpi_aoi_validation",
+      "row_count": 11,
+      "event_time_min": null,
+      "event_time_max": null,
+      "distinct_dates": 0,
+      "freshness_hours": null,
+      "last_successful_landing": null,
+      "missing_event_times": 11,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "915e043c0de1f7e2"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 3869,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:51:03.227000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/kpi_eo_daily",
+      "row_count": 464,
+      "event_time_min": "2026-06-30T00:00:00+00:00",
+      "event_time_max": "2026-10-31T00:00:00+00:00",
+      "distinct_dates": 4,
+      "freshness_hours": 19.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "8b91fea6f35869eb"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 14221,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:51:02.263000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/kpi_flood_aoi_daily",
+      "row_count": 35,
+      "event_time_min": "2026-10-17T00:00:00+00:00",
+      "event_time_max": "2026-10-29T00:00:00+00:00",
+      "distinct_dates": 7,
+      "freshness_hours": 67.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "4cbbd196d0180f97"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 4482,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:50:59.232000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/kpi_launch_monthly",
+      "row_count": 0,
+      "event_time_min": null,
+      "event_time_max": null,
+      "distinct_dates": 0,
+      "freshness_hours": null,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 2,
+      "bytes": 873,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:51:10.515000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/kpi_wildfire_aoi_daily",
+      "row_count": 10,
+      "event_time_min": "2026-07-01T00:00:00+00:00",
+      "event_time_max": "2026-10-31T00:00:00+00:00",
+      "distinct_dates": 3,
+      "freshness_hours": 19.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "00bbb125f7fdc6ed"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 3551,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:50:56.498000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://gold/ref_aoi",
+      "row_count": 11,
+      "event_time_min": null,
+      "event_time_max": null,
+      "distinct_dates": 0,
+      "freshness_hours": null,
+      "last_successful_landing": null,
+      "missing_event_times": 11,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "b858149902d3c2b7"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 5067,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:51:04.091000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://silver/silver_aerosol",
+      "row_count": 50,
+      "event_time_min": "2024-06-01T00:00:00+00:00",
+      "event_time_max": "2026-10-27T00:00:00+00:00",
+      "distinct_dates": 18,
+      "freshness_hours": 115.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "8d51bd22b25e2d36"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 14682,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:18:17.245000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://silver/silver_air_quality",
+      "row_count": 5047,
+      "event_time_min": "2022-04-11T14:00:00+00:00",
+      "event_time_max": "2026-10-31T12:00:00+00:00",
+      "distinct_dates": 66,
+      "freshness_hours": 7.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "aa761af67a955bfd"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 337143,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:17:47.574000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://silver/silver_atmos_column",
+      "row_count": 140,
+      "event_time_min": "2024-06-01T00:00:00+00:00",
+      "event_time_max": "2026-10-31T00:00:00+00:00",
+      "distinct_dates": 22,
+      "freshness_hours": 19.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "7c714e753cde8863"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 25450,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:18:53.466000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://silver/silver_fire",
+      "row_count": 1686,
+      "event_time_min": "2026-06-30T01:28:00+00:00",
+      "event_time_max": "2026-10-31T14:20:00+00:00",
+      "distinct_dates": 4,
+      "freshness_hours": 5.599,
+      "last_successful_landing": "2026-10-31T19:35:12.147845+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "25df21dab3ec5f3f"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 167600,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T19:46:20.169000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://silver/silver_index",
+      "row_count": 14,
+      "event_time_min": "2026-10-17T00:00:00+00:00",
+      "event_time_max": "2026-10-29T00:00:00+00:00",
+      "distinct_dates": 7,
+      "freshness_hours": 67.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "db83dc76d60c9c6d"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 11873,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:16:53.323000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://silver/silver_orbit",
+      "row_count": 30,
+      "event_time_min": "2026-07-13T11:32:36.769161+00:00",
+      "event_time_max": "2026-07-13T11:39:36.769161+00:00",
+      "distinct_dates": 1,
+      "freshness_hours": 2648.272,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "1b336c4b3adf466d"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 9993,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:14:49.410000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://silver/silver_scene",
+      "row_count": 60,
+      "event_time_min": "2024-01-23T07:02:25+00:00",
+      "event_time_max": "2026-10-29T07:02:45.794000+00:00",
+      "distinct_dates": 12,
+      "freshness_hours": 60.886,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "e6eddc371dece52f"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 15607,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:16:29.101000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://silver/silver_space_weather",
+      "row_count": 80,
+      "event_time_min": "2026-07-13T11:32:36.780337+00:00",
+      "event_time_max": "2026-10-31T09:00:00+00:00",
+      "distinct_dates": 9,
+      "freshness_hours": 10.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "5575d592c4d03b48"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 10830,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:15:15.356000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://silver/silver_telemetry",
+      "row_count": 120,
+      "event_time_min": "2026-06-01T00:00:00+00:00",
+      "event_time_max": "2026-06-01T00:00:39+00:00",
+      "distinct_dates": 1,
+      "freshness_hours": 3667.922,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "50daaa88b302f088"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 29274,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:14:26.566000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://silver/silver_vessel",
+      "row_count": 88,
+      "event_time_min": "2013-02-09T03:19:03+00:00",
+      "event_time_max": "2026-10-29T23:59:54+00:00",
+      "distinct_dates": 80,
+      "freshness_hours": 43.934,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "107c3313826a76a2"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 3,
+      "bytes": 17945,
+      "unsupported_objects": [],
+      "last_modified": "2026-10-31T14:16:03.340000+00:00",
+      "record_count_status": "complete"
+    },
+    {
+      "path": "s3://silver/stream_sat_health_1m",
+      "row_count": 6,
+      "event_time_min": "2026-10-31T11:18:30+00:00",
+      "event_time_max": "2026-10-31T11:19:00+00:00",
+      "distinct_dates": 1,
+      "freshness_hours": 8.616,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "b12e6c03caecb41d"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract",
+      "object_count": 14,
+      "bytes": 12125,
+      "unsupported_objects": [
+        "stream_sat_health_1m/_spark_metadata/0",
+        "stream_sat_health_1m/_spark_metadata/1",
+        "stream_sat_health_1m/_spark_metadata/2",
+        "stream_sat_health_1m/_spark_metadata/3",
+        "stream_sat_health_1m/_spark_metadata/4"
+      ],
+      "last_modified": "2026-10-31T11:23:35.794000+00:00",
+      "record_count_status": "partial"
+    }
+  ],
+  "serving_tables": [
+    {
+      "schema": "serving",
+      "table": "serving_air_quality_daily",
+      "path": "duckdb://serving/serving_air_quality_daily",
+      "row_count": 102,
+      "event_time_min": "2022-04-11T00:00:00+00:00",
+      "event_time_max": "2026-10-31T00:00:00+00:00",
+      "distinct_dates": 73,
+      "freshness_hours": 19.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "04ec52fd86fb03fd"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract"
+    },
+    {
+      "schema": "serving",
+      "table": "serving_aoi_validation",
+      "path": "duckdb://serving/serving_aoi_validation",
+      "row_count": 11,
+      "event_time_min": null,
+      "event_time_max": null,
+      "distinct_dates": 0,
+      "freshness_hours": null,
+      "last_successful_landing": null,
+      "missing_event_times": 11,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "3e4138969dcbea8c"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract"
+    },
+    {
+      "schema": "serving",
+      "table": "serving_climate_indicator_daily",
+      "path": "duckdb://serving/serving_climate_indicator_daily",
+      "row_count": 35,
+      "event_time_min": "2026-10-17T00:00:00+00:00",
+      "event_time_max": "2026-10-29T00:00:00+00:00",
+      "distinct_dates": 7,
+      "freshness_hours": 67.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "e295e4dfda139142"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract"
+    },
+    {
+      "schema": "serving",
+      "table": "serving_dust_event_daily",
+      "path": "duckdb://serving/serving_dust_event_daily",
+      "row_count": 50,
+      "event_time_min": "2024-06-01T00:00:00+00:00",
+      "event_time_max": "2026-10-27T00:00:00+00:00",
+      "distinct_dates": 18,
+      "freshness_hours": 115.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "108070b06a17a6bb"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract"
+    },
+    {
+      "schema": "serving",
+      "table": "serving_flood_daily",
+      "path": "duckdb://serving/serving_flood_daily",
+      "row_count": 35,
+      "event_time_min": "2026-10-17T00:00:00+00:00",
+      "event_time_max": "2026-10-29T00:00:00+00:00",
+      "distinct_dates": 7,
+      "freshness_hours": 67.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "1f5b35e1ed2a13a6"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract"
+    },
+    {
+      "schema": "serving",
+      "table": "serving_scene_catalog",
+      "path": "duckdb://serving/serving_scene_catalog",
+      "row_count": 60,
+      "event_time_min": "2024-01-23T00:00:00+00:00",
+      "event_time_max": "2026-10-29T00:00:00+00:00",
+      "distinct_dates": 12,
+      "freshness_hours": 67.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "27a7458366a16df8"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract"
+    },
+    {
+      "schema": "serving",
+      "table": "serving_vegetation_health_daily",
+      "path": "duckdb://serving/serving_vegetation_health_daily",
+      "row_count": 35,
+      "event_time_min": "2026-10-17T00:00:00+00:00",
+      "event_time_max": "2026-10-29T00:00:00+00:00",
+      "distinct_dates": 7,
+      "freshness_hours": 67.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "3b4ec546fe58616e"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract"
+    },
+    {
+      "schema": "serving",
+      "table": "serving_vessel_activity",
+      "path": "duckdb://serving/serving_vessel_activity",
+      "row_count": 88,
+      "event_time_min": "2013-02-09T00:00:00+00:00",
+      "event_time_max": "2026-10-29T00:00:00+00:00",
+      "distinct_dates": 80,
+      "freshness_hours": 67.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "57ef1f027d224cf9"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract"
+    },
+    {
+      "schema": "serving",
+      "table": "serving_wildfire_daily",
+      "path": "duckdb://serving/serving_wildfire_daily",
+      "row_count": 10,
+      "event_time_min": "2026-07-01T00:00:00+00:00",
+      "event_time_max": "2026-10-31T00:00:00+00:00",
+      "distinct_dates": 3,
+      "freshness_hours": 19.932,
+      "last_successful_landing": null,
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "35edf49afc7835aa"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract"
+    }
+  ],
+  "unmapped_bronze_families": [
+    "s3://bronze/GFW",
+    "s3://bronze/TROPOMI",
+    "s3://bronze/orbit_position",
+    "s3://bronze/space_weather",
+    "s3://bronze/telemetry"
+  ],
+  "fire_product": {
+    "product": "serving_wildfire_daily",
+    "business_question": "How many detected thermal anomalies intersect each configured AOI per UTC day?",
+    "grain": "AOI / UTC date; overlapping AOIs may count a detection more than once",
+    "data_nature": "real/open FIRMS observations; derived aggregates; curated reference AOIs",
+    "lineage": [
+      "s3://bronze/FIRMS",
+      "s3://silver/silver_fire",
+      "s3://gold/fire_aoi_attribution",
+      "s3://gold/kpi_wildfire_aoi_daily",
+      "serving/dbt/serving.duckdb:serving_wildfire_daily"
+    ],
+    "time_coverage": {
+      "path": "s3://silver/silver_fire",
+      "row_count": 1686,
+      "event_time_min": "2026-06-30T01:28:00+00:00",
+      "event_time_max": "2026-10-31T14:20:00+00:00",
+      "distinct_dates": 4,
+      "freshness_hours": 5.599,
+      "last_successful_landing": "2026-10-31T19:35:12.147845+00:00",
+      "missing_event_times": 0,
+      "invalid_event_times": 0,
+      "observed_field_schema_versions": [
+        "25df21dab3ec5f3f"
+      ],
+      "schema_version_kind": "sha256-field-names-v1; not a declared schema contract"
+    },
+    "counts": {
+      "bronze_rows": 6047,
+      "quarantined": 0,
+      "duplicates_removed": 4361,
+      "silver_detections": 1686,
+      "matched": 258,
+      "unmatched": 1428,
+      "invalid_date": 0,
+      "overlapping_detections": 140,
+      "aoi_assignments": 472,
+      "gold_detections": 472,
+      "serving_rows": 10
+    },
+    "coverage_by_aoi": {
+      "AOI-ARABIA": 100,
+      "AOI-DESERT": 3,
+      "AOI-UAE-NAT": 27,
+      "AOI-COAST": 24,
+      "AOI-GULF": 104,
+      "AOI-IRAN": 84,
+      "AOI-IRAQ": 85,
+      "EMSR-CA-FIRE-2025": 45
+    },
+    "key_field_completeness": {
+      "brightness": {
+        "missing_count": 0,
+        "null_fraction": 0.0
+      },
+      "frp": {
+        "missing_count": 0,
+        "null_fraction": 0.0
+      },
+      "confidence": {
+        "missing_count": 0,
+        "null_fraction": 0.0
+      },
+      "_ingest_id": {
+        "missing_count": 0,
+        "null_fraction": 0.0
+      },
+      "_batch_id": {
+        "missing_count": 0,
+        "null_fraction": 0.0
+      }
+    },
+    "brightness_status_counts": {
+      "present": 1686
+    },
+    "mapping_error_count": 0,
+    "representative_query": {
+      "purpose": "Review the largest AOI/day detection counts; not a hazard confirmation.",
+      "sql": "SET schema = 'serving'; SELECT aoi_key, date_key, detections, mean_frp, max_frp FROM serving_wildfire_daily ORDER BY detections DESC, aoi_key, date_key LIMIT 5",
+      "results": [
+        {
+          "aoi_key": "AOI-GULF",
+          "date_key": "2026-10-31",
+          "detections": 104,
+          "mean_frp": 7.336,
+          "max_frp": 31.05
+        },
+        {
+          "aoi_key": "AOI-ARABIA",
+          "date_key": "2026-10-31",
+          "detections": 100,
+          "mean_frp": 8.482,
+          "max_frp": 40.21
+        },
+        {
+          "aoi_key": "AOI-IRAQ",
+          "date_key": "2026-10-31",
+          "detections": 85,
+          "mean_frp": 10.872,
+          "max_frp": 68.73
+        },
+        {
+          "aoi_key": "AOI-IRAN",
+          "date_key": "2026-10-31",
+          "detections": 84,
+          "mean_frp": 9.185,
+          "max_frp": 31.05
+        },
+        {
+          "aoi_key": "AOI-UAE-NAT",
+          "date_key": "2026-10-31",
+          "detections": 27,
+          "mean_frp": 7.519,
+          "max_frp": 24.3
+        }
+      ],
+      "domain_review_status": "pending"
+    },
+    "technical_gates": {
+      "required_source_populated": true,
+      "bronze_to_silver_keys": true,
+      "measurement_and_lineage_mapping": true,
+      "silver_keys_unique": true,
+      "persisted_attribution_matches": true,
+      "every_detection_accounted": true,
+      "gold_aoi_reconciliation": true,
+      "gold_grid_reconciliation": true,
+      "serving_reconciliation": true,
+      "freshness_within_6h": true
+    },
+    "technical_status": "pass",
+    "quality_status": "blocked",
+    "analysis_ready": false,
+    "limitations": [
+      "Domain owner has not approved grain, completeness bounds, or an acceptance scenario.",
+      "AOI seed is curated rectangular reference data, not independently verified EMS activation evidence.",
+      "Unmatched detections remain in the attribution ledger; no AOI is invented to improve match rate.",
+      "Matching uses WGS84 lon/lat, outer edges included, hole interiors/edges excluded; no reprojection, antimeridian polygons, temporal activation matching, or burned-area inference.",
+      "Brightness is VIIRS I4 or MODIS channel-21/22 temperature (K), not interchangeable radiance; FRP (MW) and confidence remain independent. Confidence categories use the existing numeric mapping.",
+      "A successful snapshot is a bounded observation window, not a transactional whole-lake snapshot."
+    ]
+  },
+  "limitations": "No credentials, source URIs, station/vessel payloads or raw records are emitted. Recent landing is evidence of prior access, not a live upstream probe. Unsupported objects and unknown time ranges are explicit. Source mappings are non-additive."
+}

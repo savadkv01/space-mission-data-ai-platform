@@ -21,6 +21,10 @@ Deep technical analysis of all data sources for the Space Mission Data & AI Plat
 | 13 | [Glossary](./13-glossary.md) | Terms |
 | 14 | [References & Access Prerequisites](./14-references.md) | Access points + auth requirements |
 | 15 | [Data Analysis Readiness Implementation Plan](./15-data-analysis-readiness-implementation-plan.md) | Prioritized work packages to make populated data analytically trustworthy |
+| 16 | [Live Readiness and Fire Contract](./16-live-readiness-and-fire-contract.md) | WP0 snapshot operation and WP1/WP6 fire mapping, coverage, and release evidence |
+
+The [generated live snapshot](./live-readiness-snapshot.json) records observed
+state separately from the historical Phase 5 catalog.
 
 ## Extensions
 
@@ -30,4 +34,7 @@ Deep technical analysis of all data sources for the Space Mission Data & AI Plat
 
 ## Scope Note
 
-Documentation only. All sources free and open, feasible on a 16 GB RAM laptop. Builds on the Phase 2 catalog of 30 datasets.
+The original Phase 5 analysis is documentation only. The explicitly authorized
+readiness remediation is tracked separately in documents 15-16; it does not
+advance to climate feature materialization or model training. Sources and
+bounded verification remain feasible on a 16 GB RAM laptop.

@@ -15,7 +15,7 @@ models:
       - name: date_key
         tests: [not_null]
       - name: station_count
-        description: "Contributing OpenAQ stations (>=1 required for AQI)."
+        description: "Valid PM-contributing OpenAQ stations (>=1 required for AQI)."
         tests:
           - dbt_utils.accepted_range:
               min_value: 0

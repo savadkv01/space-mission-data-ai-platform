@@ -252,12 +252,20 @@ def gold_air_quality_daily(silver_air_quality: list[dict[str, Any]],
     out = []
     for key in sorted(set(surface) | set(columns)):
         aoi, day = key
-        rows = surface.get(key, [])
+        rows = [
+            row for row in surface.get(key, [])
+            if row.get("quality_flag") == "valid"
+        ]
         pm25 = [r["value_std"] for r in rows
                 if r.get("pollutant_code") == "PM25" and r.get("value_std") is not None]
         pm10 = [r["value_std"] for r in rows
                 if r.get("pollutant_code") == "PM10" and r.get("value_std") is not None]
-        stations = {r.get("location_id") for r in rows if r.get("location_id")}
+        stations = {
+            r.get("location_id") for r in rows
+            if r.get("location_id")
+            and r.get("pollutant_code") in {"PM25", "PM10"}
+            and r.get("value_std") is not None
+        }
 
         col_rows = columns.get(key, [])
         gas_means = defaultdict(list)

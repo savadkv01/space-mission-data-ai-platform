@@ -17,6 +17,7 @@ from transformation.batch.climate_silver_to_gold import (
     ndvi_health_band,
     warming_flag,
 )
+from transformation.batch.gold_lakehouse import build_marts
 
 _DXB_AOI = {
     "aoi_key": "AOI-DXB",
@@ -75,7 +76,7 @@ def test_exceedance():
 
 def _aq_row(pollutant, value, loc, day="2024-06-01"):
     return {"aoi_id": "AOI-DXB", "stat_date": day, "pollutant_code": pollutant,
-            "value_std": value, "location_id": loc}
+            "value_std": value, "location_id": loc, "quality_flag": "valid"}
 
 
 def test_gold_air_quality_daily_grain_and_aqi():
@@ -106,6 +107,21 @@ def test_gold_air_quality_no_station_no_aqi():
     assert gold[0]["aqi_pm25"] is None
 
 
+def test_gold_air_quality_excludes_suspect_units_and_counts_only_valid_pm_stations():
+    surface = [
+        _aq_row("PM25", 12.0, "valid-station"),
+        {**_aq_row("PM25", 900.0, "suspect-station"), "quality_flag": "suspect"},
+        {**_aq_row("PM10", 800.0, "suspect-station"), "quality_flag": "suspect"},
+    ]
+
+    result = gold_air_quality_daily(surface)[0]
+
+    assert result["pm25_mean"] == 12.0
+    assert result["pm10_mean"] is None
+    assert result["station_count"] == 1
+    assert result["aqi_pm10"] is None
+
+
 # --- fact_dust_event_daily -------------------------------------------------
 
 def _aer_row(aoi, day, aod, uv=None, vf=0.9):
@@ -134,6 +150,49 @@ def test_gold_dust_uv_from_atmos_column():
     gold = gold_dust_event_daily(aerosol, columns)
     assert gold[0]["uv_aerosol_index_mean"] == 1.4
     assert gold[0]["dust_flag"] is True
+
+
+def test_gold_dust_uses_wind_for_context_and_transport_flag():
+    aerosol = [
+        _aer_row("AOI-DXB", "2024-06-01", 0.8, uv=1.5),
+        _aer_row("AOI-ARABIA", "2024-06-01", 1.2, uv=2.0),
+    ]
+    wind = {("AOI-DXB", "2024-06-01"): {
+        "wind_speed_mean": 4.5,
+        "wind_dir_dominant": 275.0,
+    }}
+
+    result = gold_dust_event_daily(aerosol, wind_by_aoi_day=wind)
+    dxb = next(row for row in result if row["aoi_key"] == "AOI-DXB")
+
+    assert dxb["wind_speed_mean"] == 4.5
+    assert dxb["wind_dir_dominant"] == 275.0
+    assert dxb["transport_flag"] is True
+
+
+def test_gold_lakehouse_wires_silver_power_wind_into_dust_mart():
+    marts = build_marts(
+        {
+            "aerosol": [
+                _aer_row("AOI-DXB", "2024-06-01", 0.8, uv=1.5),
+                _aer_row("AOI-ARABIA", "2024-06-01", 1.2, uv=2.0),
+            ],
+            "wind": [
+                {"aoi_id": "AOI-DXB", "stat_date": "2024-06-01",
+                 "parameter": "WS2M", "value_std": 4.5, "quality_flag": "valid"},
+                {"aoi_id": "AOI-DXB", "stat_date": "2024-06-01",
+                 "parameter": "WD2M", "value_std": 275.0, "quality_flag": "valid"},
+            ],
+        },
+        [],
+    )
+
+    dxb = next(
+        row for row in marts["fact_dust_event_daily"] if row["aoi_key"] == "AOI-DXB"
+    )
+    assert dxb["wind_speed_mean"] == 4.5
+    assert dxb["wind_dir_dominant"] == 275.0
+    assert dxb["transport_flag"] is True
 
 
 # --- fact_vegetation_health_daily ------------------------------------------

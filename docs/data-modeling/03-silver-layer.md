@@ -75,12 +75,24 @@ carries the Bronze provenance columns (`_ingest_id`, `_batch_id`, `_source`,
 | `latitude` | double | Range [-90, 90] |
 | `longitude` | double | Range [-180, 180] |
 | `geo_key` | string | Grid-snapped cell for spatial joins |
-| `brightness` | double | Kelvin; nullable |
+| `brightness` | double | Kelvin; native `brightness`, or VIIRS `bright_ti4` when native `brightness` is absent; non-finite/non-numeric values become null with an invalid-source status |
+| `brightness_source_field` | string | `brightness` or `bright_ti4`; null when neither applicable source field is present |
+| `brightness_status` | string | `present`, `source_absent`, or `source_invalid`; distinguishes missing input from mapping loss |
+| `brightness_unit` | string | `K`; brightness temperature, not radiance |
+| `bright_ti5` | double | Native VIIRS I5 brightness temperature (K), preserved separately; nullable |
+| `bright_t31` | double | Native MODIS channel-31 brightness temperature (K), preserved separately; nullable |
 | `frp` | double | Fire Radiative Power (MW); >= 0 |
 | `confidence` | int | Normalized to 0-100 (nominal/low/high mapped) |
 | `satellite` | string | Platform code (e.g. N, Aqua, Terra) |
 | `daynight` | string | `D` or `N`; nullable |
 | `source` | string | `VIIRS` or `MODIS` |
+| `_source`, `_ingest_id`, `_batch_id`, `_ingest_ts` | string | Bronze source and landing lineage retained |
+
+VIIRS I4 and MODIS channel-21/22 temperatures are not interchangeable spectral
+measurements. FRP and confidence remain independent measures; no brightness
+threshold is used to certify fire severity. The
+[fire readiness contract](../source-data-analysis/16-live-readiness-and-fire-contract.md)
+defines the mapping, coverage reconciliation, and release gates.
 
 ### `obs_vessel` (source: Global Fishing Watch)
 

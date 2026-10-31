@@ -21,6 +21,7 @@ from transformation.quality.climate_suites import (
     silver_aerosol_suite,
     silver_air_quality_suite,
     silver_atmos_column_suite,
+    silver_wind_suite,
 )
 
 
@@ -64,6 +65,17 @@ def _atmos_column_rows():
          "stat_date": "2024-06-01", "aoi_id": "AOI-DXB", "geo_key": "g1",
          "gas_code": "AER_AI", "mean": -0.3, "unit_std": "unitless",
          "valid_pixel_fraction": 0.9, "quality_flag": "valid"},
+    ]
+
+
+def _wind_rows():
+    return [
+        {"wind_key": "w1", "event_ts": "2024-06-01T00:00:00Z",
+         "stat_date": "2024-06-01", "aoi_id": "AOI-DXB", "parameter": "WS2M",
+         "value_std": 4.5, "unit_std": "m/s", "quality_flag": "valid"},
+        {"wind_key": "w2", "event_ts": "2024-06-01T00:00:00Z",
+         "stat_date": "2024-06-01", "aoi_id": "AOI-DXB", "parameter": "WD2M",
+         "value_std": 275.0, "unit_std": "degree", "quality_flag": "valid"},
     ]
 
 
@@ -125,6 +137,11 @@ def test_silver_atmos_column_clean_passes():
     assert result.passed, result.failures
 
 
+def test_silver_wind_clean_passes():
+    result = run_checkpoint(_wind_rows(), silver_wind_suite(), "obs_wind")
+    assert result.passed, result.failures
+
+
 # --- Gold: clean batches pass -----------------------------------------------
 
 def test_gold_air_quality_daily_clean_passes():
@@ -157,7 +174,7 @@ def test_gold_vegetation_health_daily_clean_passes():
 
 def test_registries_expose_all_entities():
     assert set(CLIMATE_SILVER_SUITES) == {
-        "obs_air_quality", "obs_aerosol", "obs_atmos_column"}
+        "obs_air_quality", "obs_aerosol", "obs_atmos_column", "obs_wind"}
     assert set(CLIMATE_GOLD_SUITES) == {
         "fact_air_quality_daily", "fact_dust_event_daily",
         "fact_climate_indicator_daily", "fact_vegetation_health_daily"}
@@ -227,6 +244,14 @@ def test_atmos_column_negative_gas_mean_fails():
     result = run_checkpoint(rows, silver_atmos_column_suite(), "obs_atmos_column")
     assert not result.passed
     assert any("column_mean_non_negative" in f for f in result.failures)
+
+
+def test_wind_invalid_speed_fails():
+    rows = _wind_rows()
+    rows[0]["value_std"] = 151.0
+    result = run_checkpoint(rows, silver_wind_suite(), "obs_wind")
+    assert not result.passed
+    assert any("wind_measurement" in f for f in result.failures)
 
 
 # --- Gold: injected defects fail critically ---------------------------------

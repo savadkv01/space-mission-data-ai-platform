@@ -25,6 +25,7 @@ from transformation.cleaning.cleaning_rules import CleanResult, deduplicate
 from transformation.cleaning.climate.aerosol import clean_aerosol
 from transformation.cleaning.climate.air_quality import clean_air_quality
 from transformation.cleaning.climate.atmos_column import clean_atmos_column
+from transformation.cleaning.climate.wind import clean_power_wind
 from transformation.geospatial.spatial_transform import assign_aoi
 
 
@@ -85,6 +86,22 @@ def silver_atmos_column(records: list[dict[str, Any]]) -> SilverResult:
                   key_fields=["atmos_key"])
 
 
+# --- obs_wind (NASA POWER) --------------------------------------------------
+
+def silver_wind(records: list[dict[str, Any]]) -> SilverResult:
+    """Conform daily NASA POWER wind observations at AOI representative points."""
+    wind_records = [
+        row for row in records
+        if str(row.get("parameter") or "").upper() in {"WS2M", "WD2M"}
+    ]
+    return _apply(
+        wind_records,
+        clean_power_wind,
+        entity="silver_wind",
+        key_fields=["aoi_id", "stat_date", "parameter"],
+    )
+
+
 # --- Spark entrypoint (requires infrastructure) -----------------------------
 
 def _silver_spark_schema(entity: str):  # pragma: no cover - needs Spark
@@ -131,6 +148,12 @@ def _silver_spark_schema(entity: str):  # pragma: no cover - needs Spark
             _d("max"), _d("stddev"), _s("unit_std"), _d("valid_pixel_fraction"),
             _s("quality_flag"), _s("source"), _s("_ingest_id"), _s("_batch_id"),
         ]),
+        "wind": StructType([
+            _s("wind_key"), _s("event_ts"), _s("stat_date"), _s("aoi_id"),
+            _s("parameter"), _d("value_std"), _s("unit_std"), _d("latitude"),
+            _d("longitude"), _s("quality_flag"), _s("source"),
+            _s("_ingest_id"), _s("_batch_id"),
+        ]),
     }
     return schemas.get(entity)
 
@@ -148,6 +171,7 @@ def run_spark(entity: str) -> None:  # pragma: no cover - needs Spark/MinIO
         "air_quality": (["OPENAQ"], silver_air_quality),
         "aerosol": (["MODIS_AOD"], silver_aerosol),
         "atmos_column": (["TROPOMI"], silver_atmos_column),
+        "wind": (["POWER"], silver_wind),
     }
     if entity not in transforms:
         raise ValueError(f"unknown climate entity: {entity}")

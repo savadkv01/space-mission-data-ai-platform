@@ -52,6 +52,15 @@ def test_point_in_polygon_respects_holes():
     assert point_in_polygon(55.0, 25.0, with_hole) is False
 
 
+def test_polygon_edges_vertices_hole_edges_and_multipolygons():
+    for lon, lat in [(54.8, 25), (55.6, 25), (55, 24.8), (55, 25.5), (55.6, 25.5)]:
+        assert point_in_polygon(lon, lat, _SQUARE)
+    hole = [[54.9, 24.9], [55.5, 24.9], [55.5, 25.4], [54.9, 25.4], [54.9, 24.9]]
+    assert not point_in_polygon(55.5, 25, [_SQUARE[0], hole])
+    outside = [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]]
+    assert assign_aoi(25, 55, [{"aoi_key": "multi", "polygons": [outside, _SQUARE]}]) == ["multi"]
+
+
 def test_assign_aoi_matches_and_prefilters():
     assert assign_aoi(25.0, 55.0, [_AOI]) == ["EMSR001"]
     assert assign_aoi(10.0, 10.0, [_AOI]) == []  # bbox pre-filter rejects
