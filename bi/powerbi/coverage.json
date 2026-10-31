@@ -1,0 +1,482 @@
+[
+  {
+    "dashboard": "executive",
+    "page": "Executive - Overview",
+    "chart": "Total Fire Detections",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000001",
+    "dataset": "platform_daily",
+    "source": "bi\\superset\\charts\\exec_fire_detections.yaml",
+    "powerbi_visual": "card",
+    "deviation": null
+  },
+  {
+    "dashboard": "executive",
+    "page": "Executive - Overview",
+    "chart": "EMS Corroboration Rate",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000002",
+    "dataset": "aoi_validation",
+    "source": "bi\\superset\\charts\\exec_corroboration_rate.yaml",
+    "powerbi_visual": "card",
+    "deviation": null
+  },
+  {
+    "dashboard": "executive",
+    "page": "Executive - Overview",
+    "chart": "Suspicious Vessels",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000003",
+    "dataset": "platform_daily",
+    "source": "bi\\superset\\charts\\exec_suspicious_vessels.yaml",
+    "powerbi_visual": "card",
+    "deviation": null
+  },
+  {
+    "dashboard": "executive",
+    "page": "Executive - Overview",
+    "chart": "Detections & Flood AOI-days (trend)",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000004",
+    "dataset": "platform_daily",
+    "source": "bi\\superset\\charts\\exec_detections_trend.yaml",
+    "powerbi_visual": "clusteredColumnChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "executive",
+    "page": "Executive - Overview",
+    "chart": "AQI Exceedance Days (window)",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000012",
+    "dataset": "climate_daily",
+    "source": "bi\\superset\\charts\\exec_aqi_exceedance_kpi.yaml",
+    "powerbi_visual": "card",
+    "deviation": null
+  },
+  {
+    "dashboard": "executive",
+    "page": "Executive - Overview",
+    "chart": "Active Dust Days (window)",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000013",
+    "dataset": "climate_daily",
+    "source": "bi\\superset\\charts\\exec_dust_days_kpi.yaml",
+    "powerbi_visual": "card",
+    "deviation": null
+  },
+  {
+    "dashboard": "executive",
+    "page": "Executive - Overview",
+    "chart": "Mean LST Anomaly (window)",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000014",
+    "dataset": "climate_daily",
+    "source": "bi\\superset\\charts\\exec_lst_anomaly_kpi.yaml",
+    "powerbi_visual": "card",
+    "deviation": null
+  },
+  {
+    "dashboard": "executive",
+    "page": "Executive - Overview",
+    "chart": "Climate Exceedance & Dust Trend",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000015",
+    "dataset": "climate_daily",
+    "source": "bi\\superset\\charts\\exec_climate_trend.yaml",
+    "powerbi_visual": "lineChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "executive",
+    "page": "Executive - Details",
+    "chart": "Fire Detection Details",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000009",
+    "dataset": "wildfire_daily",
+    "source": "bi\\superset\\charts\\eo_fire_detection_details.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "executive",
+    "page": "Executive - Details",
+    "chart": "Suspicious Vessel Details",
+    "chart_uuid": "c1000000-0000-4000-8000-00000000000b",
+    "dataset": "vessel_activity",
+    "source": "bi\\superset\\charts\\maritime_suspicious_vessel_details.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "earth-observation",
+    "page": "Earth Observation - Overview",
+    "chart": "Wildfire Severity Distribution",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000005",
+    "dataset": "wildfire_daily",
+    "source": "bi\\superset\\charts\\eo_severity_pie.yaml",
+    "powerbi_visual": "pieChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "earth-observation",
+    "page": "Earth Observation - Overview",
+    "chart": "Wildfire Detections by Day",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000006",
+    "dataset": "wildfire_daily",
+    "source": "bi\\superset\\charts\\eo_detections_by_day.yaml",
+    "powerbi_visual": "clusteredColumnChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "earth-observation",
+    "page": "Earth Observation - Overview",
+    "chart": "Peak FRP by AOI",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000007",
+    "dataset": "wildfire_daily",
+    "source": "bi\\superset\\charts\\eo_peak_frp_table.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "earth-observation",
+    "page": "Earth Observation - Overview",
+    "chart": "Suspicious Vessel Queue",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000008",
+    "dataset": "vessel_activity",
+    "source": "bi\\superset\\charts\\eo_vessel_queue_table.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "earth-observation",
+    "page": "Earth Observation - Details",
+    "chart": "Fire Detection Details",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000009",
+    "dataset": "wildfire_daily",
+    "source": "bi\\superset\\charts\\eo_fire_detection_details.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "earth-observation",
+    "page": "Earth Observation - Details",
+    "chart": "Flood Extent Details",
+    "chart_uuid": "c1000000-0000-4000-8000-00000000000a",
+    "dataset": "flood_daily",
+    "source": "bi\\superset\\charts\\eo_flood_extent_details.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "earth-observation",
+    "page": "Earth Observation - Details",
+    "chart": "Suspicious Vessel Details",
+    "chart_uuid": "c1000000-0000-4000-8000-00000000000b",
+    "dataset": "vessel_activity",
+    "source": "bi\\superset\\charts\\maritime_suspicious_vessel_details.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "air-quality-dust",
+    "page": "Air Quality & Dust - Air Quality",
+    "chart": "AQI Exceedance Days",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000001",
+    "dataset": "air_quality_daily",
+    "source": "bi\\superset\\charts\\aq_exceedance_kpi.yaml",
+    "powerbi_visual": "card",
+    "deviation": null
+  },
+  {
+    "dashboard": "air-quality-dust",
+    "page": "Air Quality & Dust - Air Quality",
+    "chart": "AQI Band Distribution",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000003",
+    "dataset": "air_quality_daily",
+    "source": "bi\\superset\\charts\\aq_aqi_band_pie.yaml",
+    "powerbi_visual": "pieChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "air-quality-dust",
+    "page": "Air Quality & Dust - Air Quality",
+    "chart": "PM2.5 / PM10 Trend",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000002",
+    "dataset": "air_quality_daily",
+    "source": "bi\\superset\\charts\\aq_pm_trend.yaml",
+    "powerbi_visual": "lineChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "air-quality-dust",
+    "page": "Air Quality & Dust - Dust",
+    "chart": "Active Dust Days",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000005",
+    "dataset": "dust_event_daily",
+    "source": "bi\\superset\\charts\\dust_event_days_kpi.yaml",
+    "powerbi_visual": "card",
+    "deviation": null
+  },
+  {
+    "dashboard": "air-quality-dust",
+    "page": "Air Quality & Dust - Dust",
+    "chart": "Dust Severity Distribution",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000008",
+    "dataset": "dust_event_daily",
+    "source": "bi\\superset\\charts\\dust_severity_pie.yaml",
+    "powerbi_visual": "pieChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "air-quality-dust",
+    "page": "Air Quality & Dust - Dust",
+    "chart": "AOD (Dust) Trend",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000006",
+    "dataset": "dust_event_daily",
+    "source": "bi\\superset\\charts\\dust_aod_trend.yaml",
+    "powerbi_visual": "clusteredColumnChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "air-quality-dust",
+    "page": "Air Quality & Dust - Dust",
+    "chart": "Dust-flag Calendar",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000007",
+    "dataset": "dust_event_daily",
+    "source": "bi\\superset\\charts\\dust_flag_calendar.yaml",
+    "powerbi_visual": "pivotTable",
+    "deviation": "Calendar heatmap translated to a month/day matrix; no custom visual or heatmap colouring."
+  },
+  {
+    "dashboard": "air-quality-dust",
+    "page": "Air Quality & Dust - Details",
+    "chart": "Air Quality Details",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000004",
+    "dataset": "air_quality_daily",
+    "source": "bi\\superset\\charts\\aq_pollutant_detail.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "air-quality-dust",
+    "page": "Air Quality & Dust - Details",
+    "chart": "Dust & Wind-transport Details",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000009",
+    "dataset": "dust_event_daily",
+    "source": "bi\\superset\\charts\\dust_transport_detail.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "climate-indicators",
+    "page": "Climate Indicators - Temperature & Water",
+    "chart": "Mean LST Anomaly",
+    "chart_uuid": "c2000000-0000-4000-8000-00000000000a",
+    "dataset": "climate_indicator_daily",
+    "source": "bi\\superset\\charts\\clim_lst_anomaly_kpi.yaml",
+    "powerbi_visual": "card",
+    "deviation": null
+  },
+  {
+    "dashboard": "climate-indicators",
+    "page": "Climate Indicators - Temperature & Water",
+    "chart": "LST & Anomaly Trend",
+    "chart_uuid": "c2000000-0000-4000-8000-00000000000b",
+    "dataset": "climate_indicator_daily",
+    "source": "bi\\superset\\charts\\clim_lst_trend.yaml",
+    "powerbi_visual": "lineChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "climate-indicators",
+    "page": "Climate Indicators - Temperature & Water",
+    "chart": "SST & Anomaly Trend (coastal)",
+    "chart_uuid": "c2000000-0000-4000-8000-00000000000e",
+    "dataset": "climate_indicator_daily",
+    "source": "bi\\superset\\charts\\clim_sst_trend.yaml",
+    "powerbi_visual": "lineChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "climate-indicators",
+    "page": "Climate Indicators - Vegetation & Land",
+    "chart": "Vegetation Health Distribution",
+    "chart_uuid": "c2000000-0000-4000-8000-00000000000d",
+    "dataset": "vegetation_health_daily",
+    "source": "bi\\superset\\charts\\veg_health_pie.yaml",
+    "powerbi_visual": "pieChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "climate-indicators",
+    "page": "Climate Indicators - Vegetation & Land",
+    "chart": "NDVI Vegetation Trend",
+    "chart_uuid": "c2000000-0000-4000-8000-00000000000c",
+    "dataset": "vegetation_health_daily",
+    "source": "bi\\superset\\charts\\clim_ndvi_trend.yaml",
+    "powerbi_visual": "lineChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "climate-indicators",
+    "page": "Climate Indicators - Vegetation & Land",
+    "chart": "Tree-cover Loss by AOI",
+    "chart_uuid": "c2000000-0000-4000-8000-00000000000f",
+    "dataset": "climate_indicator_daily",
+    "source": "bi\\superset\\charts\\clim_deforestation_bar.yaml",
+    "powerbi_visual": "clusteredColumnChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "climate-indicators",
+    "page": "Climate Indicators - Details",
+    "chart": "Climate Indicator Details",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000010",
+    "dataset": "climate_indicator_daily",
+    "source": "bi\\superset\\charts\\clim_indicator_detail.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "climate-indicators",
+    "page": "Climate Indicators - Details",
+    "chart": "Vegetation Health Details",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000011",
+    "dataset": "vegetation_health_daily",
+    "source": "bi\\superset\\charts\\veg_health_detail.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "imagery-quality",
+    "page": "Imagery & Catalog Quality - Overview",
+    "chart": "Searchable Scene Rate",
+    "chart_uuid": "c1000000-0000-4000-8000-00000000000f",
+    "dataset": "scene_catalog",
+    "source": "bi\\superset\\charts\\imagery_searchable_rate_kpi.yaml",
+    "powerbi_visual": "card",
+    "deviation": null
+  },
+  {
+    "dashboard": "imagery-quality",
+    "page": "Imagery & Catalog Quality - Overview",
+    "chart": "Scene Quality Band Distribution",
+    "chart_uuid": "c1000000-0000-4000-8000-00000000000e",
+    "dataset": "scene_catalog",
+    "source": "bi\\superset\\charts\\imagery_quality_band_pie.yaml",
+    "powerbi_visual": "pieChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "imagery-quality",
+    "page": "Imagery & Catalog Quality - Overview",
+    "chart": "Scenes Captured by Day",
+    "chart_uuid": "c1000000-0000-4000-8000-00000000000d",
+    "dataset": "scene_catalog",
+    "source": "bi\\superset\\charts\\imagery_scenes_by_day.yaml",
+    "powerbi_visual": "clusteredColumnChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "imagery-quality",
+    "page": "Imagery & Catalog Quality - Overview",
+    "chart": "Catalog Quality by Collection",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000010",
+    "dataset": "catalog_quality",
+    "source": "bi\\superset\\charts\\imagery_catalog_quality_table.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "imagery-quality",
+    "page": "Imagery & Catalog Quality - Overview",
+    "chart": "Scene Catalog Detail",
+    "chart_uuid": "c1000000-0000-4000-8000-00000000000c",
+    "dataset": "scene_catalog",
+    "source": "bi\\superset\\charts\\imagery_scene_catalog_detail.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "simulation-track",
+    "page": "Simulation Track - Satellite",
+    "chart": "Satellite Health Status (sim)",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000011",
+    "dataset": "sat_health",
+    "source": "bi\\superset\\charts\\sim_sat_health_status_pie.yaml",
+    "powerbi_visual": "pieChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "simulation-track",
+    "page": "Simulation Track - Satellite",
+    "chart": "Mean Satellite Health Trend (sim)",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000012",
+    "dataset": "sat_health",
+    "source": "bi\\superset\\charts\\sim_sat_health_trend.yaml",
+    "powerbi_visual": "clusteredColumnChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "simulation-track",
+    "page": "Simulation Track - Launch",
+    "chart": "Launch Success Rate by Provider (sim)",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000013",
+    "dataset": "launch_monthly",
+    "source": "bi\\superset\\charts\\sim_launch_success_rate_table.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "simulation-track",
+    "page": "Simulation Track - Weather",
+    "chart": "Max Kp Index by Day (sim)",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000015",
+    "dataset": "weather_impact",
+    "source": "bi\\superset\\charts\\sim_max_kp_by_day.yaml",
+    "powerbi_visual": "clusteredColumnChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "simulation-track",
+    "page": "Simulation Track - Weather",
+    "chart": "Weather Impact Detail (sim)",
+    "chart_uuid": "c1000000-0000-4000-8000-000000000014",
+    "dataset": "weather_impact",
+    "source": "bi\\superset\\charts\\sim_weather_impact_detail.yaml",
+    "powerbi_visual": "tableEx",
+    "deviation": null
+  },
+  {
+    "dashboard": "weather",
+    "page": "Weather & Climate - Overview",
+    "chart": "Mean AQI (PM2.5)",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000016",
+    "dataset": "climate_daily",
+    "source": "bi\\superset\\charts\\weather_aqi_kpi.yaml",
+    "powerbi_visual": "card",
+    "deviation": null
+  },
+  {
+    "dashboard": "weather",
+    "page": "Weather & Climate - Overview",
+    "chart": "AQI & Exceedance Trend",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000017",
+    "dataset": "climate_daily",
+    "source": "bi\\superset\\charts\\weather_aqi_trend.yaml",
+    "powerbi_visual": "lineChart",
+    "deviation": null
+  },
+  {
+    "dashboard": "weather",
+    "page": "Weather & Climate - Overview",
+    "chart": "Dust-day Calendar",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000018",
+    "dataset": "dust_event_daily",
+    "source": "bi\\superset\\charts\\weather_dust_calendar.yaml",
+    "powerbi_visual": "pivotTable",
+    "deviation": "Calendar heatmap translated to a month/day matrix; no custom visual or heatmap colouring."
+  },
+  {
+    "dashboard": "weather",
+    "page": "Weather & Climate - Overview",
+    "chart": "LST Anomaly Trend",
+    "chart_uuid": "c2000000-0000-4000-8000-000000000019",
+    "dataset": "climate_daily",
+    "source": "bi\\superset\\charts\\weather_lst_trend.yaml",
+    "powerbi_visual": "lineChart",
+    "deviation": null
+  }
+]

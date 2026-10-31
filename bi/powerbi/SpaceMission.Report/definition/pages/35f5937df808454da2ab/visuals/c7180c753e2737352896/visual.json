@@ -1,0 +1,242 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "c7180c753e2737352896",
+  "position": {
+    "x": 24,
+    "y": 430,
+    "width": 604,
+    "height": 310,
+    "z": 3,
+    "tabOrder": 3
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "flood_daily"
+                    }
+                  },
+                  "Property": "aoi_name"
+                }
+              },
+              "queryRef": "flood_daily.aoi_name",
+              "nativeQueryRef": "aoi_name"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "flood_daily"
+                    }
+                  },
+                  "Property": "event_date"
+                }
+              },
+              "queryRef": "flood_daily.event_date",
+              "nativeQueryRef": "event_date"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "flood_daily"
+                    }
+                  },
+                  "Property": "ndwi_mean"
+                }
+              },
+              "queryRef": "flood_daily.ndwi_mean",
+              "nativeQueryRef": "ndwi_mean"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "flood_daily"
+                    }
+                  },
+                  "Property": "ndwi_max"
+                }
+              },
+              "queryRef": "flood_daily.ndwi_max",
+              "nativeQueryRef": "ndwi_max"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "flood_daily"
+                    }
+                  },
+                  "Property": "valid_pixel_fraction"
+                }
+              },
+              "queryRef": "flood_daily.valid_pixel_fraction",
+              "nativeQueryRef": "valid_pixel_fraction"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "flood_daily"
+                    }
+                  },
+                  "Property": "area_km2"
+                }
+              },
+              "queryRef": "flood_daily.area_km2",
+              "nativeQueryRef": "area_km2"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "flood_daily"
+                    }
+                  },
+                  "Property": "flood_flag"
+                }
+              },
+              "queryRef": "flood_daily.flood_flag",
+              "nativeQueryRef": "flood_flag"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "flood_daily"
+                    }
+                  },
+                  "Property": "ems_corroborated"
+                }
+              },
+              "queryRef": "flood_daily.ems_corroborated",
+              "nativeQueryRef": "ems_corroborated"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Flood Extent Details'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "e0eb373fe4c1f07387a5",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "flood_daily"
+              }
+            },
+            "Property": "flood_flag"
+          }
+        },
+        "type": "Advanced",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "s",
+              "Entity": "flood_daily",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "Comparison": {
+                  "ComparisonKind": 0,
+                  "Left": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Source": "s"
+                        }
+                      },
+                      "Property": "flood_flag"
+                    }
+                  },
+                  "Right": {
+                    "Literal": {
+                      "Value": "true"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "howCreated": "User"
+      }
+    ]
+  }
+}

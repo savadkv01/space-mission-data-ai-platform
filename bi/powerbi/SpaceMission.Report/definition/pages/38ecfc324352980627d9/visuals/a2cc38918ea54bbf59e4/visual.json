@@ -1,0 +1,189 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "a2cc38918ea54bbf59e4",
+  "position": {
+    "x": 24,
+    "y": 430,
+    "width": 1220,
+    "height": 310,
+    "z": 3,
+    "tabOrder": 3
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "weather_impact"
+                    }
+                  },
+                  "Property": "weather_date"
+                }
+              },
+              "queryRef": "weather_impact.weather_date",
+              "nativeQueryRef": "weather_date"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "weather_impact"
+                    }
+                  },
+                  "Property": "max_kp_index"
+                }
+              },
+              "queryRef": "weather_impact.max_kp_index",
+              "nativeQueryRef": "max_kp_index"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "weather_impact"
+                    }
+                  },
+                  "Property": "mean_kp_index"
+                }
+              },
+              "queryRef": "weather_impact.mean_kp_index",
+              "nativeQueryRef": "mean_kp_index"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "weather_impact"
+                    }
+                  },
+                  "Property": "storm_events"
+                }
+              },
+              "queryRef": "weather_impact.storm_events",
+              "nativeQueryRef": "storm_events"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "weather_impact"
+                    }
+                  },
+                  "Property": "telemetry_samples"
+                }
+              },
+              "queryRef": "weather_impact.telemetry_samples",
+              "nativeQueryRef": "telemetry_samples"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "weather_impact"
+                    }
+                  },
+                  "Property": "anomaly_samples"
+                }
+              },
+              "queryRef": "weather_impact.anomaly_samples",
+              "nativeQueryRef": "anomaly_samples"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "weather_impact"
+                    }
+                  },
+                  "Property": "anomaly_rate"
+                }
+              },
+              "queryRef": "weather_impact.anomaly_rate",
+              "nativeQueryRef": "anomaly_rate"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "weather_impact"
+                    }
+                  },
+                  "Property": "storm_day"
+                }
+              },
+              "queryRef": "weather_impact.storm_day",
+              "nativeQueryRef": "storm_day"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Weather Impact Detail (sim)'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

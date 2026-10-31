@@ -1,0 +1,143 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "2b36e39902735f05ad89",
+  "position": {
+    "x": 24,
+    "y": 802,
+    "z": 9,
+    "height": 310,
+    "width": 1220,
+    "tabOrder": 9
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "climate_daily"
+                    }
+                  },
+                  "Property": "kpi_date"
+                }
+              },
+              "queryRef": "climate_daily.kpi_date",
+              "nativeQueryRef": "kpi_date",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "climate_daily"
+                    }
+                  },
+                  "Property": "KPI climate_daily - aqi_exceedance_days"
+                }
+              },
+              "queryRef": "climate_daily.KPI climate_daily - aqi_exceedance_days",
+              "nativeQueryRef": "KPI climate_daily - aqi_exceedance_days",
+              "displayName": "AQI Exceedance Days"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "climate_daily"
+                    }
+                  },
+                  "Property": "KPI climate_daily - dust_event_days"
+                }
+              },
+              "queryRef": "climate_daily.KPI climate_daily - dust_event_days",
+              "nativeQueryRef": "KPI climate_daily - dust_event_days",
+              "displayName": "Active Dust Days"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "climate_daily"
+                  }
+                },
+                "Property": "kpi_date"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Climate Exceedance & Dust Trend'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

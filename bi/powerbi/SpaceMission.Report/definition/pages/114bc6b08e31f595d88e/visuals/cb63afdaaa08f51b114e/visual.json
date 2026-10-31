@@ -1,0 +1,228 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "cb63afdaaa08f51b114e",
+  "position": {
+    "x": 640,
+    "y": 104,
+    "width": 604,
+    "height": 310,
+    "z": 3,
+    "tabOrder": 3
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vessel_activity"
+                    }
+                  },
+                  "Property": "vessel_key"
+                }
+              },
+              "queryRef": "vessel_activity.vessel_key",
+              "nativeQueryRef": "vessel_key"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vessel_activity"
+                    }
+                  },
+                  "Property": "activity_date"
+                }
+              },
+              "queryRef": "vessel_activity.activity_date",
+              "nativeQueryRef": "activity_date"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vessel_activity"
+                    }
+                  },
+                  "Property": "flag"
+                }
+              },
+              "queryRef": "vessel_activity.flag",
+              "nativeQueryRef": "flag"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vessel_activity"
+                    }
+                  },
+                  "Property": "vessel_type"
+                }
+              },
+              "queryRef": "vessel_activity.vessel_type",
+              "nativeQueryRef": "vessel_type"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vessel_activity"
+                    }
+                  },
+                  "Property": "transmissions"
+                }
+              },
+              "queryRef": "vessel_activity.transmissions",
+              "nativeQueryRef": "transmissions"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vessel_activity"
+                    }
+                  },
+                  "Property": "active_span_days"
+                }
+              },
+              "queryRef": "vessel_activity.active_span_days",
+              "nativeQueryRef": "active_span_days"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vessel_activity"
+                    }
+                  },
+                  "Property": "review_priority"
+                }
+              },
+              "queryRef": "vessel_activity.review_priority",
+              "nativeQueryRef": "review_priority"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Suspicious Vessel Details'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "05f486e9b5439475ea86",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "vessel_activity"
+              }
+            },
+            "Property": "suspicious_flag"
+          }
+        },
+        "type": "Advanced",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "s",
+              "Entity": "vessel_activity",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "Comparison": {
+                  "ComparisonKind": 0,
+                  "Left": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Source": "s"
+                        }
+                      },
+                      "Property": "suspicious_flag"
+                    }
+                  },
+                  "Right": {
+                    "Literal": {
+                      "Value": "true"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "howCreated": "User"
+      }
+    ]
+  }
+}

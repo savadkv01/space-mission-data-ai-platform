@@ -1,0 +1,243 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 0,
+        "y": 0
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 636.23010676691854,
+            "y": 1705.7356649367084
+          },
+          "nodeIndex": "air_quality_daily",
+          "nodeLineageTag": "f0ce7d57-5693-49b1-a150-6feb843e43a9",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 766.39618464439968,
+            "y": -50
+          },
+          "nodeIndex": "aoi_validation",
+          "nodeLineageTag": "133da68e-1554-4ec7-ada8-35c1177a57c4",
+          "size": {
+            "height": 272,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1717.8334003696348,
+            "y": 877.86783246835421
+          },
+          "nodeIndex": "catalog_quality",
+          "nodeLineageTag": "3edf121c-89a4-421b-9dd4-5347d495be11",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 94.649433289269609,
+            "y": 1124.4696976269718
+          },
+          "nodeIndex": "climate_daily",
+          "nodeLineageTag": "b06357ee-cc90-45e7-a690-71a270ef114a",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 350.06612658538586,
+            "y": 1478.0913841466333
+          },
+          "nodeIndex": "climate_indicator_daily",
+          "nodeLineageTag": "038fd78d-a50a-4b6d-bd83-b4d574ced472",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2001.8334003696348,
+            "y": 915.86783246835421
+          },
+          "nodeIndex": "DataStatus",
+          "nodeLineageTag": "bafd92fa-a3e7-49bb-a50e-5838674d13de",
+          "size": {
+            "height": 224,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 920.90745174238339,
+            "y": 1623.3531919463983
+          },
+          "nodeIndex": "dust_event_daily",
+          "nodeLineageTag": "1df972ea-8846-4e12-9d60-2ef1fd8edaae",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 481.83987665528946,
+            "y": 75.358427181369279
+          },
+          "nodeIndex": "flood_daily",
+          "nodeLineageTag": "bc28d68b-9f79-4ddc-99f2-17f76e699d54",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2285.8334003696345,
+            "y": 879.86783246835421
+          },
+          "nodeIndex": "launch_monthly",
+          "nodeLineageTag": "357ed9f1-3735-415e-b7d3-42e285c4aa2d",
+          "size": {
+            "height": 296,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1351.7086366304216,
+            "y": 360.70778153890546
+          },
+          "nodeIndex": "platform_daily",
+          "nodeLineageTag": "af786bdf-d3a8-40fb-be0e-bda918a93471",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 951.74392987081967,
+            "y": 1216.6407935941797
+          },
+          "nodeIndex": "ReportDate",
+          "nodeLineageTag": "b569786a-efb8-44cd-a715-c834853dc00a",
+          "size": {
+            "height": 152,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1483.8334003696348,
+            "y": 714.355186530242
+          },
+          "nodeIndex": "sat_health",
+          "nodeLineageTag": "53fa5493-1d95-49f2-8fbf-e8024f087c66",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1052.6812076857741,
+            "y": 43.73477725893872
+          },
+          "nodeIndex": "scene_catalog",
+          "nodeLineageTag": "acb6cf1e-0e76-4d27-af8a-3f97a0737ebe",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 50,
+            "y": 770.811667417905
+          },
+          "nodeIndex": "vegetation_health_daily",
+          "nodeLineageTag": "720a008d-031b-484e-876f-f348be09aadb",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 195.55521386426585,
+            "y": 417.176068109296
+          },
+          "nodeIndex": "vessel_activity",
+          "nodeLineageTag": "ca190efd-3159-4c20-b806-b84cda758c61",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1207.0714353643048,
+            "y": 1421.6284845381638
+          },
+          "nodeIndex": "weather_impact",
+          "nodeLineageTag": "c90254c6-fe26-4da0-b1f5-15da8bb3e9a6",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1430.4924024750521,
+            "y": 1068.0051448448526
+          },
+          "nodeIndex": "wildfire_daily",
+          "nodeLineageTag": "c09506c8-dcb6-45cb-b9b6-9414cc40a8ab",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "All tables",
+      "zoomValue": 100,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "All tables",
+  "defaultDiagram": "All tables"
+}

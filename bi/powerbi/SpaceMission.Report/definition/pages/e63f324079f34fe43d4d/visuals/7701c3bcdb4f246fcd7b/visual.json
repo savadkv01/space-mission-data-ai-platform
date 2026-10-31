@@ -1,0 +1,217 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "7701c3bcdb4f246fcd7b",
+  "position": {
+    "x": 24,
+    "y": 104,
+    "width": 604,
+    "height": 310,
+    "z": 2,
+    "tabOrder": 2
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "air_quality_daily"
+                    }
+                  },
+                  "Property": "aoi_name"
+                }
+              },
+              "queryRef": "air_quality_daily.aoi_name",
+              "nativeQueryRef": "aoi_name"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "air_quality_daily"
+                    }
+                  },
+                  "Property": "event_date"
+                }
+              },
+              "queryRef": "air_quality_daily.event_date",
+              "nativeQueryRef": "event_date"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "air_quality_daily"
+                    }
+                  },
+                  "Property": "pm25_mean"
+                }
+              },
+              "queryRef": "air_quality_daily.pm25_mean",
+              "nativeQueryRef": "pm25_mean"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "air_quality_daily"
+                    }
+                  },
+                  "Property": "pm10_mean"
+                }
+              },
+              "queryRef": "air_quality_daily.pm10_mean",
+              "nativeQueryRef": "pm10_mean"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "air_quality_daily"
+                    }
+                  },
+                  "Property": "no2_column_mean"
+                }
+              },
+              "queryRef": "air_quality_daily.no2_column_mean",
+              "nativeQueryRef": "no2_column_mean"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "air_quality_daily"
+                    }
+                  },
+                  "Property": "o3_column_mean"
+                }
+              },
+              "queryRef": "air_quality_daily.o3_column_mean",
+              "nativeQueryRef": "o3_column_mean"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "air_quality_daily"
+                    }
+                  },
+                  "Property": "aqi_pm25"
+                }
+              },
+              "queryRef": "air_quality_daily.aqi_pm25",
+              "nativeQueryRef": "aqi_pm25"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "air_quality_daily"
+                    }
+                  },
+                  "Property": "aqi_band"
+                }
+              },
+              "queryRef": "air_quality_daily.aqi_band",
+              "nativeQueryRef": "aqi_band"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "air_quality_daily"
+                    }
+                  },
+                  "Property": "exceedance_flag"
+                }
+              },
+              "queryRef": "air_quality_daily.exceedance_flag",
+              "nativeQueryRef": "exceedance_flag"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "air_quality_daily"
+                    }
+                  },
+                  "Property": "station_count"
+                }
+              },
+              "queryRef": "air_quality_daily.station_count",
+              "nativeQueryRef": "station_count"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Air Quality Details'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

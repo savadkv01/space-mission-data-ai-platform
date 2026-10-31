@@ -1,0 +1,217 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "136e397bfade9ea46927",
+  "position": {
+    "x": 24,
+    "y": 756,
+    "width": 1220,
+    "height": 310,
+    "z": 5,
+    "tabOrder": 5
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "catalog_quality"
+                    }
+                  },
+                  "Property": "collection"
+                }
+              },
+              "queryRef": "catalog_quality.collection",
+              "nativeQueryRef": "collection"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "catalog_quality"
+                    }
+                  },
+                  "Property": "provider"
+                }
+              },
+              "queryRef": "catalog_quality.provider",
+              "nativeQueryRef": "provider"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "catalog_quality"
+                    }
+                  },
+                  "Property": "scenes"
+                }
+              },
+              "queryRef": "catalog_quality.scenes",
+              "nativeQueryRef": "scenes"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "catalog_quality"
+                    }
+                  },
+                  "Property": "searchable_scenes"
+                }
+              },
+              "queryRef": "catalog_quality.searchable_scenes",
+              "nativeQueryRef": "searchable_scenes"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "catalog_quality"
+                    }
+                  },
+                  "Property": "searchable_rate"
+                }
+              },
+              "queryRef": "catalog_quality.searchable_rate",
+              "nativeQueryRef": "searchable_rate"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "catalog_quality"
+                    }
+                  },
+                  "Property": "mean_completeness"
+                }
+              },
+              "queryRef": "catalog_quality.mean_completeness",
+              "nativeQueryRef": "mean_completeness"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "catalog_quality"
+                    }
+                  },
+                  "Property": "mean_cloud_cover"
+                }
+              },
+              "queryRef": "catalog_quality.mean_cloud_cover",
+              "nativeQueryRef": "mean_cloud_cover"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "catalog_quality"
+                    }
+                  },
+                  "Property": "gold_scenes"
+                }
+              },
+              "queryRef": "catalog_quality.gold_scenes",
+              "nativeQueryRef": "gold_scenes"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "catalog_quality"
+                    }
+                  },
+                  "Property": "silver_scenes"
+                }
+              },
+              "queryRef": "catalog_quality.silver_scenes",
+              "nativeQueryRef": "silver_scenes"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "catalog_quality"
+                    }
+                  },
+                  "Property": "bronze_scenes"
+                }
+              },
+              "queryRef": "catalog_quality.bronze_scenes",
+              "nativeQueryRef": "bronze_scenes"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Catalog Quality by Collection'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

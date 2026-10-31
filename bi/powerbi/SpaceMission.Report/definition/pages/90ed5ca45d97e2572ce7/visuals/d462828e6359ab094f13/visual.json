@@ -1,0 +1,231 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "d462828e6359ab094f13",
+  "position": {
+    "x": 24,
+    "y": 104,
+    "width": 604,
+    "height": 310,
+    "z": 2,
+    "tabOrder": 2
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "climate_indicator_daily"
+                    }
+                  },
+                  "Property": "aoi_name"
+                }
+              },
+              "queryRef": "climate_indicator_daily.aoi_name",
+              "nativeQueryRef": "aoi_name"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "climate_indicator_daily"
+                    }
+                  },
+                  "Property": "event_date"
+                }
+              },
+              "queryRef": "climate_indicator_daily.event_date",
+              "nativeQueryRef": "event_date"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "climate_indicator_daily"
+                    }
+                  },
+                  "Property": "lst_c"
+                }
+              },
+              "queryRef": "climate_indicator_daily.lst_c",
+              "nativeQueryRef": "lst_c"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "climate_indicator_daily"
+                    }
+                  },
+                  "Property": "lst_anomaly_c"
+                }
+              },
+              "queryRef": "climate_indicator_daily.lst_anomaly_c",
+              "nativeQueryRef": "lst_anomaly_c"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "climate_indicator_daily"
+                    }
+                  },
+                  "Property": "lst_anomaly_label"
+                }
+              },
+              "queryRef": "climate_indicator_daily.lst_anomaly_label",
+              "nativeQueryRef": "lst_anomaly_label"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "climate_indicator_daily"
+                    }
+                  },
+                  "Property": "sst_c"
+                }
+              },
+              "queryRef": "climate_indicator_daily.sst_c",
+              "nativeQueryRef": "sst_c"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "climate_indicator_daily"
+                    }
+                  },
+                  "Property": "sst_anomaly_c"
+                }
+              },
+              "queryRef": "climate_indicator_daily.sst_anomaly_c",
+              "nativeQueryRef": "sst_anomaly_c"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "climate_indicator_daily"
+                    }
+                  },
+                  "Property": "ndwi_mean"
+                }
+              },
+              "queryRef": "climate_indicator_daily.ndwi_mean",
+              "nativeQueryRef": "ndwi_mean"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "climate_indicator_daily"
+                    }
+                  },
+                  "Property": "tree_cover_loss_ha"
+                }
+              },
+              "queryRef": "climate_indicator_daily.tree_cover_loss_ha",
+              "nativeQueryRef": "tree_cover_loss_ha"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "climate_indicator_daily"
+                    }
+                  },
+                  "Property": "desertification_proxy"
+                }
+              },
+              "queryRef": "climate_indicator_daily.desertification_proxy",
+              "nativeQueryRef": "desertification_proxy"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "climate_indicator_daily"
+                    }
+                  },
+                  "Property": "desertification_flag"
+                }
+              },
+              "queryRef": "climate_indicator_daily.desertification_flag",
+              "nativeQueryRef": "desertification_flag"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Climate Indicator Details'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

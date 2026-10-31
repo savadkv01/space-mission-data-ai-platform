@@ -1,0 +1,143 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "c8395290a74533ea9c34",
+  "position": {
+    "x": 24,
+    "y": 290,
+    "z": 5,
+    "height": 310,
+    "width": 1220,
+    "tabOrder": 5
+  },
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "platform_daily"
+                    }
+                  },
+                  "Property": "kpi_date"
+                }
+              },
+              "queryRef": "platform_daily.kpi_date",
+              "nativeQueryRef": "kpi_date",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "platform_daily"
+                    }
+                  },
+                  "Property": "KPI platform_daily - fire_detections"
+                }
+              },
+              "queryRef": "platform_daily.KPI platform_daily - fire_detections",
+              "nativeQueryRef": "KPI platform_daily - fire_detections",
+              "displayName": "Total Fire Detections"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "platform_daily"
+                    }
+                  },
+                  "Property": "KPI platform_daily - flood_aoi_days"
+                }
+              },
+              "queryRef": "platform_daily.KPI platform_daily - flood_aoi_days",
+              "nativeQueryRef": "KPI platform_daily - flood_aoi_days",
+              "displayName": "Flood AOI-days"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "platform_daily"
+                  }
+                },
+                "Property": "kpi_date"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Detections & Flood AOI-days (trend)'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

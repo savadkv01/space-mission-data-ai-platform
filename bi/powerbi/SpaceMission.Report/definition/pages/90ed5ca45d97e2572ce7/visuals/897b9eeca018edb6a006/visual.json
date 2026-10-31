@@ -1,0 +1,217 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "897b9eeca018edb6a006",
+  "position": {
+    "x": 640,
+    "y": 104,
+    "width": 604,
+    "height": 310,
+    "z": 3,
+    "tabOrder": 3
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vegetation_health_daily"
+                    }
+                  },
+                  "Property": "aoi_name"
+                }
+              },
+              "queryRef": "vegetation_health_daily.aoi_name",
+              "nativeQueryRef": "aoi_name"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vegetation_health_daily"
+                    }
+                  },
+                  "Property": "event_date"
+                }
+              },
+              "queryRef": "vegetation_health_daily.event_date",
+              "nativeQueryRef": "event_date"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vegetation_health_daily"
+                    }
+                  },
+                  "Property": "ndvi_mean"
+                }
+              },
+              "queryRef": "vegetation_health_daily.ndvi_mean",
+              "nativeQueryRef": "ndvi_mean"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vegetation_health_daily"
+                    }
+                  },
+                  "Property": "ndvi_max"
+                }
+              },
+              "queryRef": "vegetation_health_daily.ndvi_max",
+              "nativeQueryRef": "ndvi_max"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vegetation_health_daily"
+                    }
+                  },
+                  "Property": "evi_mean"
+                }
+              },
+              "queryRef": "vegetation_health_daily.evi_mean",
+              "nativeQueryRef": "evi_mean"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vegetation_health_daily"
+                    }
+                  },
+                  "Property": "ndvi_trend_30d"
+                }
+              },
+              "queryRef": "vegetation_health_daily.ndvi_trend_30d",
+              "nativeQueryRef": "ndvi_trend_30d"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vegetation_health_daily"
+                    }
+                  },
+                  "Property": "ndvi_trend_dir"
+                }
+              },
+              "queryRef": "vegetation_health_daily.ndvi_trend_dir",
+              "nativeQueryRef": "ndvi_trend_dir"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vegetation_health_daily"
+                    }
+                  },
+                  "Property": "ndvi_health_label"
+                }
+              },
+              "queryRef": "vegetation_health_daily.ndvi_health_label",
+              "nativeQueryRef": "ndvi_health_label"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vegetation_health_daily"
+                    }
+                  },
+                  "Property": "crop_stress_flag"
+                }
+              },
+              "queryRef": "vegetation_health_daily.crop_stress_flag",
+              "nativeQueryRef": "crop_stress_flag"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vegetation_health_daily"
+                    }
+                  },
+                  "Property": "valid_pixel_fraction"
+                }
+              },
+              "queryRef": "vegetation_health_daily.valid_pixel_fraction",
+              "nativeQueryRef": "valid_pixel_fraction"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Vegetation Health Details'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

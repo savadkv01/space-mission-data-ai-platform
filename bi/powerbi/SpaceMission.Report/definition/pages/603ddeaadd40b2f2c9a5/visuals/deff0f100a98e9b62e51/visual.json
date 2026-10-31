@@ -1,0 +1,217 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "deff0f100a98e9b62e51",
+  "position": {
+    "x": 24,
+    "y": 1082,
+    "width": 1220,
+    "height": 310,
+    "z": 6,
+    "tabOrder": 6
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "scene_catalog"
+                    }
+                  },
+                  "Property": "scene_key"
+                }
+              },
+              "queryRef": "scene_catalog.scene_key",
+              "nativeQueryRef": "scene_key"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "scene_catalog"
+                    }
+                  },
+                  "Property": "capture_date"
+                }
+              },
+              "queryRef": "scene_catalog.capture_date",
+              "nativeQueryRef": "capture_date"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "scene_catalog"
+                    }
+                  },
+                  "Property": "collection"
+                }
+              },
+              "queryRef": "scene_catalog.collection",
+              "nativeQueryRef": "collection"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "scene_catalog"
+                    }
+                  },
+                  "Property": "provider"
+                }
+              },
+              "queryRef": "scene_catalog.provider",
+              "nativeQueryRef": "provider"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "scene_catalog"
+                    }
+                  },
+                  "Property": "platform"
+                }
+              },
+              "queryRef": "scene_catalog.platform",
+              "nativeQueryRef": "platform"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "scene_catalog"
+                    }
+                  },
+                  "Property": "geo_key"
+                }
+              },
+              "queryRef": "scene_catalog.geo_key",
+              "nativeQueryRef": "geo_key"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "scene_catalog"
+                    }
+                  },
+                  "Property": "cloud_cover"
+                }
+              },
+              "queryRef": "scene_catalog.cloud_cover",
+              "nativeQueryRef": "cloud_cover"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "scene_catalog"
+                    }
+                  },
+                  "Property": "completeness_score"
+                }
+              },
+              "queryRef": "scene_catalog.completeness_score",
+              "nativeQueryRef": "completeness_score"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "scene_catalog"
+                    }
+                  },
+                  "Property": "is_searchable"
+                }
+              },
+              "queryRef": "scene_catalog.is_searchable",
+              "nativeQueryRef": "is_searchable"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "scene_catalog"
+                    }
+                  },
+                  "Property": "quality_band"
+                }
+              },
+              "queryRef": "scene_catalog.quality_band",
+              "nativeQueryRef": "quality_band"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Scene Catalog Detail'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

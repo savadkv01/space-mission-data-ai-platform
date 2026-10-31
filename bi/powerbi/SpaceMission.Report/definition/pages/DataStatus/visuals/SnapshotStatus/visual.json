@@ -1,0 +1,161 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "SnapshotStatus",
+  "position": {
+    "x": 24,
+    "y": 24,
+    "width": 1232,
+    "height": 650,
+    "z": 0,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DataStatus"
+                    }
+                  },
+                  "Property": "Dataset"
+                }
+              },
+              "queryRef": "DataStatus.Dataset",
+              "nativeQueryRef": "Dataset"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DataStatus"
+                    }
+                  },
+                  "Property": "Rows"
+                }
+              },
+              "queryRef": "DataStatus.Rows",
+              "nativeQueryRef": "Rows"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DataStatus"
+                    }
+                  },
+                  "Property": "State"
+                }
+              },
+              "queryRef": "DataStatus.State",
+              "nativeQueryRef": "State"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DataStatus"
+                    }
+                  },
+                  "Property": "MinDate"
+                }
+              },
+              "queryRef": "DataStatus.MinDate",
+              "nativeQueryRef": "MinDate"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DataStatus"
+                    }
+                  },
+                  "Property": "MaxDate"
+                }
+              },
+              "queryRef": "DataStatus.MaxDate",
+              "nativeQueryRef": "MaxDate"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DataStatus"
+                    }
+                  },
+                  "Property": "ExportedUTC"
+                }
+              },
+              "queryRef": "DataStatus.ExportedUTC",
+              "nativeQueryRef": "ExportedUTC"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Snapshot availability (EMPTY SOURCE is not a zero KPI)'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

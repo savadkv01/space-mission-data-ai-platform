@@ -1,0 +1,135 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "ad88208760f6f9d3af57",
+  "position": {
+    "x": 24,
+    "y": 104,
+    "width": 1220,
+    "height": 310,
+    "z": 2,
+    "tabOrder": 2
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "launch_monthly"
+                    }
+                  },
+                  "Property": "provider_key"
+                }
+              },
+              "queryRef": "launch_monthly.provider_key",
+              "nativeQueryRef": "provider_key"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "launch_monthly"
+                    }
+                  },
+                  "Property": "month_key"
+                }
+              },
+              "queryRef": "launch_monthly.month_key",
+              "nativeQueryRef": "month_key"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "launch_monthly"
+                    }
+                  },
+                  "Property": "KPI launch_monthly - total_launches"
+                }
+              },
+              "queryRef": "launch_monthly.KPI launch_monthly - total_launches",
+              "nativeQueryRef": "KPI launch_monthly - total_launches",
+              "displayName": "Launches (sim)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "launch_monthly"
+                    }
+                  },
+                  "Property": "KPI launch_monthly - mean_success_rate"
+                }
+              },
+              "queryRef": "launch_monthly.KPI launch_monthly - mean_success_rate",
+              "nativeQueryRef": "KPI launch_monthly - mean_success_rate",
+              "displayName": "Launch Success Rate (sim)"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Launch Success Rate by Provider (sim)'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

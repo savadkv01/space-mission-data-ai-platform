@@ -1,0 +1,149 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "c2961f3307c43536d937",
+  "position": {
+    "x": 24,
+    "y": 430,
+    "width": 1220,
+    "height": 310,
+    "z": 4,
+    "tabOrder": 4
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "wildfire_daily"
+                    }
+                  },
+                  "Property": "aoi_name"
+                }
+              },
+              "queryRef": "wildfire_daily.aoi_name",
+              "nativeQueryRef": "aoi_name"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "wildfire_daily"
+                    }
+                  },
+                  "Property": "severity"
+                }
+              },
+              "queryRef": "wildfire_daily.severity",
+              "nativeQueryRef": "severity"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "wildfire_daily"
+                    }
+                  },
+                  "Property": "ems_corroborated"
+                }
+              },
+              "queryRef": "wildfire_daily.ems_corroborated",
+              "nativeQueryRef": "ems_corroborated"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "wildfire_daily"
+                    }
+                  },
+                  "Property": "KPI wildfire_daily - mean_frp"
+                }
+              },
+              "queryRef": "wildfire_daily.KPI wildfire_daily - mean_frp",
+              "nativeQueryRef": "KPI wildfire_daily - mean_frp",
+              "displayName": "Mean Fire Radiative Power"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "wildfire_daily"
+                    }
+                  },
+                  "Property": "KPI wildfire_daily - total_detections"
+                }
+              },
+              "queryRef": "wildfire_daily.KPI wildfire_daily - total_detections",
+              "nativeQueryRef": "KPI wildfire_daily - total_detections",
+              "displayName": "Total Fire Detections"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Peak FRP by AOI'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

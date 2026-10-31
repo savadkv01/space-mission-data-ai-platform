@@ -1,0 +1,3047 @@
+{
+  "compatibilityLevel": 1600,
+  "model": {
+    "annotations": [
+      {
+        "name": "PBI_QueryOrder",
+        "value": "[\"air_quality_daily\",\"aoi_validation\",\"catalog_quality\",\"climate_daily\",\"climate_indicator_daily\",\"dust_event_daily\",\"flood_daily\",\"launch_monthly\",\"platform_daily\",\"sat_health\",\"scene_catalog\",\"vegetation_health_daily\",\"vessel_activity\",\"weather_impact\",\"wildfire_daily\",\"ReportDate\",\"DataStatus\",\"SnapshotFolder\"]"
+      },
+      {
+        "name": "PBI_ProTooling",
+        "value": "[\"DevMode\"]"
+      }
+    ],
+    "culture": "en-US",
+    "cultures": [
+      {
+        "name": "en-US",
+        "linguisticMetadata": {
+          "content": {
+            "Entities": {
+              "air_quality_daily.kpi_air_quality_daily__aoidays": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "air_quality_daily",
+                    "ConceptualProperty": "KPI air_quality_daily - AOI-days"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "AOI-days": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "air_quality_daily.kpi_air_quality_daily__exceedance_days": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "air_quality_daily",
+                    "ConceptualProperty": "KPI air_quality_daily - exceedance_days"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "AQI Exceedance Days": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "air_quality_daily.kpi_air_quality_daily__mean_pm10": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "air_quality_daily",
+                    "ConceptualProperty": "KPI air_quality_daily - mean_pm10"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Mean PM10": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "air_quality_daily.kpi_air_quality_daily__mean_pm25": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "air_quality_daily",
+                    "ConceptualProperty": "KPI air_quality_daily - mean_pm25"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Mean PM2.5": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "aoi_validation.kpi_aoi_validation__corroboration_rate": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "aoi_validation",
+                    "ConceptualProperty": "KPI aoi_validation - corroboration_rate"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "EMS Corroboration Rate": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "climate_daily.kpi_climate_daily__aqi_exceedance_days": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "climate_daily",
+                    "ConceptualProperty": "KPI climate_daily - aqi_exceedance_days"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "AQI Exceedance Days": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "climate_daily.kpi_climate_daily__dust_event_days": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "climate_daily",
+                    "ConceptualProperty": "KPI climate_daily - dust_event_days"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Active Dust Days": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "climate_daily.kpi_climate_daily__mean_aqi_pm25": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "climate_daily",
+                    "ConceptualProperty": "KPI climate_daily - mean_aqi_pm25"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Mean AQI (PM2.5)": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "climate_daily.kpi_climate_daily__mean_lst_anomaly": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "climate_daily",
+                    "ConceptualProperty": "KPI climate_daily - mean_lst_anomaly"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Mean LST Anomaly (C)": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "climate_indicator_daily.kpi_climate_indicator_daily__mean_lst": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "climate_indicator_daily",
+                    "ConceptualProperty": "KPI climate_indicator_daily - mean_lst"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Mean LST (C)": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "climate_indicator_daily.kpi_climate_indicator_daily__mean_lst_anomaly": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "climate_indicator_daily",
+                    "ConceptualProperty": "KPI climate_indicator_daily - mean_lst_anomaly"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Mean LST Anomaly (C)": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "climate_indicator_daily.kpi_climate_indicator_daily__mean_sst": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "climate_indicator_daily",
+                    "ConceptualProperty": "KPI climate_indicator_daily - mean_sst"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Mean SST (C)": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "climate_indicator_daily.kpi_climate_indicator_daily__mean_sst_anomaly": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "climate_indicator_daily",
+                    "ConceptualProperty": "KPI climate_indicator_daily - mean_sst_anomaly"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Mean SST Anomaly (C)": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "climate_indicator_daily.kpi_climate_indicator_daily__tree_cover_loss_ha": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "climate_indicator_daily",
+                    "ConceptualProperty": "KPI climate_indicator_daily - tree_cover_loss_ha"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Tree-cover Loss (ha)": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "dust_event_daily.kpi_dust_event_daily__aoidays": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "dust_event_daily",
+                    "ConceptualProperty": "KPI dust_event_daily - AOI-days"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "AOI-days": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "dust_event_daily.kpi_dust_event_daily__dust_days": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "dust_event_daily",
+                    "ConceptualProperty": "KPI dust_event_daily - dust_days"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Dust Event Days": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "dust_event_daily.kpi_dust_event_daily__peak_aod": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "dust_event_daily",
+                    "ConceptualProperty": "KPI dust_event_daily - peak_aod"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Peak AOD": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "launch_monthly.kpi_launch_monthly__mean_success_rate": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "launch_monthly",
+                    "ConceptualProperty": "KPI launch_monthly - mean_success_rate"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Launch Success Rate (sim)": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "launch_monthly.kpi_launch_monthly__total_launches": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "launch_monthly",
+                    "ConceptualProperty": "KPI launch_monthly - total_launches"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Launches (sim)": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "platform_daily.kpi_platform_daily__fire_detections": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "platform_daily",
+                    "ConceptualProperty": "KPI platform_daily - fire_detections"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Total Fire Detections": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "platform_daily.kpi_platform_daily__flood_aoi_days": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "platform_daily",
+                    "ConceptualProperty": "KPI platform_daily - flood_aoi_days"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Flood AOI-days": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "platform_daily.kpi_platform_daily__suspicious_vessels": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "platform_daily",
+                    "ConceptualProperty": "KPI platform_daily - suspicious_vessels"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Suspicious Vessels": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "sat_health.kpi_sat_health__mean_health": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "sat_health",
+                    "ConceptualProperty": "KPI sat_health - mean_health"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Mean Satellite Health (sim)": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "sat_health.kpi_sat_health__records": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "sat_health",
+                    "ConceptualProperty": "KPI sat_health - records"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "records": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "scene_catalog.kpi_scene_catalog__scenes": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "scene_catalog",
+                    "ConceptualProperty": "KPI scene_catalog - scenes"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Scenes": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "scene_catalog.kpi_scene_catalog__searchable_rate": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "scene_catalog",
+                    "ConceptualProperty": "KPI scene_catalog - searchable_rate"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Searchable Scene Rate": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "vegetation_health_daily.kpi_vegetation_health_daily__aoidays": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "vegetation_health_daily",
+                    "ConceptualProperty": "KPI vegetation_health_daily - AOI-days"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "AOI-days": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "vegetation_health_daily.kpi_vegetation_health_daily__mean_ndvi": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "vegetation_health_daily",
+                    "ConceptualProperty": "KPI vegetation_health_daily - mean_ndvi"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Mean NDVI": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "weather_impact.kpi_weather_impact__max_kp": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "weather_impact",
+                    "ConceptualProperty": "KPI weather_impact - max_kp"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Max Kp Index": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "wildfire_daily.kpi_wildfire_daily__mean_frp": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "wildfire_daily",
+                    "ConceptualProperty": "KPI wildfire_daily - mean_frp"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Mean Fire Radiative Power": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              },
+              "wildfire_daily.kpi_wildfire_daily__total_detections": {
+                "Definition": {
+                  "Binding": {
+                    "ConceptualEntity": "wildfire_daily",
+                    "ConceptualProperty": "KPI wildfire_daily - total_detections"
+                  }
+                },
+                "State": "Generated",
+                "Terms": [
+                  {
+                    "Total Fire Detections": {
+                      "Source": {
+                        "Agent": "PowerBI.VisualColumnRename",
+                        "Type": "External"
+                      },
+                      "State": "Suggested",
+                      "Weight": 0.9
+                    }
+                  }
+                ]
+              }
+            },
+            "Language": "en-US",
+            "Version": "2.0.0"
+          },
+          "contentType": "json"
+        }
+      }
+    ],
+    "dataAccessOptions": {
+      "legacyRedirects": true,
+      "returnErrorValuesAsNull": false
+    },
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "expressions": [
+      {
+        "name": "SnapshotFolder",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Text"
+          }
+        ],
+        "expression": "\"C:\\D Drive\\Projects\\DE\\Projects\\space-data-ai-platform\\bi\\powerbi\\data\" meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]",
+        "kind": "m",
+        "lineageTag": "6f3009db-c683-4b36-b4f3-ae111f443e5b"
+      }
+    ],
+    "relationships": [
+      {
+        "name": "52ff13f5fbc8bc5d350b",
+        "fromColumn": "event_date",
+        "fromTable": "air_quality_daily",
+        "toColumn": "Date",
+        "toTable": "ReportDate"
+      },
+      {
+        "name": "7bd508b9e946382e2d8b",
+        "fromColumn": "event_date",
+        "fromTable": "aoi_validation",
+        "toColumn": "Date",
+        "toTable": "ReportDate"
+      },
+      {
+        "name": "10eea557b0a8300a0270",
+        "fromColumn": "kpi_date",
+        "fromTable": "climate_daily",
+        "toColumn": "Date",
+        "toTable": "ReportDate"
+      },
+      {
+        "name": "ec4bb34f68bc162d167a",
+        "fromColumn": "event_date",
+        "fromTable": "climate_indicator_daily",
+        "toColumn": "Date",
+        "toTable": "ReportDate"
+      },
+      {
+        "name": "0c6c2a179840de04e06f",
+        "fromColumn": "event_date",
+        "fromTable": "dust_event_daily",
+        "toColumn": "Date",
+        "toTable": "ReportDate"
+      },
+      {
+        "name": "722e31a5db356e50f973",
+        "fromColumn": "event_date",
+        "fromTable": "flood_daily",
+        "toColumn": "Date",
+        "toTable": "ReportDate"
+      },
+      {
+        "name": "9a70235585244b33363f",
+        "fromColumn": "kpi_date",
+        "fromTable": "platform_daily",
+        "toColumn": "Date",
+        "toTable": "ReportDate"
+      },
+      {
+        "name": "afb2b8ffdfc5304b2dc1",
+        "fromColumn": "health_date",
+        "fromTable": "sat_health",
+        "toColumn": "Date",
+        "toTable": "ReportDate"
+      },
+      {
+        "name": "e58888ecb19ffaf1fe95",
+        "fromColumn": "capture_date",
+        "fromTable": "scene_catalog",
+        "toColumn": "Date",
+        "toTable": "ReportDate"
+      },
+      {
+        "name": "bd7cab578ab618479ef2",
+        "fromColumn": "event_date",
+        "fromTable": "vegetation_health_daily",
+        "toColumn": "Date",
+        "toTable": "ReportDate"
+      },
+      {
+        "name": "460bbac8c6c05e74915f",
+        "fromColumn": "activity_date",
+        "fromTable": "vessel_activity",
+        "toColumn": "Date",
+        "toTable": "ReportDate"
+      },
+      {
+        "name": "2be492793e58f92fdbb1",
+        "fromColumn": "weather_date",
+        "fromTable": "weather_impact",
+        "toColumn": "Date",
+        "toTable": "ReportDate"
+      },
+      {
+        "name": "088e161281d06333eb8a",
+        "fromColumn": "event_date",
+        "fromTable": "wildfire_daily",
+        "toColumn": "Date",
+        "toTable": "ReportDate"
+      }
+    ],
+    "sourceQueryCulture": "en-US",
+    "tables": [
+      {
+        "name": "air_quality_daily",
+        "columns": [
+          {
+            "name": "aoi_key",
+            "dataType": "string",
+            "lineageTag": "ece75345-af2d-4098-b94e-3955cb756d3b",
+            "sourceColumn": "aoi_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "aoi_name",
+            "dataType": "string",
+            "lineageTag": "f3dba1ae-903f-4f49-84bb-dbfec128893f",
+            "sourceColumn": "aoi_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "event_date",
+            "dataType": "dateTime",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "b4c3fdd8-5ab0-4b57-8532-231e20a28668",
+            "sourceColumn": "event_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "pm25_mean",
+            "dataType": "double",
+            "lineageTag": "e15da540-8e8e-4071-8ae0-b741601a14a8",
+            "sourceColumn": "pm25_mean",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "pm25_max",
+            "dataType": "double",
+            "lineageTag": "40ae1d97-9e99-4877-a79c-1b1e3ca1515b",
+            "sourceColumn": "pm25_max",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "pm10_mean",
+            "dataType": "double",
+            "lineageTag": "4289e110-2f3c-49dd-a08b-522afe60ea02",
+            "sourceColumn": "pm10_mean",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "pm10_max",
+            "dataType": "double",
+            "lineageTag": "85b2cfb7-ac23-4a6f-a0f1-2bf94c50b8eb",
+            "sourceColumn": "pm10_max",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "no2_column_mean",
+            "dataType": "double",
+            "lineageTag": "82cf5976-ef00-4e66-b0d3-e241b7d58739",
+            "sourceColumn": "no2_column_mean",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "so2_column_mean",
+            "dataType": "double",
+            "lineageTag": "91a00094-0b46-4044-9a3c-b86189386d1c",
+            "sourceColumn": "so2_column_mean",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "co_column_mean",
+            "dataType": "double",
+            "lineageTag": "954d1836-b585-4c42-a3bd-145dd3761540",
+            "sourceColumn": "co_column_mean",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "o3_column_mean",
+            "dataType": "double",
+            "lineageTag": "33691e31-b756-4131-aaed-f05f095e4fd5",
+            "sourceColumn": "o3_column_mean",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "station_count",
+            "dataType": "int64",
+            "lineageTag": "13e913c1-1114-4ab4-aed7-c9ef6d8a04a6",
+            "sourceColumn": "station_count",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "aqi_pm25",
+            "dataType": "int64",
+            "lineageTag": "db263e73-58b1-41e1-ac85-c5dc9be9bcd9",
+            "sourceColumn": "aqi_pm25",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "aqi_pm10",
+            "dataType": "int64",
+            "lineageTag": "04a1e67f-4684-400d-8e78-30b13ed63df4",
+            "sourceColumn": "aqi_pm10",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "aqi_band",
+            "dataType": "string",
+            "lineageTag": "8520aa2a-a493-4d5e-b761-6b770dc0e2b6",
+            "sourceColumn": "aqi_band",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "exceedance_flag",
+            "dataType": "boolean",
+            "lineageTag": "e232404b-a9a4-44bc-8316-6d02b64008fb",
+            "sourceColumn": "exceedance_flag",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "area_km2",
+            "dataType": "double",
+            "lineageTag": "c191c468-d1a4-485a-bb68-3b7a168dbfa8",
+            "sourceColumn": "area_km2",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "f0ce7d57-5693-49b1-a150-6feb843e43a9",
+        "measures": [
+          {
+            "name": "KPI air_quality_daily - mean_aqi_pm25",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(aqi_pm25)"
+              }
+            ],
+            "description": "Mean AQI (PM2.5). Superset SQL: AVG(aqi_pm25)",
+            "expression": "AVERAGE('air_quality_daily'[aqi_pm25])",
+            "formatString": "#,0.00",
+            "lineageTag": "e188b991-3134-43b9-bafd-21959a2ec690"
+          },
+          {
+            "name": "KPI air_quality_daily - max_pm25",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "MAX(pm25_max)"
+              }
+            ],
+            "description": "Max PM2.5. Superset SQL: MAX(pm25_max)",
+            "expression": "MAX('air_quality_daily'[pm25_max])",
+            "formatString": "#,0.00",
+            "lineageTag": "b8f12268-61fa-45e3-a26f-93f65077aa34"
+          },
+          {
+            "name": "KPI air_quality_daily - mean_pm25",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(pm25_mean)"
+              }
+            ],
+            "description": "Mean PM2.5. Superset SQL: AVG(pm25_mean)",
+            "expression": "AVERAGE('air_quality_daily'[pm25_mean])",
+            "formatString": "#,0.00",
+            "lineageTag": "0bea12c3-566f-4071-b7bc-e73f5297ae96"
+          },
+          {
+            "name": "KPI air_quality_daily - mean_pm10",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(pm10_mean)"
+              }
+            ],
+            "description": "Mean PM10. Superset SQL: AVG(pm10_mean)",
+            "expression": "AVERAGE('air_quality_daily'[pm10_mean])",
+            "formatString": "#,0.00",
+            "lineageTag": "5fbc2588-a667-4bb6-8630-9fa382e84e43"
+          },
+          {
+            "name": "KPI air_quality_daily - exceedance_days",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(CASE WHEN exceedance_flag THEN 1 ELSE 0 END)"
+              }
+            ],
+            "description": "AQI Exceedance Days. Superset SQL: SUM(CASE WHEN exceedance_flag THEN 1 ELSE 0 END)",
+            "expression": "SUMX('air_quality_daily', IF('air_quality_daily'[exceedance_flag] = TRUE(), 1, 0))",
+            "formatString": "#,0",
+            "lineageTag": "c505279a-b5f2-4f3c-ab0a-8202c8be7d87"
+          },
+          {
+            "name": "KPI air_quality_daily - AOI-days",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "COUNT(*)"
+              }
+            ],
+            "description": "AOI-days. Superset SQL: COUNT(*)",
+            "expression": "COALESCE(COUNTROWS('air_quality_daily'), 0)",
+            "formatString": "#,0",
+            "lineageTag": "64f25fb3-6a98-4d28-9fff-4a27813df7ae"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "air_quality_daily",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\air_quality_daily.csv\"), [Delimiter=\",\", Columns=17, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"aoi_key\", type text}, {\"aoi_name\", type text}, {\"event_date\", type datetime}, {\"pm25_mean\", type number}, {\"pm25_max\", type number}, {\"pm10_mean\", type number}, {\"pm10_max\", type number}, {\"no2_column_mean\", type number}, {\"so2_column_mean\", type number}, {\"co_column_mean\", type number}, {\"o3_column_mean\", type number}, {\"station_count\", Int64.Type}, {\"aqi_pm25\", Int64.Type}, {\"aqi_pm10\", Int64.Type}, {\"aqi_band\", type text}, {\"exceedance_flag\", type logical}, {\"area_km2\", type number}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "aoi_validation",
+        "columns": [
+          {
+            "name": "aoi_key",
+            "dataType": "string",
+            "lineageTag": "fd3aa9c8-2942-409e-aa2f-2f06283bf065",
+            "sourceColumn": "aoi_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "event_type",
+            "dataType": "string",
+            "lineageTag": "74bdce6f-defe-4db6-a848-e94fad2cd173",
+            "sourceColumn": "event_type",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "event_date",
+            "dataType": "dateTime",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "7d71d36c-1ba1-4020-bc0c-c50f78088fad",
+            "sourceColumn": "event_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "area_km2",
+            "dataType": "double",
+            "lineageTag": "8d8ce04d-139a-462d-b982-0029ba582c4c",
+            "sourceColumn": "area_km2",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "evidence_days",
+            "dataType": "int64",
+            "lineageTag": "19884595-0d3a-4377-bcef-b311ecf2d296",
+            "sourceColumn": "evidence_days",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "corroborated",
+            "dataType": "boolean",
+            "lineageTag": "8044f359-2776-4743-b211-3149daec5cab",
+            "sourceColumn": "corroborated",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "trust",
+            "dataType": "string",
+            "lineageTag": "46804e8a-7f14-45dd-8a8b-c65be2b2a0b1",
+            "sourceColumn": "trust",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "133da68e-1554-4ec7-ada8-35c1177a57c4",
+        "measures": [
+          {
+            "name": "KPI aoi_validation - corroboration_rate",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(CASE WHEN corroborated THEN 1.0 ELSE 0.0 END)"
+              }
+            ],
+            "description": "EMS Corroboration Rate. Superset SQL: AVG(CASE WHEN corroborated THEN 1.0 ELSE 0.0 END)",
+            "expression": "AVERAGEX('aoi_validation', IF('aoi_validation'[corroborated] = TRUE(), 1.0, 0.0))",
+            "formatString": "0.0%",
+            "lineageTag": "bbc670c3-e75c-465f-bb8e-c0197c1e7619"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "aoi_validation",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\aoi_validation.csv\"), [Delimiter=\",\", Columns=7, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"aoi_key\", type text}, {\"event_type\", type text}, {\"event_date\", type datetime}, {\"area_km2\", type number}, {\"evidence_days\", Int64.Type}, {\"corroborated\", type logical}, {\"trust\", type text}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "catalog_quality",
+        "columns": [
+          {
+            "name": "collection",
+            "dataType": "string",
+            "lineageTag": "cf8975a0-f228-4c1e-a5be-d33ad1cb3b45",
+            "sourceColumn": "collection",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "provider",
+            "dataType": "string",
+            "lineageTag": "ab6edf26-8f2b-4e3e-8782-f8927402aa17",
+            "sourceColumn": "provider",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "scenes",
+            "dataType": "int64",
+            "lineageTag": "21564314-faae-4f48-94cd-3f18fa6a2a22",
+            "sourceColumn": "scenes",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "searchable_scenes",
+            "dataType": "int64",
+            "lineageTag": "8099ef7f-cc0a-43f2-8541-a2ff110b18af",
+            "sourceColumn": "searchable_scenes",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "searchable_rate",
+            "dataType": "double",
+            "lineageTag": "b3d273da-c20f-4927-a02f-e29886de0d47",
+            "sourceColumn": "searchable_rate",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "mean_completeness",
+            "dataType": "double",
+            "lineageTag": "ccb4a49f-affc-4248-80ce-88e1cd9c2d93",
+            "sourceColumn": "mean_completeness",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "mean_cloud_cover",
+            "dataType": "double",
+            "lineageTag": "0fa77c7b-76f3-4edb-b9b0-168dea45a533",
+            "sourceColumn": "mean_cloud_cover",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "gold_scenes",
+            "dataType": "int64",
+            "lineageTag": "19448279-8aec-40e9-bfce-1a2e34f8b4ac",
+            "sourceColumn": "gold_scenes",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "silver_scenes",
+            "dataType": "int64",
+            "lineageTag": "4f8656ab-1969-4e90-ad29-ce3251e12203",
+            "sourceColumn": "silver_scenes",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "bronze_scenes",
+            "dataType": "int64",
+            "lineageTag": "819c51ca-8228-4a8d-aeca-84c79ea9ed6c",
+            "sourceColumn": "bronze_scenes",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "3edf121c-89a4-421b-9dd4-5347d495be11",
+        "measures": [
+          {
+            "name": "KPI catalog_quality - mean_searchable_rate",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(searchable_rate)"
+              }
+            ],
+            "description": "Searchable Rate. Superset SQL: AVG(searchable_rate)",
+            "expression": "AVERAGE('catalog_quality'[searchable_rate])",
+            "formatString": "0.0%",
+            "lineageTag": "c4edfa70-4a7d-4577-88f9-8f40e4b45275"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "catalog_quality",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\catalog_quality.csv\"), [Delimiter=\",\", Columns=10, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"collection\", type text}, {\"provider\", type text}, {\"scenes\", Int64.Type}, {\"searchable_scenes\", Int64.Type}, {\"searchable_rate\", type number}, {\"mean_completeness\", type number}, {\"mean_cloud_cover\", type number}, {\"gold_scenes\", Int64.Type}, {\"silver_scenes\", Int64.Type}, {\"bronze_scenes\", Int64.Type}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "climate_daily",
+        "columns": [
+          {
+            "name": "kpi_date",
+            "dataType": "dateTime",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "74c6479d-dce2-4bd6-a20a-744a8281d7ca",
+            "sourceColumn": "kpi_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "mean_aqi_pm25",
+            "dataType": "double",
+            "lineageTag": "3ba3cab5-8d42-43c7-8c42-78edbfda52e0",
+            "sourceColumn": "mean_aqi_pm25",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "aqi_exceedance_days",
+            "dataType": "int64",
+            "lineageTag": "0b3eff10-48a0-420c-9ccb-4261729b8e27",
+            "sourceColumn": "aqi_exceedance_days",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "air_quality_aois",
+            "dataType": "int64",
+            "lineageTag": "faa600d2-08c5-4081-98d5-f5e7daac59f0",
+            "sourceColumn": "air_quality_aois",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "dust_event_days",
+            "dataType": "int64",
+            "lineageTag": "0f22cf67-7117-4531-9dd2-f366026c445e",
+            "sourceColumn": "dust_event_days",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "peak_aod",
+            "dataType": "double",
+            "lineageTag": "a94b259f-6d74-4783-b33b-8c4553011895",
+            "sourceColumn": "peak_aod",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "dust_aois",
+            "dataType": "int64",
+            "lineageTag": "5669a206-391e-4a23-b6b2-4726f131f4ca",
+            "sourceColumn": "dust_aois",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "mean_lst_anomaly",
+            "dataType": "double",
+            "lineageTag": "9412d6c7-0201-4807-914d-e45bfc633495",
+            "sourceColumn": "mean_lst_anomaly",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "warming_days",
+            "dataType": "int64",
+            "lineageTag": "ebe0e579-6840-4687-88de-eab756037611",
+            "sourceColumn": "warming_days",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "desertification_days",
+            "dataType": "int64",
+            "lineageTag": "de9fa390-14a5-4ec4-a2c4-5bd6fe32cf08",
+            "sourceColumn": "desertification_days",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "mean_ndvi",
+            "dataType": "double",
+            "lineageTag": "ed29c097-729f-480e-b469-4d26b93de7a7",
+            "sourceColumn": "mean_ndvi",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "crop_stress_days",
+            "dataType": "int64",
+            "lineageTag": "c89e620e-6668-415c-ae54-447b95ccbc7f",
+            "sourceColumn": "crop_stress_days",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "b06357ee-cc90-45e7-a690-71a270ef114a",
+        "measures": [
+          {
+            "name": "KPI climate_daily - aqi_exceedance_days",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(aqi_exceedance_days)"
+              }
+            ],
+            "description": "AQI Exceedance Days. Superset SQL: SUM(aqi_exceedance_days)",
+            "expression": "SUM('climate_daily'[aqi_exceedance_days])",
+            "formatString": "#,0",
+            "lineageTag": "81e9798c-52e0-4e0e-8dc4-17415ee3d496"
+          },
+          {
+            "name": "KPI climate_daily - dust_event_days",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(dust_event_days)"
+              }
+            ],
+            "description": "Active Dust Days. Superset SQL: SUM(dust_event_days)",
+            "expression": "SUM('climate_daily'[dust_event_days])",
+            "formatString": "#,0",
+            "lineageTag": "f02902a2-fe15-407a-8b3e-a855d6e47615"
+          },
+          {
+            "name": "KPI climate_daily - mean_lst_anomaly",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(mean_lst_anomaly)"
+              }
+            ],
+            "description": "Mean LST Anomaly (C). Superset SQL: AVG(mean_lst_anomaly)",
+            "expression": "AVERAGE('climate_daily'[mean_lst_anomaly])",
+            "formatString": "#,0.00",
+            "lineageTag": "8a314f30-3fc8-441b-98e2-46e59d58d009"
+          },
+          {
+            "name": "KPI climate_daily - warming_days",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(warming_days)"
+              }
+            ],
+            "description": "Warming Days. Superset SQL: SUM(warming_days)",
+            "expression": "SUM('climate_daily'[warming_days])",
+            "formatString": "#,0",
+            "lineageTag": "a39f094c-e263-4d7c-8de7-cfd2515fdba2"
+          },
+          {
+            "name": "KPI climate_daily - mean_aqi_pm25",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(mean_aqi_pm25)"
+              }
+            ],
+            "description": "Mean AQI (PM2.5). Superset SQL: AVG(mean_aqi_pm25)",
+            "expression": "AVERAGE('climate_daily'[mean_aqi_pm25])",
+            "formatString": "#,0.00",
+            "lineageTag": "81c66e18-6d4f-4ab6-af5d-350103329b74"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "climate_daily",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\climate_daily.csv\"), [Delimiter=\",\", Columns=12, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"kpi_date\", type datetime}, {\"mean_aqi_pm25\", type number}, {\"aqi_exceedance_days\", Int64.Type}, {\"air_quality_aois\", Int64.Type}, {\"dust_event_days\", Int64.Type}, {\"peak_aod\", type number}, {\"dust_aois\", Int64.Type}, {\"mean_lst_anomaly\", type number}, {\"warming_days\", Int64.Type}, {\"desertification_days\", Int64.Type}, {\"mean_ndvi\", type number}, {\"crop_stress_days\", Int64.Type}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "climate_indicator_daily",
+        "columns": [
+          {
+            "name": "aoi_key",
+            "dataType": "string",
+            "lineageTag": "a6e89801-b8df-40a3-8c2d-08d9db3dca74",
+            "sourceColumn": "aoi_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "aoi_name",
+            "dataType": "string",
+            "lineageTag": "2c6b9eae-422c-4e6a-9a28-5465646b98f4",
+            "sourceColumn": "aoi_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "event_date",
+            "dataType": "dateTime",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "73a0dd82-29be-4624-b157-ba0b48cbc7ce",
+            "sourceColumn": "event_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "lst_c",
+            "dataType": "double",
+            "lineageTag": "8236f220-91bf-40e7-8ce6-51255c548032",
+            "sourceColumn": "lst_c",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "lst_anomaly_c",
+            "dataType": "double",
+            "lineageTag": "699f5451-6491-43c2-882e-069ef123b44d",
+            "sourceColumn": "lst_anomaly_c",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "sst_c",
+            "dataType": "double",
+            "lineageTag": "11209da5-90e2-4ef3-baac-4c62c5f202ae",
+            "sourceColumn": "sst_c",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "sst_anomaly_c",
+            "dataType": "double",
+            "lineageTag": "00425f94-585a-4d88-9ec4-40a0747def0f",
+            "sourceColumn": "sst_anomaly_c",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ndwi_mean",
+            "dataType": "double",
+            "lineageTag": "8ff4ae74-887f-4945-814b-6fb0c8c9597b",
+            "sourceColumn": "ndwi_mean",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "tree_cover_loss_ha",
+            "dataType": "double",
+            "lineageTag": "1048544b-8a0a-4705-8008-091d4e7ab08e",
+            "sourceColumn": "tree_cover_loss_ha",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "desertification_proxy",
+            "dataType": "double",
+            "lineageTag": "f96253a2-45df-4ea9-bd68-1b54336ed7be",
+            "sourceColumn": "desertification_proxy",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "lst_anomaly_band",
+            "dataType": "int64",
+            "lineageTag": "70be4d79-107a-4ed8-b0eb-cca838e4dcbe",
+            "sourceColumn": "lst_anomaly_band",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "lst_anomaly_label",
+            "dataType": "string",
+            "lineageTag": "c558d3a3-b6f3-45c9-b41f-deaa25adb9be",
+            "sourceColumn": "lst_anomaly_label",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "warming_flag",
+            "dataType": "boolean",
+            "lineageTag": "5aa54af8-fd65-433c-92dc-146aab923fcb",
+            "sourceColumn": "warming_flag",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "desertification_flag",
+            "dataType": "boolean",
+            "lineageTag": "9f79b72f-6439-492a-acd6-0a53015d3a22",
+            "sourceColumn": "desertification_flag",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "area_km2",
+            "dataType": "double",
+            "lineageTag": "1e2f490b-0129-43a1-923f-35c246707bd1",
+            "sourceColumn": "area_km2",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "038fd78d-a50a-4b6d-bd83-b4d574ced472",
+        "measures": [
+          {
+            "name": "KPI climate_indicator_daily - mean_lst_anomaly",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(lst_anomaly_c)"
+              }
+            ],
+            "description": "Mean LST Anomaly (C). Superset SQL: AVG(lst_anomaly_c)",
+            "expression": "AVERAGE('climate_indicator_daily'[lst_anomaly_c])",
+            "formatString": "#,0.00",
+            "lineageTag": "f37deda4-7f57-46bc-be27-236a7974c784"
+          },
+          {
+            "name": "KPI climate_indicator_daily - max_lst_anomaly",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "MAX(lst_anomaly_c)"
+              }
+            ],
+            "description": "Max LST Anomaly (C). Superset SQL: MAX(lst_anomaly_c)",
+            "expression": "MAX('climate_indicator_daily'[lst_anomaly_c])",
+            "formatString": "#,0.00",
+            "lineageTag": "6db575b4-c0af-423e-ab05-bea7eb4751e5"
+          },
+          {
+            "name": "KPI climate_indicator_daily - mean_sst_anomaly",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(sst_anomaly_c)"
+              }
+            ],
+            "description": "Mean SST Anomaly (C). Superset SQL: AVG(sst_anomaly_c)",
+            "expression": "AVERAGE('climate_indicator_daily'[sst_anomaly_c])",
+            "formatString": "#,0.00",
+            "lineageTag": "a9ae8558-4c74-4c7f-a098-afa82a984209"
+          },
+          {
+            "name": "KPI climate_indicator_daily - warming_days",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(CASE WHEN warming_flag THEN 1 ELSE 0 END)"
+              }
+            ],
+            "description": "Warming Days. Superset SQL: SUM(CASE WHEN warming_flag THEN 1 ELSE 0 END)",
+            "expression": "SUMX('climate_indicator_daily', IF('climate_indicator_daily'[warming_flag] = TRUE(), 1, 0))",
+            "formatString": "#,0",
+            "lineageTag": "7ab7eeec-3059-4fb4-a495-72d0cf2158e4"
+          },
+          {
+            "name": "KPI climate_indicator_daily - desertification_days",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(CASE WHEN desertification_flag THEN 1 ELSE 0 END)"
+              }
+            ],
+            "description": "Desertification Days. Superset SQL: SUM(CASE WHEN desertification_flag THEN 1 ELSE 0 END)",
+            "expression": "SUMX('climate_indicator_daily', IF('climate_indicator_daily'[desertification_flag] = TRUE(), 1, 0))",
+            "formatString": "#,0",
+            "lineageTag": "2a2685ae-6cca-4f75-9993-a7ecd56772e1"
+          },
+          {
+            "name": "KPI climate_indicator_daily - tree_cover_loss_ha",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(tree_cover_loss_ha)"
+              }
+            ],
+            "description": "Tree-cover Loss (ha). Superset SQL: SUM(tree_cover_loss_ha)",
+            "expression": "SUM('climate_indicator_daily'[tree_cover_loss_ha])",
+            "formatString": "#,0",
+            "lineageTag": "adf25aa2-006a-4411-9297-3bbe317c53fd"
+          },
+          {
+            "name": "KPI climate_indicator_daily - mean_lst",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(lst_c)"
+              }
+            ],
+            "description": "Mean LST (C). Superset SQL: AVG(lst_c)",
+            "expression": "AVERAGE('climate_indicator_daily'[lst_c])",
+            "formatString": "#,0.00",
+            "lineageTag": "325d0803-bafc-4db8-9cf6-354a7afb3b67"
+          },
+          {
+            "name": "KPI climate_indicator_daily - mean_sst",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(sst_c)"
+              }
+            ],
+            "description": "Mean SST (C). Superset SQL: AVG(sst_c)",
+            "expression": "AVERAGE('climate_indicator_daily'[sst_c])",
+            "formatString": "#,0.00",
+            "lineageTag": "31860ec1-f22e-4782-b2b1-a6c6c588b7c5"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "climate_indicator_daily",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\climate_indicator_daily.csv\"), [Delimiter=\",\", Columns=15, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"aoi_key\", type text}, {\"aoi_name\", type text}, {\"event_date\", type datetime}, {\"lst_c\", type number}, {\"lst_anomaly_c\", type number}, {\"sst_c\", type number}, {\"sst_anomaly_c\", type number}, {\"ndwi_mean\", type number}, {\"tree_cover_loss_ha\", type number}, {\"desertification_proxy\", type number}, {\"lst_anomaly_band\", Int64.Type}, {\"lst_anomaly_label\", type text}, {\"warming_flag\", type logical}, {\"desertification_flag\", type logical}, {\"area_km2\", type number}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "dust_event_daily",
+        "columns": [
+          {
+            "name": "aoi_key",
+            "dataType": "string",
+            "lineageTag": "57ad456c-e591-4af7-925f-431e35f06e45",
+            "sourceColumn": "aoi_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "aoi_name",
+            "dataType": "string",
+            "lineageTag": "bb69112b-51d5-494a-a79f-73abe5807932",
+            "sourceColumn": "aoi_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "event_date",
+            "dataType": "dateTime",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "bf11695f-a058-4122-b91d-03eb18e638db",
+            "sourceColumn": "event_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "aod_mean",
+            "dataType": "double",
+            "lineageTag": "15ef6180-bfab-4063-9fa8-6a24f687da38",
+            "sourceColumn": "aod_mean",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "aod_max",
+            "dataType": "double",
+            "lineageTag": "50a59375-7c4a-4384-adee-738fd959065e",
+            "sourceColumn": "aod_max",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "uv_aerosol_index_mean",
+            "dataType": "double",
+            "lineageTag": "5ad6e35a-abc2-4f25-8920-c2f704f445bc",
+            "sourceColumn": "uv_aerosol_index_mean",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "wind_speed_mean",
+            "dataType": "double",
+            "lineageTag": "f9e620a6-43a7-4d78-8dd5-0f2a40d1cadd",
+            "sourceColumn": "wind_speed_mean",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "wind_dir_dominant",
+            "dataType": "double",
+            "lineageTag": "bcaf689b-fa40-40ce-860a-4d9603c5b4cb",
+            "sourceColumn": "wind_dir_dominant",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "corridor_aod_max",
+            "dataType": "double",
+            "lineageTag": "8de540e1-8ffe-4aa3-97f6-949d2f47b765",
+            "sourceColumn": "corridor_aod_max",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "valid_fraction",
+            "dataType": "double",
+            "lineageTag": "471ab80d-ece2-4cf4-b40f-4fc37312683f",
+            "sourceColumn": "valid_fraction",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "dust_severity_band",
+            "dataType": "int64",
+            "lineageTag": "42f83593-d5f2-4691-9f78-0013cd25d767",
+            "sourceColumn": "dust_severity_band",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "dust_severity_label",
+            "dataType": "string",
+            "lineageTag": "104ccf7d-c645-4cd4-8bb4-1c7b40e73d7c",
+            "sourceColumn": "dust_severity_label",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "dust_flag",
+            "dataType": "boolean",
+            "lineageTag": "608b670f-47c6-462c-8263-2fdfc8a70cd3",
+            "sourceColumn": "dust_flag",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "transport_flag",
+            "dataType": "boolean",
+            "lineageTag": "6f678c83-ef17-4052-8b38-9213cfade138",
+            "sourceColumn": "transport_flag",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "area_km2",
+            "dataType": "double",
+            "lineageTag": "ee20b807-d728-4108-bdf2-dc98b39bb82c",
+            "sourceColumn": "area_km2",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "1df972ea-8846-4e12-9d60-2ef1fd8edaae",
+        "measures": [
+          {
+            "name": "KPI dust_event_daily - dust_days",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(CASE WHEN dust_flag THEN 1 ELSE 0 END)"
+              }
+            ],
+            "description": "Dust Event Days. Superset SQL: SUM(CASE WHEN dust_flag THEN 1 ELSE 0 END)",
+            "expression": "SUMX('dust_event_daily', IF('dust_event_daily'[dust_flag] = TRUE(), 1, 0))",
+            "formatString": "#,0",
+            "lineageTag": "401b7d1e-6ccc-47c8-853e-0edff1f60eb7"
+          },
+          {
+            "name": "KPI dust_event_daily - peak_aod",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "MAX(aod_max)"
+              }
+            ],
+            "description": "Peak AOD. Superset SQL: MAX(aod_max)",
+            "expression": "MAX('dust_event_daily'[aod_max])",
+            "formatString": "#,0.00",
+            "lineageTag": "12c64c5c-40b7-4a82-9e2c-e03bb7a3031e"
+          },
+          {
+            "name": "KPI dust_event_daily - mean_aod",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(aod_mean)"
+              }
+            ],
+            "description": "Mean AOD. Superset SQL: AVG(aod_mean)",
+            "expression": "AVERAGE('dust_event_daily'[aod_mean])",
+            "formatString": "#,0.00",
+            "lineageTag": "108d4f6f-179d-4f18-9be1-4cccdec55422"
+          },
+          {
+            "name": "KPI dust_event_daily - transport_days",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(CASE WHEN transport_flag THEN 1 ELSE 0 END)"
+              }
+            ],
+            "description": "Dust Transport Days. Superset SQL: SUM(CASE WHEN transport_flag THEN 1 ELSE 0 END)",
+            "expression": "SUMX('dust_event_daily', IF('dust_event_daily'[transport_flag] = TRUE(), 1, 0))",
+            "formatString": "#,0",
+            "lineageTag": "bd3d7d52-fd62-4358-b58d-f4b67170cb39"
+          },
+          {
+            "name": "KPI dust_event_daily - AOI-days",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "COUNT(*)"
+              }
+            ],
+            "description": "AOI-days. Superset SQL: COUNT(*)",
+            "expression": "COALESCE(COUNTROWS('dust_event_daily'), 0)",
+            "formatString": "#,0",
+            "lineageTag": "8608f149-3b92-4a32-a424-1c5fe31fa4a8"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dust_event_daily",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\dust_event_daily.csv\"), [Delimiter=\",\", Columns=15, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"aoi_key\", type text}, {\"aoi_name\", type text}, {\"event_date\", type datetime}, {\"aod_mean\", type number}, {\"aod_max\", type number}, {\"uv_aerosol_index_mean\", type number}, {\"wind_speed_mean\", type number}, {\"wind_dir_dominant\", type number}, {\"corridor_aod_max\", type number}, {\"valid_fraction\", type number}, {\"dust_severity_band\", Int64.Type}, {\"dust_severity_label\", type text}, {\"dust_flag\", type logical}, {\"transport_flag\", type logical}, {\"area_km2\", type number}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "flood_daily",
+        "columns": [
+          {
+            "name": "aoi_key",
+            "dataType": "string",
+            "lineageTag": "e9e164ce-4547-4387-a785-a2b8a8b8cce5",
+            "sourceColumn": "aoi_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "aoi_name",
+            "dataType": "string",
+            "lineageTag": "7bfa4381-83b5-428f-9476-8995176be3cd",
+            "sourceColumn": "aoi_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "event_date",
+            "dataType": "dateTime",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "f4b78553-5fe7-4221-b279-0312bfb6a40d",
+            "sourceColumn": "event_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ndwi_mean",
+            "dataType": "double",
+            "lineageTag": "8b444e99-97b9-4870-9bc3-535acd3d4bce",
+            "sourceColumn": "ndwi_mean",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ndwi_max",
+            "dataType": "double",
+            "lineageTag": "a987f50f-3830-4e4b-a6b8-5b6ef4552b51",
+            "sourceColumn": "ndwi_max",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "valid_pixel_fraction",
+            "dataType": "double",
+            "lineageTag": "b78f5a86-bff3-4f17-bf2f-f43a10a4bd06",
+            "sourceColumn": "valid_pixel_fraction",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "flood_flag",
+            "dataType": "boolean",
+            "lineageTag": "1551834a-686b-43d1-8230-9d45994f2e60",
+            "sourceColumn": "flood_flag",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "area_km2",
+            "dataType": "double",
+            "lineageTag": "b98b2ad8-e768-4d53-af69-d41965efbfea",
+            "sourceColumn": "area_km2",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ems_corroborated",
+            "dataType": "boolean",
+            "lineageTag": "a4e4fba1-c0a4-4040-b5bf-5edecba69a2d",
+            "sourceColumn": "ems_corroborated",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "bc28d68b-9f79-4ddc-99f2-17f76e699d54",
+        "measures": [
+          {
+            "name": "KPI flood_daily - flood_day_rate",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(CASE WHEN flood_flag THEN 1.0 ELSE 0.0 END)"
+              }
+            ],
+            "description": "Flood Day Rate. Superset SQL: AVG(CASE WHEN flood_flag THEN 1.0 ELSE 0.0 END)",
+            "expression": "AVERAGEX('flood_daily', IF('flood_daily'[flood_flag] = TRUE(), 1.0, 0.0))",
+            "formatString": "0.0%",
+            "lineageTag": "c209895a-75da-4793-96ad-bfa668876c50"
+          },
+          {
+            "name": "KPI flood_daily - mean_ndwi",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(ndwi_mean)"
+              }
+            ],
+            "description": "Mean NDWI. Superset SQL: AVG(ndwi_mean)",
+            "expression": "AVERAGE('flood_daily'[ndwi_mean])",
+            "formatString": "#,0.00",
+            "lineageTag": "c34ce323-ced9-4ec4-86ee-01ec33a6841f"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "flood_daily",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\flood_daily.csv\"), [Delimiter=\",\", Columns=9, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"aoi_key\", type text}, {\"aoi_name\", type text}, {\"event_date\", type datetime}, {\"ndwi_mean\", type number}, {\"ndwi_max\", type number}, {\"valid_pixel_fraction\", type number}, {\"flood_flag\", type logical}, {\"area_km2\", type number}, {\"ems_corroborated\", type logical}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "launch_monthly",
+        "columns": [
+          {
+            "name": "provider_key",
+            "dataType": "string",
+            "lineageTag": "a7e141b0-35fd-459a-8f5a-abaecd3dc631",
+            "sourceColumn": "provider_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "month_key",
+            "dataType": "string",
+            "lineageTag": "3660911a-6cd8-489b-b1ee-f5646cbe70df",
+            "sourceColumn": "month_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "launches",
+            "dataType": "int64",
+            "lineageTag": "ae2617af-3c5f-419b-8d57-fb6012536647",
+            "sourceColumn": "launches",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "successes",
+            "dataType": "int64",
+            "lineageTag": "d35e3079-70b4-4220-b0a3-9df1aee86967",
+            "sourceColumn": "successes",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "success_rate",
+            "dataType": "double",
+            "lineageTag": "7a85e917-0d56-4f1d-9907-9ea0227ddae5",
+            "sourceColumn": "success_rate",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "cadence_per_month",
+            "dataType": "int64",
+            "lineageTag": "fa00893c-c541-4323-a880-152cccfbce60",
+            "sourceColumn": "cadence_per_month",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "mean_delay_days",
+            "dataType": "double",
+            "lineageTag": "7d93eb57-4498-41b8-8c48-4e1bcee533e8",
+            "sourceColumn": "mean_delay_days",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "357ed9f1-3735-415e-b7d3-42e285c4aa2d",
+        "measures": [
+          {
+            "name": "KPI launch_monthly - mean_success_rate",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(success_rate)"
+              }
+            ],
+            "description": "Launch Success Rate (sim). Superset SQL: AVG(success_rate)",
+            "expression": "AVERAGE('launch_monthly'[success_rate])",
+            "formatString": "0.0%",
+            "lineageTag": "34600576-bc81-4c80-9415-1a9d73f698bc"
+          },
+          {
+            "name": "KPI launch_monthly - total_launches",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(launches)"
+              }
+            ],
+            "description": "Launches (sim). Superset SQL: SUM(launches)",
+            "expression": "SUM('launch_monthly'[launches])",
+            "formatString": "#,0",
+            "lineageTag": "ef3a3b96-bf41-4c41-a84b-f4bfff13279d"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "launch_monthly",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\launch_monthly.csv\"), [Delimiter=\",\", Columns=7, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"provider_key\", type text}, {\"month_key\", type text}, {\"launches\", Int64.Type}, {\"successes\", Int64.Type}, {\"success_rate\", type number}, {\"cadence_per_month\", Int64.Type}, {\"mean_delay_days\", type number}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "platform_daily",
+        "columns": [
+          {
+            "name": "kpi_date",
+            "dataType": "dateTime",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "bd672f3e-0fb7-4690-a6a8-9996dcd3862d",
+            "sourceColumn": "kpi_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "fire_detections",
+            "dataType": "int64",
+            "lineageTag": "65d03d9a-cd99-4655-896f-5466f2d7b0ad",
+            "sourceColumn": "fire_detections",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "peak_frp",
+            "dataType": "double",
+            "lineageTag": "369a7d19-8679-4760-b733-ebaa7ee99182",
+            "sourceColumn": "peak_frp",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "fire_aois",
+            "dataType": "int64",
+            "lineageTag": "df34888a-6966-485b-a035-d3aa381505e9",
+            "sourceColumn": "fire_aois",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "flood_aoi_days",
+            "dataType": "int64",
+            "lineageTag": "1550a1ad-4aa3-4464-98ea-b4cad469eb7c",
+            "sourceColumn": "flood_aoi_days",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "flood_aois",
+            "dataType": "int64",
+            "lineageTag": "37b834a5-a378-47d8-b591-104553137f55",
+            "sourceColumn": "flood_aois",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "vessel_days",
+            "dataType": "int64",
+            "lineageTag": "7774dc4d-3c18-408f-8e73-6a74a515bbc6",
+            "sourceColumn": "vessel_days",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "suspicious_vessels",
+            "dataType": "int64",
+            "lineageTag": "6633a0cc-5f20-4d61-a10b-c0f35e2b4dc6",
+            "sourceColumn": "suspicious_vessels",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "af786bdf-d3a8-40fb-be0e-bda918a93471",
+        "measures": [
+          {
+            "name": "KPI platform_daily - fire_detections",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(fire_detections)"
+              }
+            ],
+            "description": "Total Fire Detections. Superset SQL: SUM(fire_detections)",
+            "expression": "SUM('platform_daily'[fire_detections])",
+            "formatString": "#,0",
+            "lineageTag": "b01e169f-1cd4-4c83-969a-50f614f528ce"
+          },
+          {
+            "name": "KPI platform_daily - flood_aoi_days",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(flood_aoi_days)"
+              }
+            ],
+            "description": "Flood AOI-days. Superset SQL: SUM(flood_aoi_days)",
+            "expression": "SUM('platform_daily'[flood_aoi_days])",
+            "formatString": "#,0",
+            "lineageTag": "6c8716cf-d7ac-4c44-b0fc-7d94e3d515e4"
+          },
+          {
+            "name": "KPI platform_daily - suspicious_vessels",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(suspicious_vessels)"
+              }
+            ],
+            "description": "Suspicious Vessels. Superset SQL: SUM(suspicious_vessels)",
+            "expression": "SUM('platform_daily'[suspicious_vessels])",
+            "formatString": "#,0",
+            "lineageTag": "f94f5758-428e-4b3b-83f2-53a042a3530d"
+          },
+          {
+            "name": "KPI platform_daily - peak_frp",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "MAX(peak_frp)"
+              }
+            ],
+            "description": "Peak FRP. Superset SQL: MAX(peak_frp)",
+            "expression": "MAX('platform_daily'[peak_frp])",
+            "formatString": "#,0.00",
+            "lineageTag": "a843bf2a-e11f-4e36-8b9b-2fa187e06ae7"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "platform_daily",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\platform_daily.csv\"), [Delimiter=\",\", Columns=8, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"kpi_date\", type datetime}, {\"fire_detections\", Int64.Type}, {\"peak_frp\", type number}, {\"fire_aois\", Int64.Type}, {\"flood_aoi_days\", Int64.Type}, {\"flood_aois\", Int64.Type}, {\"vessel_days\", Int64.Type}, {\"suspicious_vessels\", Int64.Type}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "sat_health",
+        "columns": [
+          {
+            "name": "sat_key",
+            "dataType": "string",
+            "lineageTag": "5acef066-c773-4af6-bad8-599a687fbe8a",
+            "sourceColumn": "sat_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "health_date",
+            "dataType": "dateTime",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "5ec01ba9-9fec-4de7-a064-b7b94ad48a47",
+            "sourceColumn": "health_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "samples",
+            "dataType": "int64",
+            "lineageTag": "8e3dc809-9d71-431e-b768-a66fd6c81027",
+            "sourceColumn": "samples",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "health_score",
+            "dataType": "double",
+            "lineageTag": "513a9783-c128-4086-82af-1b5ce34a0737",
+            "sourceColumn": "health_score",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "anomaly_samples",
+            "dataType": "int64",
+            "lineageTag": "0b4ff9a5-67d2-4d9c-a2c7-8c25405d9cfc",
+            "sourceColumn": "anomaly_samples",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "labelled_anomalies",
+            "dataType": "int64",
+            "lineageTag": "d36b387a-8a79-4ba2-ab66-07605304f925",
+            "sourceColumn": "labelled_anomalies",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "anomaly_density",
+            "dataType": "double",
+            "lineageTag": "1569303d-cd86-42df-8b35-7b4edf5f58e2",
+            "sourceColumn": "anomaly_density",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "battery_voltage_drift",
+            "dataType": "double",
+            "lineageTag": "230a9d56-f301-4dbd-8f1e-c05f236b27a6",
+            "sourceColumn": "battery_voltage_drift",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "status",
+            "dataType": "string",
+            "lineageTag": "c5543aa7-343a-43b1-a140-49e6af41eabf",
+            "sourceColumn": "status",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "53fa5493-1d95-49f2-8fbf-e8024f087c66",
+        "measures": [
+          {
+            "name": "KPI sat_health - mean_health",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(health_score)"
+              }
+            ],
+            "description": "Mean Satellite Health (sim). Superset SQL: AVG(health_score)",
+            "expression": "AVERAGE('sat_health'[health_score])",
+            "formatString": "#,0.00",
+            "lineageTag": "7bce2ce1-6810-4ba0-9742-b04aac5e76db"
+          },
+          {
+            "name": "KPI sat_health - records",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "COUNT(*)"
+              }
+            ],
+            "description": "records. Superset SQL: COUNT(*)",
+            "expression": "COALESCE(COUNTROWS('sat_health'), 0)",
+            "formatString": "#,0",
+            "lineageTag": "91001ff4-5a72-4718-b810-39bb121d5566"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "sat_health",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\sat_health.csv\"), [Delimiter=\",\", Columns=9, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"sat_key\", type text}, {\"health_date\", type datetime}, {\"samples\", Int64.Type}, {\"health_score\", type number}, {\"anomaly_samples\", Int64.Type}, {\"labelled_anomalies\", Int64.Type}, {\"anomaly_density\", type number}, {\"battery_voltage_drift\", type number}, {\"status\", type text}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "scene_catalog",
+        "columns": [
+          {
+            "name": "scene_key",
+            "dataType": "string",
+            "lineageTag": "c20aa7d3-48b8-4f1d-8ead-e64411b06eb8",
+            "sourceColumn": "scene_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "capture_date",
+            "dataType": "dateTime",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "d577ab7d-3441-494c-930c-ed00efa7a2d4",
+            "sourceColumn": "capture_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "collection",
+            "dataType": "string",
+            "lineageTag": "85e5da29-7479-4035-8b7b-b9fbf4afbe6f",
+            "sourceColumn": "collection",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "provider",
+            "dataType": "string",
+            "lineageTag": "eab2926d-28a0-4e71-a5d4-398f32dfa5c8",
+            "sourceColumn": "provider",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "platform",
+            "dataType": "string",
+            "lineageTag": "84855268-6530-4e50-9abd-ce764d2b88ae",
+            "sourceColumn": "platform",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "geo_key",
+            "dataType": "string",
+            "lineageTag": "55af8a96-978f-43f4-b169-d0f567b56c47",
+            "sourceColumn": "geo_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "cloud_cover",
+            "dataType": "double",
+            "lineageTag": "f51c7b48-b0d2-4ae5-9d5d-91cc5d85bcdf",
+            "sourceColumn": "cloud_cover",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "completeness_score",
+            "dataType": "double",
+            "lineageTag": "202be65d-b67d-43f7-84d4-4313533209ab",
+            "sourceColumn": "completeness_score",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "is_searchable",
+            "dataType": "boolean",
+            "lineageTag": "4f348831-8c80-4842-936f-bec18454e87c",
+            "sourceColumn": "is_searchable",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "quality_band",
+            "dataType": "string",
+            "lineageTag": "c52ab640-fc56-4b1f-a92d-86a62c323deb",
+            "sourceColumn": "quality_band",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "acb6cf1e-0e76-4d27-af8a-3f97a0737ebe",
+        "measures": [
+          {
+            "name": "KPI scene_catalog - scenes",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "COUNT(*)"
+              }
+            ],
+            "description": "Scenes. Superset SQL: COUNT(*)",
+            "expression": "COALESCE(COUNTROWS('scene_catalog'), 0)",
+            "formatString": "#,0",
+            "lineageTag": "5b46245f-94c5-419a-87ce-0bb0ce88ceed"
+          },
+          {
+            "name": "KPI scene_catalog - searchable_rate",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(CASE WHEN is_searchable THEN 1.0 ELSE 0.0 END)"
+              }
+            ],
+            "description": "Searchable Scene Rate. Superset SQL: AVG(CASE WHEN is_searchable THEN 1.0 ELSE 0.0 END)",
+            "expression": "AVERAGEX('scene_catalog', IF('scene_catalog'[is_searchable] = TRUE(), 1.0, 0.0))",
+            "formatString": "0.0%",
+            "lineageTag": "50bc8ce9-8af8-4f21-91ff-9d6bebe12bfb"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "scene_catalog",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\scene_catalog.csv\"), [Delimiter=\",\", Columns=10, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"scene_key\", type text}, {\"capture_date\", type datetime}, {\"collection\", type text}, {\"provider\", type text}, {\"platform\", type text}, {\"geo_key\", type text}, {\"cloud_cover\", type number}, {\"completeness_score\", type number}, {\"is_searchable\", type logical}, {\"quality_band\", type text}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "vegetation_health_daily",
+        "columns": [
+          {
+            "name": "aoi_key",
+            "dataType": "string",
+            "lineageTag": "a1b57160-7572-49ac-ac7c-abc4acfdace7",
+            "sourceColumn": "aoi_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "aoi_name",
+            "dataType": "string",
+            "lineageTag": "e5aed94b-c66e-46ad-b3c1-536b3ab9a4f4",
+            "sourceColumn": "aoi_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "event_date",
+            "dataType": "dateTime",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "bb2c024b-4497-4e32-89c6-974f68c09654",
+            "sourceColumn": "event_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ndvi_mean",
+            "dataType": "double",
+            "lineageTag": "0ff366a0-6990-4300-8e8a-10f87df4623a",
+            "sourceColumn": "ndvi_mean",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ndvi_max",
+            "dataType": "double",
+            "lineageTag": "6e696fe7-21c8-4103-b4c7-839f54d0c78e",
+            "sourceColumn": "ndvi_max",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "evi_mean",
+            "dataType": "double",
+            "lineageTag": "c07a98d9-b3f7-4c0f-abbf-9861b41b23e0",
+            "sourceColumn": "evi_mean",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ndvi_trend_30d",
+            "dataType": "double",
+            "lineageTag": "60f5f475-3f49-4f93-904a-47a3600cf4c7",
+            "sourceColumn": "ndvi_trend_30d",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ndvi_trend_dir",
+            "dataType": "string",
+            "lineageTag": "598bbe9a-f4b5-4104-9273-6e7c011fc90a",
+            "sourceColumn": "ndvi_trend_dir",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "valid_pixel_fraction",
+            "dataType": "double",
+            "lineageTag": "154d9297-a468-493d-a9d4-db68897369cf",
+            "sourceColumn": "valid_pixel_fraction",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ndvi_health_band",
+            "dataType": "int64",
+            "lineageTag": "edd58adf-1b7e-4fe1-b2ac-cc22fe2e5fc7",
+            "sourceColumn": "ndvi_health_band",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ndvi_health_label",
+            "dataType": "string",
+            "lineageTag": "4ce3d29d-dabf-43d1-b539-166816d97572",
+            "sourceColumn": "ndvi_health_label",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "crop_stress_flag",
+            "dataType": "boolean",
+            "lineageTag": "c4639124-4804-492e-99ae-110cd47f40c2",
+            "sourceColumn": "crop_stress_flag",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "area_km2",
+            "dataType": "double",
+            "lineageTag": "e26b806c-7ba5-47de-bd43-da38aed77c89",
+            "sourceColumn": "area_km2",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "720a008d-031b-484e-876f-f348be09aadb",
+        "measures": [
+          {
+            "name": "KPI vegetation_health_daily - mean_ndvi",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(ndvi_mean)"
+              }
+            ],
+            "description": "Mean NDVI. Superset SQL: AVG(ndvi_mean)",
+            "expression": "AVERAGE('vegetation_health_daily'[ndvi_mean])",
+            "formatString": "#,0.00",
+            "lineageTag": "bd4765da-d54c-4f12-a4fb-0df293308dac"
+          },
+          {
+            "name": "KPI vegetation_health_daily - mean_evi",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(evi_mean)"
+              }
+            ],
+            "description": "Mean EVI. Superset SQL: AVG(evi_mean)",
+            "expression": "AVERAGE('vegetation_health_daily'[evi_mean])",
+            "formatString": "#,0.00",
+            "lineageTag": "85e460ef-edd9-40b5-ba93-7470d5389738"
+          },
+          {
+            "name": "KPI vegetation_health_daily - crop_stress_days",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(CASE WHEN crop_stress_flag THEN 1 ELSE 0 END)"
+              }
+            ],
+            "description": "Crop-stress Days. Superset SQL: SUM(CASE WHEN crop_stress_flag THEN 1 ELSE 0 END)",
+            "expression": "SUMX('vegetation_health_daily', IF('vegetation_health_daily'[crop_stress_flag] = TRUE(), 1, 0))",
+            "formatString": "#,0",
+            "lineageTag": "8ebab0e7-af8a-429d-8ddc-e052fe25ebca"
+          },
+          {
+            "name": "KPI vegetation_health_daily - AOI-days",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "COUNT(*)"
+              }
+            ],
+            "description": "AOI-days. Superset SQL: COUNT(*)",
+            "expression": "COALESCE(COUNTROWS('vegetation_health_daily'), 0)",
+            "formatString": "#,0",
+            "lineageTag": "d8e1c9cd-8992-415d-a294-8d4729b84d5b"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "vegetation_health_daily",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\vegetation_health_daily.csv\"), [Delimiter=\",\", Columns=13, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"aoi_key\", type text}, {\"aoi_name\", type text}, {\"event_date\", type datetime}, {\"ndvi_mean\", type number}, {\"ndvi_max\", type number}, {\"evi_mean\", type number}, {\"ndvi_trend_30d\", type number}, {\"ndvi_trend_dir\", type text}, {\"valid_pixel_fraction\", type number}, {\"ndvi_health_band\", Int64.Type}, {\"ndvi_health_label\", type text}, {\"crop_stress_flag\", type logical}, {\"area_km2\", type number}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "vessel_activity",
+        "columns": [
+          {
+            "name": "vessel_key",
+            "dataType": "string",
+            "lineageTag": "df0b19a5-92ba-4251-ad45-ddb694057a62",
+            "sourceColumn": "vessel_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "activity_date",
+            "dataType": "dateTime",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "d7f00165-caa0-422d-9ecd-4212ee0f97e3",
+            "sourceColumn": "activity_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "transmissions",
+            "dataType": "int64",
+            "lineageTag": "7e8d5951-3134-4953-b508-a7031b2c6f97",
+            "sourceColumn": "transmissions",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "flag",
+            "dataType": "string",
+            "lineageTag": "1daf6a93-21ea-4c49-a8b4-035b6be235de",
+            "sourceColumn": "flag",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "vessel_type",
+            "dataType": "string",
+            "lineageTag": "042aabf3-6503-43e9-ba47-174988d6f75e",
+            "sourceColumn": "vessel_type",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "active_span_days",
+            "dataType": "int64",
+            "lineageTag": "1109abd3-3ead-4406-b117-e367ade3aa38",
+            "sourceColumn": "active_span_days",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "suspicious_flag",
+            "dataType": "boolean",
+            "lineageTag": "81cffd5d-55a2-4c6a-84cc-3faffc2e8e01",
+            "sourceColumn": "suspicious_flag",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "review_priority",
+            "dataType": "string",
+            "lineageTag": "8f3c6604-3d90-4d3b-9b0d-a537ba21cece",
+            "sourceColumn": "review_priority",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "ca190efd-3159-4c20-b806-b84cda758c61",
+        "measures": [
+          {
+            "name": "KPI vessel_activity - suspicious_rate",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(CASE WHEN suspicious_flag THEN 1.0 ELSE 0.0 END)"
+              }
+            ],
+            "description": "Suspicious Vessel Rate. Superset SQL: AVG(CASE WHEN suspicious_flag THEN 1.0 ELSE 0.0 END)",
+            "expression": "AVERAGEX('vessel_activity', IF('vessel_activity'[suspicious_flag] = TRUE(), 1.0, 0.0))",
+            "formatString": "0.0%",
+            "lineageTag": "84f062e3-1be4-4acd-aabb-74955fa65467"
+          },
+          {
+            "name": "KPI vessel_activity - suspicious_count",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(CASE WHEN suspicious_flag THEN 1 ELSE 0 END)"
+              }
+            ],
+            "description": "Suspicious Vessels. Superset SQL: SUM(CASE WHEN suspicious_flag THEN 1 ELSE 0 END)",
+            "expression": "SUMX('vessel_activity', IF('vessel_activity'[suspicious_flag] = TRUE(), 1, 0))",
+            "formatString": "#,0",
+            "lineageTag": "3fc88ca1-dc06-4620-98fe-3e50f2dbc296"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "vessel_activity",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\vessel_activity.csv\"), [Delimiter=\",\", Columns=8, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"vessel_key\", type text}, {\"activity_date\", type datetime}, {\"transmissions\", Int64.Type}, {\"flag\", type text}, {\"vessel_type\", type text}, {\"active_span_days\", Int64.Type}, {\"suspicious_flag\", type logical}, {\"review_priority\", type text}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "weather_impact",
+        "columns": [
+          {
+            "name": "weather_date",
+            "dataType": "dateTime",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "258f6f7a-17ec-4f32-8811-3a3c0e45d5a3",
+            "sourceColumn": "weather_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "max_kp_index",
+            "dataType": "double",
+            "lineageTag": "23f710bc-5e1f-4438-b01f-e540fb626881",
+            "sourceColumn": "max_kp_index",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "mean_kp_index",
+            "dataType": "double",
+            "lineageTag": "a872cccd-51f6-4e42-b758-088ae3cacf53",
+            "sourceColumn": "mean_kp_index",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "storm_events",
+            "dataType": "int64",
+            "lineageTag": "f8eee2b3-f1c6-4ea6-a1f3-2e3d453c4ce9",
+            "sourceColumn": "storm_events",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "telemetry_samples",
+            "dataType": "int64",
+            "lineageTag": "d83769da-23de-49ee-a601-e1b9525a447a",
+            "sourceColumn": "telemetry_samples",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "anomaly_samples",
+            "dataType": "int64",
+            "lineageTag": "c644e45a-8891-4c1a-96a1-1eb9935e34b2",
+            "sourceColumn": "anomaly_samples",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "anomaly_rate",
+            "dataType": "double",
+            "lineageTag": "aa8d32cb-fab4-4ff8-9ed4-da3aceae2b08",
+            "sourceColumn": "anomaly_rate",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "storm_day",
+            "dataType": "boolean",
+            "lineageTag": "3eb41a79-59e4-45b1-8aec-f0b723627dc3",
+            "sourceColumn": "storm_day",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "c90254c6-fe26-4da0-b1f5-15da8bb3e9a6",
+        "measures": [
+          {
+            "name": "KPI weather_impact - max_kp",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "MAX(max_kp_index)"
+              }
+            ],
+            "description": "Max Kp Index. Superset SQL: MAX(max_kp_index)",
+            "expression": "MAX('weather_impact'[max_kp_index])",
+            "formatString": "#,0.00",
+            "lineageTag": "464ff31f-cf23-4ab1-ade3-4ecac22c3b84"
+          },
+          {
+            "name": "KPI weather_impact - storm_days",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(CASE WHEN max_kp_index >= 5 THEN 1 ELSE 0 END)"
+              }
+            ],
+            "description": "Storm Days (sim). Superset SQL: SUM(CASE WHEN max_kp_index >= 5 THEN 1 ELSE 0 END)",
+            "expression": "SUMX('weather_impact', IF(NOT ISBLANK('weather_impact'[max_kp_index]) && 'weather_impact'[max_kp_index] >= 5, 1, 0))",
+            "formatString": "#,0",
+            "lineageTag": "7889a0ea-b42b-4920-8638-4deef1272058"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "weather_impact",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\weather_impact.csv\"), [Delimiter=\",\", Columns=8, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"weather_date\", type datetime}, {\"max_kp_index\", type number}, {\"mean_kp_index\", type number}, {\"storm_events\", Int64.Type}, {\"telemetry_samples\", Int64.Type}, {\"anomaly_samples\", Int64.Type}, {\"anomaly_rate\", type number}, {\"storm_day\", type logical}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "wildfire_daily",
+        "columns": [
+          {
+            "name": "aoi_key",
+            "dataType": "string",
+            "lineageTag": "762a21d8-9406-4d01-a35a-aab47181b74b",
+            "sourceColumn": "aoi_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "aoi_name",
+            "dataType": "string",
+            "lineageTag": "b9018fa4-d7d3-43d6-9d1e-efb7685c60cb",
+            "sourceColumn": "aoi_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "event_date",
+            "dataType": "dateTime",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "c0701fe1-56d9-4071-8194-09b37ed86e01",
+            "sourceColumn": "event_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "detections",
+            "dataType": "int64",
+            "lineageTag": "54f9a32c-ebd6-4fc8-b8fa-b2fbc7a010a8",
+            "sourceColumn": "detections",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "mean_frp",
+            "dataType": "double",
+            "lineageTag": "8968529f-2dfe-4892-b170-25fb96ae7d43",
+            "sourceColumn": "mean_frp",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "max_frp",
+            "dataType": "double",
+            "lineageTag": "b5af64c8-2592-41f1-add3-e9cbc6e88a39",
+            "sourceColumn": "max_frp",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "area_km2",
+            "dataType": "double",
+            "lineageTag": "d77e357d-d52a-4a9b-9854-a42b0f5eb25d",
+            "sourceColumn": "area_km2",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "severity",
+            "dataType": "string",
+            "lineageTag": "8e5cc0d0-c925-474e-95f6-74fe7dd33605",
+            "sourceColumn": "severity",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ems_corroborated",
+            "dataType": "boolean",
+            "lineageTag": "00227cea-02ef-40ab-8a0b-17d91fb58aad",
+            "sourceColumn": "ems_corroborated",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "c09506c8-dcb6-45cb-b9b6-9414cc40a8ab",
+        "measures": [
+          {
+            "name": "KPI wildfire_daily - total_detections",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "SUM(detections)"
+              }
+            ],
+            "description": "Total Fire Detections. Superset SQL: SUM(detections)",
+            "expression": "SUM('wildfire_daily'[detections])",
+            "formatString": "#,0",
+            "lineageTag": "fb1b40f1-ae4b-444c-ba83-1107f91ba3dc"
+          },
+          {
+            "name": "KPI wildfire_daily - mean_frp",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(mean_frp)"
+              }
+            ],
+            "description": "Mean Fire Radiative Power. Superset SQL: AVG(mean_frp)",
+            "expression": "AVERAGE('wildfire_daily'[mean_frp])",
+            "formatString": "#,0.00",
+            "lineageTag": "63f2219e-a087-4e16-af1c-f7dca22899b1"
+          },
+          {
+            "name": "KPI wildfire_daily - corroboration_rate",
+            "annotations": [
+              {
+                "name": "SupersetMetricSQL",
+                "value": "AVG(CASE WHEN ems_corroborated THEN 1.0 ELSE 0.0 END)"
+              }
+            ],
+            "description": "EMS Corroboration Rate. Superset SQL: AVG(CASE WHEN ems_corroborated THEN 1.0 ELSE 0.0 END)",
+            "expression": "AVERAGEX('wildfire_daily', IF('wildfire_daily'[ems_corroborated] = TRUE(), 1.0, 0.0))",
+            "formatString": "0.0%",
+            "lineageTag": "96a1ab9a-cbc6-45f0-a2a6-a3f8f19c6b53"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "wildfire_daily",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\wildfire_daily.csv\"), [Delimiter=\",\", Columns=9, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"aoi_key\", type text}, {\"aoi_name\", type text}, {\"event_date\", type datetime}, {\"detections\", Int64.Type}, {\"mean_frp\", type number}, {\"max_frp\", type number}, {\"area_km2\", type number}, {\"severity\", type text}, {\"ems_corroborated\", type logical}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "ReportDate",
+        "columns": [
+          {
+            "name": "Date",
+            "dataType": "dateTime",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "cb814e4e-d958-4c00-be25-dab8f130726f",
+            "sourceColumn": "Date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Month",
+            "dataType": "string",
+            "lineageTag": "5e0b72a5-a541-4793-b217-b2b136c548d1",
+            "sourceColumn": "Month",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Day",
+            "dataType": "int64",
+            "lineageTag": "74b3d7cc-4203-4673-a417-d80c6da7e969",
+            "sourceColumn": "Day",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "b569786a-efb8-44cd-a715-c834853dc00a",
+        "partitions": [
+          {
+            "name": "ReportDate",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\ReportDate.csv\"), [Delimiter=\",\", Columns=3, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"Date\", type datetime}, {\"Month\", type text}, {\"Day\", Int64.Type}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "DataStatus",
+        "columns": [
+          {
+            "name": "Dataset",
+            "dataType": "string",
+            "lineageTag": "ed98e04c-703f-43fe-b98f-1f3ed693a8c4",
+            "sourceColumn": "Dataset",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Rows",
+            "dataType": "int64",
+            "lineageTag": "810ab163-b30d-40de-86c5-efa6a7726df8",
+            "sourceColumn": "Rows",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "State",
+            "dataType": "string",
+            "lineageTag": "8a511b37-c607-4e38-865f-aebb41e72ff6",
+            "sourceColumn": "State",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "MinDate",
+            "dataType": "string",
+            "lineageTag": "4013ee8f-256a-4d64-ac86-2ed6b78d80e6",
+            "sourceColumn": "MinDate",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "MaxDate",
+            "dataType": "string",
+            "lineageTag": "9343a3d5-a750-4344-bf2b-f5bf43a40436",
+            "sourceColumn": "MaxDate",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ExportedUTC",
+            "dataType": "string",
+            "lineageTag": "40deaff4-786f-4312-84f1-7c3e665ee6bd",
+            "sourceColumn": "ExportedUTC",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "bafd92fa-a3e7-49bb-a50e-5838674d13de",
+        "partitions": [
+          {
+            "name": "DataStatus",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Raw = Csv.Document(File.Contents(SnapshotFolder & \"\\DataStatus.csv\"), [Delimiter=\",\", Columns=6, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "    Nulls = Table.ReplaceValue(Headers, \"\\N\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "    Typed = Table.TransformColumnTypes(Nulls, {{\"Dataset\", type text}, {\"Rows\", Int64.Type}, {\"State\", type text}, {\"MinDate\", type text}, {\"MaxDate\", type text}, {\"ExportedUTC\", type text}}, \"en-US\")",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

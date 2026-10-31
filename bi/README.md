@@ -30,8 +30,18 @@ docs are version-controlled and load against the serving layer.
 | [`reports/reporting-strategy.md`](./reports/reporting-strategy.md) | Scheduled + real-time reporting |
 | [`alerts/alert-strategy.md`](./alerts/alert-strategy.md) | Decision + infra alert catalog + flow |
 | [`superset/`](./superset/) | Assets-as-code: databases, datasets, charts, dashboards (YAML) |
+| [`powerbi/`](./powerbi/) | Optional Power BI Desktop report translated from Superset; local certified-data snapshots, PBIP source, and PBIX save instructions |
 
 Governance narrative lives in [`../docs/bi/`](../docs/bi/) (14 documents).
+
+### Optional Power BI Desktop client
+
+Power BI is an explicitly approved proprietary-client exception, not a replacement
+for the open-source platform or Superset. The [Power BI guide](./powerbi/README.md)
+describes the translated report, refresh workflow, and limitations. Superset
+remains the source of the generated dashboard definitions; local snapshots and
+Power BI data caches are not committed. This client does not reproduce Superset
+RBAC, RLS, scheduled reporting, or alerts.
 
 ## Certified Datasets
 
