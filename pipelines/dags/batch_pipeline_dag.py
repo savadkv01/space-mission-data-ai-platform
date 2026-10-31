@@ -58,7 +58,7 @@ _SUBMIT = (
 )
 
 SILVER_ENTITIES = ["telemetry", "orbit", "space_weather", "fire", "vessel", "scene", "index"]
-CLIMATE_SILVER_ENTITIES = ["air_quality", "aerosol", "atmos_column"]
+CLIMATE_SILVER_ENTITIES = ["air_quality", "aerosol", "atmos_column", "wind"]
 
 # Gold mart names (transformation/batch/gold_lakehouse.py build_marts() keys).
 GOLD_MARTS = [

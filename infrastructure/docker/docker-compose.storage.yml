@@ -27,7 +27,7 @@ services:
   postgres:
     <<: *service-defaults
     image: postgres:16-alpine
-    profiles: ["storage", "core", "ai", "obs", "all"]
+    profiles: ["storage", "core", "ai", "obs", "all", "feature-store"]
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -51,7 +51,7 @@ services:
   minio:
     <<: [*service-defaults, *resource-small]
     image: minio/minio:latest
-    profiles: ["storage", "core", "ai", "all"]
+    profiles: ["storage", "core", "ai", "all", "feature-store"]
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}

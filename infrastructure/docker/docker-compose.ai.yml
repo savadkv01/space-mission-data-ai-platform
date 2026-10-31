@@ -137,16 +137,55 @@ services:
       - ai-net
       - edge-net
 
-  # Feast feature server is application-configured (feature repo). Declared as
-  # a blueprint placeholder; enable when the feature repository exists (Phase 5+).
-  #
-  # feast:
-  #   <<: [*service-defaults, *resource-small]
-  #   image: feastdev/feature-server:latest
-  #   container_name: feast
-  #   profiles: ["ai", "all"]
-  #   depends_on:
-  #     postgres: { condition: service_healthy }
-  #     minio:    { condition: service_healthy }
-  #   env_file: ../env/.env
-  #   networks: [ai-net, data-net]
+  feature-store:
+    <<: *service-defaults
+    build:
+      context: ../..
+      dockerfile: feature_store/Dockerfile
+    image: space-platform/feature-store:0.67.0
+    profiles: ["feature-store", "ai", "all"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      FEATURE_STORE_S3_ENDPOINT: minio:9000
+      FEATURE_STORE_S3_SCHEME: http
+      FEATURE_STORE_SERVING_DB: /opt/serving/serving_products.duckdb
+      FEAST_REPO_PATH: /app/feature_store/feature_repo
+      FEATURE_STORE_CONTAINER_PORT: "6566"
+      FEATURE_STORE_LOAD_GOLD: ${FEATURE_STORE_LOAD_GOLD:-true}
+      FEATURE_STORE_DEMO_SEED: ${FEATURE_STORE_DEMO_SEED:-true}
+      FEATURE_STORE_ALLOW_RESTRICTED: ${FEATURE_STORE_ALLOW_RESTRICTED:-true}
+      FEATURE_STORE_JOB_TOKEN: ${FEATURE_STORE_JOB_TOKEN:-}
+      FEATURE_STORE_CACHE_TTL_SECONDS: ${FEATURE_STORE_CACHE_TTL_SECONDS:-2}
+      FEATURE_STORE_CACHE_STALE_SECONDS: ${FEATURE_STORE_CACHE_STALE_SECONDS:-60}
+    volumes:
+      - ../../serving/dbt/serving.duckdb:/opt/serving/serving_products.duckdb:ro
+    ports:
+      - "127.0.0.1:${FEATURE_STORE_PORT:-6566}:6566"
+    networks:
+      - ai-net
+      - data-net
+    mem_limit: 1g
+    mem_reservation: 512m
+    cpus: 1.0
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket; socket.create_connection(('127.0.0.1', 6566), timeout=2).close()"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
