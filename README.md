@@ -22,7 +22,7 @@ Phase numbering aligns with the authored phase prompts in [.github/prompts/](.gi
 | 10 | Data Quality | ✅ Complete |
 | 11 | Serving Layer | ✅ Complete |
 | 12 | Business Intelligence (BI) | ✅ Complete |
-| 13 | Feature Store | 🔜 Upcoming |
+| 13 | Feature Store | ✅ Complete |
 | 14 | Machine Learning | 🔜 Upcoming |
 | 15 | RAG (LLM Retrieval) | 🔜 Upcoming |
 | 16 | Platform API | 🔜 Upcoming |
@@ -51,6 +51,7 @@ Two operator references complement the runbook:
 
 - [Data Inventory](DATA-INVENTORY.md) — consolidated table of every Bronze source, Silver entity, Gold fact/dim, serving product, BI dataset, feature group, ML artifact, and RAG collection, with a short description of what each contains.
 - [Functional Test Cases](FUNCTIONAL-TEST-CASES.md) — business-level acceptance tests (Given/When/Then) that validate use-case outcomes against certified data products and KPI thresholds.
+- [End-to-End Data Validation](docs/validation/README.md) — measured ingestion-through-serving results, analytical limitations, and release blockers before ML/AI advancement.
 
 ---
 
@@ -74,6 +75,7 @@ Two operator references complement the runbook:
 | `quality/` | Data-quality framework — validation rules, profiling, monitoring, governance, and incident records |
 | `serving/` | Serving layer — Gold data products, semantic layer, dbt marts, REST API design, and LLM/RAG serving models |
 | `bi/` | Business intelligence — Apache Superset dashboards, certified datasets, KPI catalog, alerts, and reporting strategy |
+| `feature_store/` | Feast feature repository, readiness-gated materialization and online retrieval, PIT dataset utilities, quality checks, and tests |
 | `tools/` | Developer utilities (e.g. `datasource-preflight` data-source connectivity checks) |
 
 ---
@@ -140,6 +142,13 @@ Two operator references complement the runbook:
 - Apache Superset dashboards (executive, earth-observation, satellite, weather, launch, platform)
 - Certified datasets, KPI catalog, alert strategy, reporting strategy, dataset governance
 - Dashboard standards, personas, security, ADRs. See [bi/README.md](bi/README.md).
+
+### Phase 13 — Feature Store
+[`feature_store/`](feature_store/) + [`docs/feature-store/`](docs/feature-store/):
+- Feast with PostgreSQL offline, online, and SQL registry stores; no new backend service
+- Eleven domain feature-view contracts with PIT training retrieval and reproducible split/version metadata
+- Dockerized, readiness-aware online retrieval, scheduled/incremental materialization, source sync, quality/drift checks, incidents, and ADRs
+- Source-analysis blockers are enforced: only synthetic demo data and restricted catalog metadata are materialized; other domains remain blocked pending source evidence
 
 ---
 

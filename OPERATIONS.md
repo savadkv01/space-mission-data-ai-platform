@@ -27,7 +27,8 @@ hands-on operator guide.
 12. [Full end-to-end platform run (infra → ingestion → transformation → serving → BI)](#12-full-end-to-end-platform-run-infra--ingestion--transformation--serving--bi)
 13. [Manual data verification & validation (per stage)](#13-manual-data-verification--validation-per-stage)
 14. [Airflow-orchestrated pipelines & run-logging (pipelines/)](#14-airflow-orchestrated-pipelines--run-logging-pipelines)
-15. [Phase status & changelog](#phase-status--changelog)
+15. [Feature Store (Phase 13)](#15-feature-store-phase-13)
+16. [Phase status & changelog](#phase-status--changelog)
 
 ---
 
@@ -102,6 +103,7 @@ laptop, avoid running the Spark (`processing`) and Ollama (`ai`) peaks at the sa
 | `ai` | storage + mlflow, jupyter, qdrant, ollama, open-webui | ~7 GB |
 | `obs` | storage + prometheus, grafana, otel | ~3 GB |
 | `bi` | storage + superset | ~3 GB |
+| `feature-store` | PostgreSQL, MinIO, Feast feature service | ~3 GB |
 | `all` | everything (mind the Spark+Ollama peak) | ~10 GB |
 
 ### Start
@@ -118,6 +120,9 @@ docker compose @ALL --profile obs up -d
 
 # BI (Superset) — needs storage too (Superset depends on postgres)
 docker compose @ALL --profile storage --profile bi up -d
+
+# Feast feature store (PostgreSQL + MinIO + local feature service)
+docker compose @ALL --profile feature-store up -d feature-store
 
 # Everything
 docker compose @ALL --profile all up -d
@@ -658,7 +663,7 @@ make -C transformation gold-infra                  # just the dbt Gold marts
 
 **Silver entities** (`run_silver.py <entity>`): simulation track `telemetry`,
 `orbit`, `space_weather`; MVP Earth-observation `fire` (FIRMS), `vessel` (GFW),
-`scene` (Sentinel Hub / Landsat / Earthdata), `index` (Sentinel Hub NDVI/NDWI/NBR).
+`scene` (Sentinel-2 via GEE / Landsat / Earthdata), `index` (Sentinel-2 NDVI/NDWI/NBR via GEE).
 An absent Bronze source is skipped inside `run_spark`, so a partial ingest still
 produces Silver. EO Silver rows carry all-null columns; explicit Spark schemas
 (`_silver_spark_schema`) + `coerce_rows_to_schema` make the Parquet write
@@ -828,10 +833,12 @@ orchestration — this is the manual full-run helper):
 docker exec space-ingest-runner python -m ingestion.scripts.run_full_batch_ingest
 ```
 
-Lands SWPC, CelesTrak, NASA POWER, FIRMS, GFW, Sentinel Hub (scene metadata + NDVI
-statistics), OpenAQ, TROPOMI, and MODIS/VIIRS AOD to Bronze. Real-time feeds use "now";
-latency-sensitive sources (POWER/OpenAQ/Sentinel Hub statistics) use a settled
-`2024-06-01..07` window to avoid upstream processing-latency 404/422s.
+Lands SWPC, CelesTrak, NASA POWER, FIRMS (MENA), GFW, Sentinel-2 scene metadata
+and indices, OpenAQ, TROPOMI, and MODIS/VIIRS AOD to Bronze. The full-run driver
+uses recent rolling UTC windows (including today for OpenAQ) instead of a fixed
+historical sample. Sentinel-2 metadata and indices use the
+configured Google Earth Engine service account because the current Sentinel Hub
+account returns `403 Invalid or expired account`.
 
 ### Step 5 — Seed the simulation-track Bronze entities (fresh start / `down -v` only)
 
@@ -1314,6 +1321,85 @@ equal the `sum(rows)`/`count(*)` of its own detail rows for that `run_id`; `batc
 
 ---
 
+## 15. Feature Store (Phase 13)
+
+The Feast service uses the existing PostgreSQL `feast` schema for its offline
+source tables, online store, and SQL registry. It reads the selected Gold
+scene-catalog Parquet from MinIO and the four Phase 11b climate serving
+products from the read-only `serving/dbt/serving.duckdb` file. Build that file
+using [Step 8](#step-8--serving-gold--dbt-data-products) before enabling climate
+sync. No new backend service is introduced.
+
+```powershell
+# Start only PostgreSQL, MinIO, and the feature-store service.
+docker compose @ALL --profile feature-store up -d feature-store
+
+# Wait for the service and check health/readiness.
+Invoke-RestMethod http://127.0.0.1:6566/health
+Invoke-RestMethod http://127.0.0.1:6566/readiness
+
+# Run unit + Feast/PostgreSQL integration tests inside the built feature image.
+docker compose @ALL --profile feature-store run --rm --no-deps `
+  --entrypoint python feature-store -m pytest -q feature_store/tests
+```
+
+The default startup seeds explicitly synthetic satellite-health examples and,
+when `FEATURE_STORE_LOAD_GOLD=true`, syncs scene-catalog metadata and attempts
+the four Phase 11b products. Synthetic rows are for pipeline validation only.
+Catalog metadata is restricted to scene discovery; its source
+event dates are stale relative to the configured 744-hour freshness objective.
+Other views return a readiness blocker and are not materialized. Phase 13b
+climate views remain blocked until the source quality evidence and readiness
+manifest are promoted; current air-quality/dust rows fail completeness checks,
+and climate/vegetation serving products are empty. The air-quality target SLA
+is 24 hours for observation age and 60 minutes after serving database build,
+but its source product remains daily.
+See [the Phase 13b feature-store contract](docs/feature-store/climate.md).
+
+```powershell
+# Example online lookup (demo-only feature; response includes nature/status/freshness).
+$body = @{
+  feature_refs = @('satellite_health_daily:health_score', 'satellite_health_daily:feature_date')
+  entity_rows = @(@{ sat_key = 'SIM-SAT-001' })
+} | ConvertTo-Json -Depth 5
+Invoke-RestMethod http://127.0.0.1:6566/features/online `
+  -Method Post -ContentType 'application/json' -Body $body
+
+# Inspect feature input and online table counts.
+docker compose @ALL exec -T postgres psql -U platform -d platform -c `
+  "select readiness_status, data_nature, count(*) from feast.source_scene_catalog group by 1,2;"
+```
+
+### Scheduled refresh and backfill
+
+The hourly `feature_store_materialization` DAG uses Airflow's existing
+network path to call the internal endpoint. Set a strong, private
+`FEATURE_STORE_JOB_TOKEN` in `infrastructure/env/.env` before enabling scheduled
+materialization, then start both the `core` and `feature-store` profiles. The
+token is not checked into the repository. Without it, the trigger remains
+disabled and Airflow reports a configuration error rather than silently
+skipping work.
+
+```powershell
+# Backfill only an explicit UTC window; use the local token without printing it.
+$tokenLine = Select-String '../env/.env' -Pattern '^FEATURE_STORE_JOB_TOKEN='
+$env:FEATURE_STORE_JOB_TOKEN = $tokenLine.Line.Substring('FEATURE_STORE_JOB_TOKEN='.Length)
+$headers = @{ 'X-Feature-Job-Token' = $env:FEATURE_STORE_JOB_TOKEN }
+$body = @{
+  start_date = '2026-10-25T00:00:00Z'
+  end_date = '2026-10-31T00:00:00Z'
+  incremental = $false
+} | ConvertTo-Json
+Invoke-RestMethod http://127.0.0.1:6566/internal/materialize `
+  -Method Post -Headers $headers -ContentType 'application/json' -Body $body
+Remove-Item Env:FEATURE_STORE_JOB_TOKEN
+```
+
+Blocked views are never materialized by scheduled or backfill requests.
+Readiness and freshness are returned separately: HTTP 200 is not an
+analysis-readiness certification. For per-view blockers, see
+[docs/feature-store/03-readiness-and-blockers.md](docs/feature-store/03-readiness-and-blockers.md).
+
 ## Phase Status & Changelog
 
 What is operationally available today, and what each future phase will add to this runbook.
@@ -1327,6 +1413,7 @@ What is operationally available today, and what each future phase will add to th
 | 8b / 9b / 12b — Climate/dust/air-quality track | §12 full-run recipe incl. climate connectors (OpenAQ, TROPOMI, MODIS/VIIRS AOD) and climate Gold marts/BI dashboards; `preflight_infra_env.py` + `run_full_batch_ingest.py` operator scripts | ✅ Available (TROPOMI/AOD data-availability gaps — see §12) |
 | Manual verification | §13 per-stage validation cheat-sheet (Bronze/Kafka/Silver/Gold/streaming/serving/BI), UI + CLI/API methods for each | ✅ Available |
 | Orchestration (`pipelines/`) | §14 Airflow-triggered `platform_batch_pipeline` / `platform_streaming_pipeline` / `platform_master_pipeline` DAGs (no schedule, manual only) + `metadata.*` run/row-level logging tables in PostgreSQL | ✅ Available |
+| Feature Store (13 / 13b) | §15 Feast/PostgreSQL service, 11b climate-product sync, readiness-gated online retrieval, demo/catalog materialization, PIT integration tests, and hourly Airflow trigger | ✅ Available; operational domains remain blocked per the readiness plan |
 | AI/ML | MLflow experiment/run queries; Feast feature retrieval; model registry commands | 🔜 Add MLflow section |
 | RAG / LLM | Qdrant collection queries; Ollama model pull/run; Open WebUI usage | 🔜 Add LLM section |
 | Serving (API) | FastAPI endpoints, auth, example requests | 🔜 Add API section |

@@ -58,6 +58,17 @@ flowchart LR
 | Event attributes | severity trend |
 | Sequential observations | temporal change indicators |
 
+### Phase 13 Implementation
+
+The feature store is implemented with Feast and the existing PostgreSQL
+instance for offline source tables, online materialization, and the SQL
+registry. Selected Gold Parquet is bridged into Feast-readable source tables;
+Bronze/Silver ingestion is not duplicated. Each registered view is subject to
+the source-analysis readiness manifest, so incomplete fire/AOI, spectral,
+air-quality, dust, and vessel products are not exposed as operational
+features. See [the feature-store strategy](../docs/feature-store/01-strategy.md)
+and [readiness blockers](../docs/feature-store/03-readiness-and-blockers.md).
+
 ## Model Training Pipeline
 
 ```mermaid

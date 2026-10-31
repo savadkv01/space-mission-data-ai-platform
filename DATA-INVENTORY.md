@@ -36,7 +36,7 @@ partitioned by `_source` + `ingest_date`. Object layout: `s3://bronze/<source>/i
 | `S2` / `SENTINELHUB` / `EARTHDATA` / `LANDSAT` | Imagery scene metadata (tile/scene id, acquisition, cloud cover, bands) | ✅ ⭐ |
 | `SENTINELHUB_STATS` | Per-AOI spectral-index statistics (NDVI/NDWI/NBR buckets) | ✅ ⭐ |
 | `GFW` | Global Fishing Watch vessel transmissions (MMSI, position, speed, flag) | ✅ ⭐ |
-| `POWER` | NASA POWER daily weather (T2M, RH2M, WS2M, precipitation) per grid cell | ✅ ⭐ |
+| `POWER` | NASA POWER daily weather (T2M, RH2M, WS2M, WD2M, precipitation) per AOI representative point | ✅ ⭐ |
 | `EMS` | Copernicus EMS activation footprints (file upload) | ✅ ⭐ |
 | `SWPC` | NOAA space-weather indices (Kp, Dst, solar wind) | ✅ 🔄 |
 | `CELESTRAK` | Orbital TLE/GP elements | ✅ 🔄 |
@@ -187,20 +187,33 @@ Apache Superset. Source: `bi/dashboards/`, `bi/datasets/certified-datasets.md`.
 
 ---
 
-## 6. Feature Store — Feature Groups 📐
+## 6. Feature Store — Feast and Readiness-Gated Views
 
-Design-only (Feast + Postgres offline/online planned in Phase 13). Source: `docs/data-modeling/08-feature-store.md`.
-Entity keys: `sat_key` (satellite), `geo_key` (grid cell). Point-in-time joins enforce no label leakage.
+Implemented in [`feature_store/`](feature_store/) and documented in
+[`docs/feature-store/`](docs/feature-store/README.md). PostgreSQL provides the
+offline source, online store, and SQL registry in the existing `feast` schema.
+Feast PIT retrieval enforces event-time correctness; the readiness manifest
+gates materialization and online access.
 
-| Feature group | Example features | Source | Status |
+| Feature group | Example features | Source / grain | Status |
 | --- | --- | --- | --- |
-| EO fire risk | `ndvi`, `dryness`, `frp_trend`, `weather_idx` | Silver `obs_index` + Gold | 📐 ⭐ |
-| EO spectral index | `ndvi_mean`, `ndwi_mean`, `nbr_mean`, `valid_pixel_fraction` | Silver `obs_index` | 📐 ⭐ |
-| Satellite health | `temp_mean`, `voltage_var`, `anomaly_7d`, `uptime` | Silver + Gold telemetry | 📐 🔄 |
-| Orbit stability | `alt_drift`, `vel_var`, `decay_rate` | Silver `orbit_trajectory` | 📐 🔄 |
-| Weather impact | `kp_lag`, `flux_max`, `exposure_hr` | Gold `fact_weather_impact` | 📐 🔄 |
+| Satellite health | health score, anomaly density, voltage drift | Gold `fact_sat_health`, satellite/day | Demo-only; seed is synthetic |
+| Mission operations | uptime fraction, anomaly count | Mission Gold source, mission/time | Blocked: WP0 |
+| Orbit stability | altitude drift, velocity variance, decay rate | Orbit Gold source, satellite/time | Blocked: WP0 source inventory |
+| Launch performance | launch count, success rate, cadence | Gold `kpi_launch_monthly`, provider/month | Blocked: WP0 source/freshness evidence |
+| Space weather | max/mean Kp, storm count | Gold `fact_weather_impact`, scope/day | Blocked: WP0 lineage/source nature |
+| Wildfire AOI | detections, FRP, EMS corroboration | Gold `kpi_wildfire_aoi_daily`, AOI/day | Blocked: WP1 45/98 reconciliation |
+| Spectral index | NDVI/NDWI/NBR, valid-pixel fraction | Silver `silver_index`, AOI/day | Blocked: WP2; no validated rows |
+| Scene catalog | cloud cover, completeness, searchable | Gold `fact_scene_catalog`, scene | Restricted to catalog discovery; stale dates flagged |
+| Vessel activity | transmission count, screening flag | Gold `fact_vessel_activity`, vessel/day | Blocked: WP5 event grain/heuristic semantics |
+| Air quality | PM2.5/PM10/O3, station count | Gold `fact_air_quality_daily`, AOI/day | Blocked: WP3 units and missingness |
+| Dust | AOD, valid fraction, wind context | Gold `fact_dust_event_daily`, AOI/day | Blocked: WP4 null wind measures |
 
-Storage split: **offline** = versioned Parquet snapshots (training/batch); **online** = Redis/Postgres KV (inference).
+Feature registration does not mean data is populated or analysis-ready. The
+offline store is PostgreSQL-backed rather than Parquet snapshots; the source
+bridge copies selected Gold data into a Feast-readable table without replacing
+Gold as the source of truth. Full blocker evidence and permitted uses are in the
+[readiness log](docs/feature-store/03-readiness-and-blockers.md).
 
 ---
 
@@ -284,7 +297,7 @@ Delivered via extension prompts `05b`–`16b` (see [README.md](README.md#planned
 | Layer | Planned objects |
 | --- | --- |
 | Bronze | `OPENAQ`, `TROPOMI`, `MODIS_AOD` source classes (JSONL) |
-| Silver | `obs_air_quality`, `obs_aerosol`, `obs_atmos_column` |
+| Silver | `obs_air_quality`, `obs_aerosol`, `obs_atmos_column`, `obs_wind` |
 | Gold | `fact_air_quality_daily`, `fact_dust_event_daily`, `fact_climate_indicator_daily`, `fact_vegetation_health_daily`; dims `dim_pollutant`, `dim_climate_indicator` |
 | Serving | `serving_air_quality_daily`, `serving_dust_event_daily`, `serving_climate_indicator_daily`, `serving_vegetation_health_daily` |
 | BI | Air-Quality/Dust dashboard, Climate-Indicators dashboard, Weather dashboard (sim → real) |
