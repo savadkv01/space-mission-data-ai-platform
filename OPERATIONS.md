@@ -414,7 +414,7 @@ SHOW TABLES IN lakehouse.silver;
 SELECT * FROM lakehouse.gold.<table> LIMIT 20;
 ```
 
-> The base `apache/spark:3.5.1` image does not bundle the Iceberg/S3 jars, so the
+> The base `apache/spark:3.5.9-scala2.12-java17-python3-ubuntu` image does not bundle the Iceberg/S3 jars, so the
 > first run downloads them via `--packages` (needs internet). The **transformation
 > phase** ships preconfigured Spark jobs and `make` targets so you won't pass
 > `--packages` by hand for the medallion pipeline — see [§11](#11-running-the-transformation-layer).
@@ -596,7 +596,7 @@ docker rm -f space-ingest-runner
 The transformation code lives in [transformation/](transformation/README.md) (Spark
 Bronze→Silver jobs, dbt Gold marts, and a Kafka→Silver streaming job). Unlike Phase 8,
 this layer runs **inside the `spark-master` container itself** — that service is now a
-**hardened image** (`space-platform/spark-transform:3.5.1` = `apache/spark:3.5.1` +
+**hardened image** (`space-platform/spark-transform:3.5.9` = `apache/spark:3.5.9-scala2.12-java17-python3-ubuntu` +
 `dbt-duckdb`) with the repo bind-mounted and MinIO/Kafka wiring baked into its
 environment. A cold `up` therefore needs **no** `docker cp`, runtime `pip install`, or
 manual `docker network connect`.
@@ -691,7 +691,7 @@ windows, and writes Parquet to `s3://silver/stream_sat_health_1m/`. It runs cont
 make -C transformation stream-infra
 # …or directly:
 docker compose @ALL exec -u root spark-master /opt/spark/bin/spark-submit `
-  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.hadoop:hadoop-aws:3.3.4 `
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.9,org.apache.hadoop:hadoop-aws:3.3.4 `
   --conf spark.jars.ivy=/tmp/.ivy2 --conf spark.sql.extensions= `
   --conf spark.driver.host=localhost --conf spark.driver.bindAddress=127.0.0.1 `
   /opt/spark/work-dir/transformation/scripts/run_stream.py
@@ -716,7 +716,7 @@ docker run --rm --network space-data-net --user root --entrypoint bash `
   -e DBT_PROFILES_DIR=/work/serving/dbt -e SERVING_DUCKDB_PATH=/work/serving/dbt/serving.duckdb `
   -e DUCKDB_S3_ENDPOINT=minio:9000 `
   -e MINIO_ROOT_USER=platform_minio -e MINIO_ROOT_PASSWORD=$p `
-  space-platform/spark-transform:3.5.1 `
+  space-platform/spark-transform:3.5.9 `
   -lc "cd /work/serving/dbt && dbt deps && dbt run && dbt test"
 ```
 
@@ -864,16 +864,19 @@ and tail the log if you don't want to block the shell — first run downloads Iv
 
 ### Step 7 — Transformation: streaming (Kafka → Silver windows)
 
-Long-running (`awaitTermination`); launch detached, let it complete 2–3 micro-batch
-triggers (watermark needs to pass a window's end before rows flush), then stop:
+Long-running (`awaitTermination`); launch detached. The configured window is 1 minute
+with a 30-second slide and 2-minute watermark. Space the later-timestamped second wave
+at least 3.5 minutes after the first, then allow 60 seconds for micro-batches to flush
+append-mode windows before stopping. Because the query uses `startingOffsets=latest`,
+produce the first wave only after the log reports `streaming query started`.
 
 ```powershell
 docker exec -u root -d space-platform-spark-master-1 /opt/spark/bin/spark-submit `
-  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.hadoop:hadoop-aws:3.3.4 `
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.9,org.apache.hadoop:hadoop-aws:3.3.4 `
   --conf spark.jars.ivy=/tmp/.ivy2 --conf spark.sql.extensions= `
   --conf spark.driver.host=localhost --conf spark.driver.bindAddress=127.0.0.1 `
   /opt/spark/work-dir/transformation/scripts/run_stream.py
-# ...produce a second wave of (later-timestamped) telemetry to advance the watermark, wait ~2-3 min, then:
+# ...produce the second wave at least 3.5 min after the first; wait 60s, then:
 docker exec space-platform-spark-master-1 pkill -f SparkSubmit
 ```
 
@@ -888,7 +891,7 @@ docker run --rm --network space-data-net --user root --entrypoint bash `
   -v "${PWD}:/work" `
   -e DBT_PROFILES_DIR=/work/serving/dbt -e SERVING_DUCKDB_PATH=/work/serving/dbt/serving.duckdb `
   -e DUCKDB_S3_ENDPOINT=minio:9000 -e MINIO_ROOT_USER=platform_minio -e MINIO_ROOT_PASSWORD=$p `
-  space-platform/spark-transform:3.5.1 -lc "cd /work/serving/dbt && dbt deps && dbt run && dbt test"
+  space-platform/spark-transform:3.5.9 -lc "cd /work/serving/dbt && dbt deps && dbt run && dbt test"
 ```
 
 Expect `dbt run` to build every `serving_*` model + `mv_kpi_platform_daily`/`mv_kpi_climate_daily`
@@ -1155,7 +1158,7 @@ PASS/WARN/ERROR summary **is** the primary validation; treat any `ERROR` or unex
 
 ```powershell
 docker run --rm --network space-data-net --user root --entrypoint bash `
-  -v "${PWD}:/work" space-platform/spark-transform:3.5.1 -lc "python3 -c \"
+  -v "${PWD}:/work" space-platform/spark-transform:3.5.9 -lc "python3 -c \"
 import duckdb
 con = duckdb.connect('/work/serving/dbt/serving.duckdb', read_only=True)
 for t in ['serving_wildfire_daily','serving_vessel_activity','serving_scene_catalog',

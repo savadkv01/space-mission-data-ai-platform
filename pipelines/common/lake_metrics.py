@@ -19,16 +19,20 @@ def _minio_host_port() -> str:
     return parsed.netloc or parsed.path
 
 
-def _duckdb_connection():
-    import duckdb  # lazy import
-
-    con = duckdb.connect()
+def _configure_httpfs(con) -> None:
     con.execute("install httpfs; load httpfs;")
     con.execute(f"set s3_endpoint='{_minio_host_port()}';")
     con.execute("set s3_use_ssl=false;")
     con.execute("set s3_url_style='path';")
     con.execute(f"set s3_access_key_id='{settings.minio.access_key}';")
     con.execute(f"set s3_secret_access_key='{settings.minio.secret_key}';")
+
+
+def _duckdb_connection():
+    import duckdb  # lazy import
+
+    con = duckdb.connect()
+    _configure_httpfs(con)
     return con
 
 
@@ -56,9 +60,22 @@ def count_duckdb_table_rows(db_path: str, qualified_table: str) -> int:
 
     con = duckdb.connect(db_path, read_only=True)
     try:
-        row = con.execute(f"select count(*) from {qualified_table}").fetchone()
-        return int(row[0]) if row else 0
-    except Exception:
-        return 0
+        _configure_httpfs(con)
+        schema, separator, table = qualified_table.partition(".")
+        if not separator or not schema or not table or "." in table:
+            raise ValueError(f"Expected a schema-qualified table name, got {qualified_table!r}")
+
+        catalog_row = con.execute("select current_database()").fetchone()
+        if catalog_row is None:
+            raise RuntimeError("DuckDB did not report the connected database name")
+
+        full_name = ".".join(
+            '"' + str(identifier).replace('"', '""') + '"'
+            for identifier in (catalog_row[0], schema, table)
+        )
+        row = con.execute(f"select count(*) from {full_name}").fetchone()
+        if row is None:
+            raise RuntimeError(f"DuckDB returned no count for {qualified_table!r}")
+        return int(row[0])
     finally:
         con.close()

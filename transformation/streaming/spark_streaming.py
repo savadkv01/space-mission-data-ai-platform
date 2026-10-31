@@ -93,6 +93,8 @@ def run() -> None:  # pragma: no cover - requires Spark + Kafka
         .start()
     )
     log.info("streaming query started: %s", query.id)
+    query.processAllAvailable()
+    log.info("streaming query ready: %s", query.id)
     query.awaitTermination()
 
 

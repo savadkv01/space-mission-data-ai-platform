@@ -54,20 +54,20 @@ SPARK_CONTAINER = os.environ.get("SPARK_CONTAINER", "space-platform-spark-master
 _WORKDIR = "/opt/spark/work-dir"
 _STREAM_SUBMIT = (
     "/opt/spark/bin/spark-submit"
-    " --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.hadoop:hadoop-aws:3.3.4"
+    " --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.9,org.apache.hadoop:hadoop-aws:3.3.4"
     " --conf spark.jars.ivy=/tmp/.ivy2 --conf spark.sql.extensions="
     " --conf spark.driver.host=localhost --conf spark.driver.bindAddress=127.0.0.1"
 )
 _STREAM_OUTPUT_PATH = "s3://silver/stream_sat_health_1m/*.parquet"
 
-# Bounded demo timing (trigger_interval=30s, watermark_delay=2min per
-# transformation/config/settings.py StreamingSettings) — two small waves of
-# real telemetry, spaced out, reliably push the watermark past the first
-# windows within this budget (~3 minutes total).
+# Keep the waves at least one window plus one watermark delay apart, then
+# allow two trigger intervals for append-mode windows to flush.
 _WAVE_1_RECORDS = 60
 _WAVE_2_RECORDS = 30
-_WAIT_AFTER_WAVE_1_SECONDS = 90
+_WAIT_AFTER_WAVE_1_SECONDS = 210
 _WAIT_AFTER_WAVE_2_SECONDS = 60
+_STREAM_READY_TIMEOUT_SECONDS = 120
+_MIN_STREAM_OUTPUT_ROWS = 3
 
 
 def _in_spark(cmd: str) -> str:
@@ -112,7 +112,7 @@ def _produce_and_consume(**context) -> None:
     from ingestion.streaming.consumers.raw_ingest_consumer import run as consume_raw
 
     start = time.monotonic()
-    written = consume_raw(batch_size=min(100, _WAVE_1_RECORDS), max_batches=3)
+    written = consume_raw(batch_size=_WAVE_1_RECORDS, max_batches=1)
     logger.log_unit("raw_ingest_consumer", status="SUCCESS", rows=written, duration_seconds=time.monotonic() - start)
 
     from ingestion.streaming.consumers.validation_consumer import run as validate
@@ -181,6 +181,20 @@ def _advance_watermark_and_stop(**context) -> None:
     from pipelines.common.lake_metrics import count_parquet_rows
 
     rows = count_parquet_rows(_STREAM_OUTPUT_PATH)
+    if rows < _MIN_STREAM_OUTPUT_ROWS:
+        error = (
+            f"Streaming transform produced {rows} rows at {_STREAM_OUTPUT_PATH}; "
+            f"expected at least {_MIN_STREAM_OUTPUT_ROWS} (one window per satellite)"
+        )
+        logger.log_unit(
+            "stream_sat_health_1m",
+            status="FAILED",
+            rows=rows,
+            details={"path": _STREAM_OUTPUT_PATH, "minimum_rows": _MIN_STREAM_OUTPUT_ROWS, "reason": error},
+        )
+        logger.finish(status="FAILED", error=error)
+        raise RuntimeError(error)
+
     logger.log_unit("stream_sat_health_1m", status="SUCCESS", rows=rows, details={"path": _STREAM_OUTPUT_PATH})
 
 
@@ -217,16 +231,23 @@ def build_dag() -> "DAG | None":
             bash_command=(
                 f"docker exec -u root -d -w {_WORKDIR} {SPARK_CONTAINER} bash -lc "
                 + shlex.quote(f"{_STREAM_SUBMIT} transformation/scripts/run_stream.py > /tmp/run_stream.log 2>&1")
+                + f" && for _ in $(seq 1 {_STREAM_READY_TIMEOUT_SECONDS}); do "
+                + f"if docker exec -u root {SPARK_CONTAINER} grep -q 'streaming query ready' /tmp/run_stream.log; then exit 0; fi; "
+                + "sleep 1; "
+                + "done; "
+                + f"docker exec -u root {SPARK_CONTAINER} tail -n 80 /tmp/run_stream.log; "
+                + "exit 1"
             ),
+            retries=0,
         )
         advance_and_stop = PythonOperator(
-            task_id="advance_watermark_and_stop", python_callable=_advance_watermark_and_stop,
+            task_id="advance_watermark_and_stop", python_callable=_advance_watermark_and_stop, retries=0,
         )
         finish = PythonOperator(task_id="streaming_finish", python_callable=_streaming_finish)
 
         (
-            start >> ensure_topics >> ingest >> clear_sink >> clear_checkpoint
-            >> start_stream >> advance_and_stop >> finish
+            start >> ensure_topics >> clear_sink >> clear_checkpoint >> start_stream
+            >> ingest >> advance_and_stop >> finish
         )
 
     return dag

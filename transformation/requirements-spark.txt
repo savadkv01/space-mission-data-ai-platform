@@ -1,6 +1,6 @@
 # Cluster / engine dependencies — install only when infrastructure is available.
 # PySpark needs a JDK (Java 11/17). dbt-duckdb is the laptop-friendly warehouse.
-pyspark==3.5.1
+pyspark==3.5.9
 dbt-core>=1.7,<1.9
 dbt-duckdb>=1.7,<1.9
 duckdb>=0.10

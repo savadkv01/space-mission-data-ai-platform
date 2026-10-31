@@ -25,7 +25,7 @@ services:
     build:
       context: .
       dockerfile: spark-transform.Dockerfile
-    image: space-platform/spark-transform:3.5.1
+    image: space-platform/spark-transform:3.5.9
     profiles: ["processing", "core", "all"]
     command: >
       /opt/spark/bin/spark-class
@@ -76,7 +76,7 @@ services:
 
   spark-worker:
     <<: *service-defaults
-    image: apache/spark:3.5.1
+    image: apache/spark:3.5.9-scala2.12-java17-python3-ubuntu
     profiles: ["processing", "core", "all"]
     restart: on-failure:3
     depends_on:
