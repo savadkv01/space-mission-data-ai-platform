@@ -1,0 +1,95 @@
+as_of: "2026-10-31"
+source_plan: ../docs/source-data-analysis/15-data-analysis-readiness-implementation-plan.md
+features:
+  - view: satellite_health_daily
+    status: demo_only
+    source: synthetic Silver telemetry / Gold satellite-health mart
+    blocker: "Synthetic mission records are pipeline-demonstrator data, not operational observations."
+    work_package: "WP0; synthetic-data constraint"
+    use: pipeline_validation
+    max_age_hours: 48
+  - view: mission_operations
+    status: blocked
+    source: mission operational Gold product not established
+    blocker: "WP0 live-versus-designed inventory is not complete; no reviewed mission feature source is identified."
+    work_package: WP0
+    use: not_available
+    max_age_hours: 48
+  - view: orbit_stability
+    status: blocked
+    source: Silver orbit
+    blocker: "WP0 must establish the live Gold source, provenance, coverage, and intended grain before an orbit feature is exposed."
+    work_package: WP0
+    use: not_available
+    max_age_hours: 48
+  - view: launch_performance_monthly
+    status: blocked
+    source: Gold kpi_launch_monthly
+    blocker: "WP0 live-versus-designed coverage and freshness evidence are not established for launch data."
+    work_package: WP0
+    use: not_available
+    max_age_hours: 744
+  - view: space_weather_daily
+    status: blocked
+    source: Gold fact_weather_impact
+    blocker: "WP0 must verify source nature and lineage; the combined mart also contains synthetic telemetry-derived measures."
+    work_package: WP0
+    use: not_available
+    max_age_hours: 48
+  - view: wildfire_aoi_daily
+    status: blocked
+    source: Gold kpi_wildfire_aoi_daily
+    blocker: "Only 45 of 98 fire detections appear in AOI daily results; WP1 must reconcile matched and unmatched records."
+    work_package: WP1
+    use: not_available
+    max_age_hours: 48
+  - view: spectral_index_daily
+    status: blocked
+    source: Silver silver_index / Gold flood and vegetation products
+    blocker: "silver_index and dependent Gold products have zero rows; source access is unresolved. Do not synthesize imagery features."
+    work_package: WP2
+    use: not_available
+    max_age_hours: 744
+  - view: scene_catalog_metadata
+    status: restricted
+    source: Gold fact_scene_catalog
+    blocker: "Catalog-only metadata (40 scenes) supports scene discovery, not pixel, flood, vegetation, or scientific claims."
+    work_package: "WP0; WP2"
+    use: catalog_discovery_only
+    max_age_hours: 744
+  - view: vessel_activity_daily
+    status: blocked
+    source: Gold fact_vessel_activity
+    blocker: "Single-transmission activity grain and heuristic suspicious flags are not validated event evidence."
+    work_package: WP5
+    use: not_available
+    max_age_hours: 168
+  - view: air_quality_aoi_daily
+    status: blocked
+    source: Phase 11b serving_air_quality_daily
+    blocker: "Per-measure completeness and native/canonical O3 units require reconciliation before feature use."
+    work_package: WP3
+    use: not_available
+    max_age_hours: 24
+    publication_sla_minutes: 60
+  - view: dust_aoi_daily
+    status: blocked
+    source: Phase 11b serving_dust_event_daily
+    blocker: "Wind speed and direction are null for all 35 rows; transport features are unsupported."
+    work_package: WP4
+    use: not_available
+    max_age_hours: 24
+  - view: climate_indicator_aoi_daily
+    status: blocked
+    source: Phase 11b serving_climate_indicator_daily
+    blocker: "Climate-indicator source product has no validated rows; WP2 remains open."
+    work_package: WP2
+    use: not_available
+    max_age_hours: 24
+  - view: vegetation_health_aoi_daily
+    status: blocked
+    source: Phase 11b serving_vegetation_health_daily
+    blocker: "Vegetation-health source product has no validated rows; WP2 remains open."
+    work_package: WP2
+    use: not_available
+    max_age_hours: 24

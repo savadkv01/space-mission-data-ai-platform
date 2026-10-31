@@ -1,0 +1,29 @@
+project: space_mission_features
+provider: local
+registry:
+  registry_type: sql
+  path: ${FEAST_REGISTRY_URL}
+  cache_ttl_seconds: 30
+  sqlalchemy_config_kwargs:
+    pool_pre_ping: true
+offline_store:
+  type: postgres
+  host: ${POSTGRES_HOST}
+  port: ${POSTGRES_PORT}
+  database: ${POSTGRES_DB}
+  db_schema: feast
+  user: ${POSTGRES_USER}
+  password: "${POSTGRES_PASSWORD}"
+  sslmode: disable
+  entity_select_mode: embed_query
+online_store:
+  type: postgres
+  host: ${POSTGRES_HOST}
+  port: ${POSTGRES_PORT}
+  database: ${POSTGRES_DB}
+  db_schema: feast
+  user: ${POSTGRES_USER}
+  password: "${POSTGRES_PASSWORD}"
+  sslmode: disable
+materialization:
+  online_write_batch_size: 1000
