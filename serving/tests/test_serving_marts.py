@@ -16,7 +16,8 @@ def test_wildfire_enriches_and_bands_severity():
     wildfire = [{"aoi_key": "EMS-A", "date_key": "2026-06-01",
                  "detections": 12, "mean_frp": 40.0, "max_frp": 120.0}]
     aoi_dim = [{"aoi_key": "EMS-A", "aoi_name": "Attica Fire", "area_km2": 55.0}]
-    validation = [{"aoi_key": "EMS-A", "event_type": "fire", "corroborated": True}]
+    validation = [{"aoi_key": "EMS-A", "event_type": "fire",
+                   "event_date": "2026-06-01", "corroborated": True}]
 
     rows = sm.serve_wildfire_daily(wildfire, aoi_dim, validation)
     assert len(rows) == 1
@@ -25,6 +26,18 @@ def test_wildfire_enriches_and_bands_severity():
     assert r["area_km2"] == 55.0
     assert r["severity"] == "extreme"        # max_frp >= 100
     assert r["ems_corroborated"] is True
+
+
+def test_wildfire_corroboration_is_limited_to_ems_event_date():
+    rows = sm.serve_wildfire_daily(
+        [{"aoi_key": "EMS-A", "date_key": "2026-06-02", "detections": 1}],
+        validation_rows=[{
+            "aoi_key": "EMS-A", "event_type": "fire",
+            "event_date": "2026-06-01", "corroborated": True,
+        }],
+    )
+
+    assert rows[0]["ems_corroborated"] is False
 
 
 def test_wildfire_missing_dim_and_frp_is_safe():
@@ -40,7 +53,8 @@ def test_flood_flag_and_corroboration():
     flood = [{"aoi_key": "EMS-F", "date_key": "2026-06-02",
               "ndwi_mean": 0.2, "ndwi_max": 0.4,
               "valid_pixel_fraction": 0.9, "flood_flag": True}]
-    validation = [{"aoi_key": "EMS-F", "event_type": "flood", "corroborated": True}]
+    validation = [{"aoi_key": "EMS-F", "event_type": "flood",
+                   "event_date": "2026-06-02", "corroborated": True}]
     rows = sm.serve_flood_daily(flood, None, validation)
     assert rows[0]["flood_flag"] is True
     assert rows[0]["ems_corroborated"] is True

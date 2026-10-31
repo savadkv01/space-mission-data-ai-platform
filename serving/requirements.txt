@@ -6,8 +6,8 @@
 pytest>=8.0
 
 # --- serving engine + models (activate with infra) ---
-# dbt-duckdb>=1.7        # serving dbt models on DuckDB
-# duckdb>=0.10           # serving SQL DDL / direct queries
+dbt-duckdb>=1.7          # serving dbt models on DuckDB
+duckdb>=0.10             # serving SQL DDL / direct queries
 
 # --- API (stubbed for Phase 16) ---
 # fastapi>=0.110

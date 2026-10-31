@@ -1,7 +1,8 @@
 # Climate / Dust / Air-Quality Data Products (Phase 11b)
 
-> Extends the [Earth Observation products](./observation-products.md). Real open
-> data (OpenAQ, MODIS/VIIRS AOD, Sentinel-2, TROPOMI). AOI-date grained and
+> Extends the [Earth Observation products](./observation-products.md). Designed
+> for free public data sources (OpenAQ, MODIS/VIIRS AOD, Sentinel-2, TROPOMI).
+> AOI-date grained and
 > pre-denormalized so consumers need no joins.
 
 Every product below is built by a pure-Python builder in
@@ -53,9 +54,9 @@ single-sourced in [../marts/semantic.py](../marts/semantic.py).
 | Consumers | Executive dashboard, weather dashboard, ML (14) |
 | Refresh | Daily |
 | SLA | Freshness ≤ 24 h |
-| Source | `fact_climate_indicator_daily`, `ref_aoi` |
+| Source | `fact_climate_indicator_daily`, `fact_vegetation_health_daily`, `ref_aoi` |
 | Grain | 1 row / AOI / day |
-| KPIs | lst_c, lst_anomaly_c, sst anomaly, ndwi_mean, desertification_proxy, warming_flag, desertification_flag |
+| KPIs | lst_c/anomaly, sst/anomaly, ndvi_mean, evi_mean, ndwi_mean, desertification_proxy, warming_flag, desertification_flag |
 
 ---
 
@@ -88,3 +89,22 @@ single-sourced in [../marts/semantic.py](../marts/semantic.py).
 `mv_kpi_climate_daily` — one row per calendar day rolling up air-quality / dust /
 climate / vegetation KPIs for the executive and weather dashboards (mirrors
 `mv_kpi_platform_daily`).
+
+## Certification and source limitations
+
+These are governed serving contracts, not an unconditional certification of
+every source batch. The Phase 10b quality gates determine whether a Gold batch
+is `DRAFT`, `VALIDATED`, or `CERTIFIED`; serving-model tests verify schema,
+grain, ranges, and enums only. Do not label a dataset or batch certified unless
+the corresponding quality-gate evidence and owner approval are available.
+
+The current Gold air-quality fact does not expose a CH4 measure, although
+`dim_pollutant` includes CH4 as a reference species. The serving product does
+not synthesize a CH4 value. Source access, pollutant completeness, and unit
+reconciliation remain upstream requirements before those fields can be
+promoted for feature-store consumption.
+
+The 2026-10-31 local Gold snapshot contains 72 air-quality AOI-days and 35
+dust AOI-days, both with latest observations in 2024; climate-indicator and
+vegetation-health Gold marts contain no rows. These tables build and pass
+serving contracts, but are not certified or suitable as fresh training data.

@@ -134,27 +134,36 @@ def _dust_label(band: Any) -> str:
 
 def serve_climate_indicator_daily(climate_rows: list[dict[str, Any]],
                                   aoi_dim: list[dict[str, Any]] | None = None,
+                                  vegetation_rows: list[dict[str, Any]] | None = None,
                                   ) -> list[dict[str, Any]]:
     """Climate-Indicator data product.
 
-    Source: ``fact_climate_indicator_daily`` (Gold). Surfaces LST/SST plus their
-    same-DOY anomalies, NDWI, tree-cover loss, the desertification proxy and the
-    warming / desertification flags, enriched with AOI metadata and an
-    LST-anomaly display band for the executive / weather dashboards.
+    Sources: ``fact_climate_indicator_daily`` and
+    ``fact_vegetation_health_daily`` (Gold). Vegetation values are joined on
+    AOI and date; unmatched observations stay null.
     """
     aoi_idx = _index_dim(aoi_dim, "aoi_key")
+    vegetation_idx = {
+        (row.get("aoi_key"), row.get("date_key")): row
+        for row in vegetation_rows or []
+        if row.get("aoi_key") is not None and row.get("date_key") is not None
+    }
     out = []
     for r in climate_rows:
         aoi_key = r.get("aoi_key")
+        date_key = r.get("date_key")
         dim = aoi_idx.get(aoi_key, {})
+        vegetation = vegetation_idx.get((aoi_key, date_key), {})
         out.append({
             "aoi_key": aoi_key,
             "aoi_name": dim.get("aoi_name"),
-            "date_key": r.get("date_key"),
+            "date_key": date_key,
             "lst_c": r.get("lst_c"),
             "lst_anomaly_c": r.get("lst_anomaly_c"),
             "sst_c": r.get("sst_c"),
             "sst_anomaly_c": r.get("sst_anomaly_c"),
+            "ndvi_mean": vegetation.get("ndvi_mean"),
+            "evi_mean": vegetation.get("evi_mean"),
             "ndwi_mean": r.get("ndwi_mean"),
             "tree_cover_loss_ha": r.get("tree_cover_loss_ha"),
             "desertification_proxy": r.get("desertification_proxy"),

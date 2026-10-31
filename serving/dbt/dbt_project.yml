@@ -14,6 +14,9 @@ seed-paths: ["seeds"]
 test-paths: ["tests"]
 macro-paths: ["macros"]
 
+on-run-start:
+  - "{{ register_gold_sources() }}"
+
 target-path: "target"
 clean-targets:
   - "target"

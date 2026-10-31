@@ -17,28 +17,36 @@ CREATE SCHEMA IF NOT EXISTS serving;
 -- --- Semantic reference dimensions (static) ----------------------------------
 CREATE OR REPLACE VIEW semantic.dim_pollutant AS
 SELECT * FROM (VALUES
-    ('PM25', 'Fine Particulate Matter',   'surface_concentration', 'µg/m³',    'US_EPA', 15.0, 15.0),
-    ('PM10', 'Coarse Particulate Matter', 'surface_concentration', 'µg/m³',    'US_EPA', 45.0, 45.0),
-    ('NO2',  'Nitrogen Dioxide',          'column_density',        'mol/m²',   'n/a',    CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE)),
-    ('SO2',  'Sulphur Dioxide',           'column_density',        'mol/m²',   'n/a',    CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE)),
-    ('CO',   'Carbon Monoxide',           'column_density',        'mol/m²',   'n/a',    CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE)),
-    ('O3',   'Ozone',                     'column_density',        'mol/m²',   'n/a',    CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE)),
-    ('CH4',  'Methane',                   'column_density',        'ppb',      'n/a',    CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE)),
-    ('AOD',  'Aerosol Optical Depth',     'optical',               'unitless', 'n/a',    CAST(NULL AS DOUBLE), 0.5)
-) AS t(pollutant_code, pollutant_name, measure_type, canonical_unit, aqi_scheme, who_guideline, exceedance_threshold);
+    ('PM25', 'Fine Particulate Matter', 'surface_concentration', 'µg/m³', 'US_EPA', 15.0, 15.0,
+     CAST('[{"aqi_low":0,"aqi_high":50,"value_low":0.0,"value_high":12.0,"label":"Good"},{"aqi_low":51,"aqi_high":100,"value_low":12.1,"value_high":35.4,"label":"Moderate"},{"aqi_low":101,"aqi_high":150,"value_low":35.5,"value_high":55.4,"label":"Unhealthy (sensitive)"},{"aqi_low":151,"aqi_high":200,"value_low":55.5,"value_high":150.4,"label":"Unhealthy"},{"aqi_low":201,"aqi_high":300,"value_low":150.5,"value_high":250.4,"label":"Very Unhealthy"},{"aqi_low":301,"aqi_high":500,"value_low":250.5,"value_high":500.4,"label":"Hazardous"}]' AS JSON),
+     CAST('[]' AS JSON)),
+    ('PM10', 'Coarse Particulate Matter', 'surface_concentration', 'µg/m³', 'US_EPA', 45.0, 45.0,
+     CAST('[{"aqi_low":0,"aqi_high":50,"value_low":0.0,"value_high":54.0,"label":"Good"},{"aqi_low":51,"aqi_high":100,"value_low":55.0,"value_high":154.0,"label":"Moderate"},{"aqi_low":101,"aqi_high":150,"value_low":155.0,"value_high":254.0,"label":"Unhealthy (sensitive)"},{"aqi_low":151,"aqi_high":200,"value_low":255.0,"value_high":354.0,"label":"Unhealthy"},{"aqi_low":201,"aqi_high":300,"value_low":355.0,"value_high":424.0,"label":"Very Unhealthy"},{"aqi_low":301,"aqi_high":500,"value_low":425.0,"value_high":604.0,"label":"Hazardous"}]' AS JSON),
+     CAST('[]' AS JSON)),
+    ('NO2', 'Nitrogen Dioxide', 'column_density', 'mol/m²', 'n/a', CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST('[]' AS JSON), CAST('[]' AS JSON)),
+    ('SO2', 'Sulphur Dioxide', 'column_density', 'mol/m²', 'n/a', CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST('[]' AS JSON), CAST('[]' AS JSON)),
+    ('CO', 'Carbon Monoxide', 'column_density', 'mol/m²', 'n/a', CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST('[]' AS JSON), CAST('[]' AS JSON)),
+    ('O3', 'Ozone', 'column_density', 'mol/m²', 'n/a', CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST('[]' AS JSON), CAST('[]' AS JSON)),
+    ('CH4', 'Methane', 'column_density', 'ppb', 'n/a', CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST('[]' AS JSON), CAST('[]' AS JSON)),
+    ('AOD', 'Aerosol Optical Depth', 'optical', 'unitless', 'n/a', CAST(NULL AS DOUBLE), 0.5,
+     CAST('[]' AS JSON),
+     CAST('[{"band":0,"label":"Clear","value_low":0.0,"value_high":0.2},{"band":1,"label":"Hazy","value_low":0.2,"value_high":0.5},{"band":2,"label":"Dusty","value_low":0.5,"value_high":1.0},{"band":3,"label":"Heavy dust","value_low":1.0,"value_high":2.0},{"band":4,"label":"Severe","value_low":2.0,"value_high":5.0}]' AS JSON))
+) AS t(pollutant_code, pollutant_name, measure_type, canonical_unit, aqi_scheme, who_guideline, exceedance_threshold, aqi_breakpoints, severity_bands);
 
 CREATE OR REPLACE VIEW semantic.dim_climate_indicator AS
 SELECT * FROM (VALUES
-    ('LST',          'Land Surface Temperature', '°C',    'MODIS/Landsat', 'daily'),
-    ('LST_ANOM',     'LST Anomaly (same-DOY)',   '°C',    'derived',       'daily'),
-    ('SST',          'Sea Surface Temperature',  '°C',    'OISST',         'daily'),
-    ('SST_ANOM',     'SST Anomaly (same-DOY)',   '°C',    'derived',       'daily'),
-    ('NDVI',         'Vegetation Index (NDVI)',  'index', 'Sentinel-2',    '16-day'),
-    ('EVI',          'Enhanced Vegetation Index','index', 'Sentinel-2',    '16-day'),
-    ('NDWI',         'Water Index (NDWI)',       'index', 'Sentinel-2',    '16-day'),
-    ('TREE_LOSS',    'Tree-Cover Loss',          'ha',    'GFW',           'annual'),
-    ('DESERT_PROXY', 'Desertification Proxy',    'index', 'derived',       'daily')
-) AS t(indicator_code, indicator_name, unit, source_family, native_cadence);
+    ('LST', 'Land Surface Temperature', '°C', 'MODIS/Landsat', 'daily', CAST(NULL AS JSON), CAST('[]' AS JSON), false),
+    ('LST_ANOM', 'LST Anomaly (same-DOY)', '°C', 'derived', 'daily', CAST(NULL AS JSON),
+     CAST('[{"band":-1,"label":"Cooler","value_low":null,"value_high":-1.0},{"band":0,"label":"Normal","value_low":-1.0,"value_high":1.0},{"band":1,"label":"Warm","value_low":1.0,"value_high":3.0},{"band":2,"label":"Hot","value_low":3.0,"value_high":5.0},{"band":3,"label":"Extreme","value_low":5.0,"value_high":null}]' AS JSON), false),
+    ('SST', 'Sea Surface Temperature', '°C', 'OISST', 'daily', CAST(NULL AS JSON), CAST('[]' AS JSON), false),
+    ('SST_ANOM', 'SST Anomaly (same-DOY)', '°C', 'derived', 'daily', CAST(NULL AS JSON), CAST('[]' AS JSON), false),
+    ('NDVI', 'Vegetation Index (NDVI)', 'index', 'Sentinel-2', '16-day', CAST('[-1.0,1.0]' AS JSON),
+     CAST('[{"band":0,"label":"Bare / water","value_low":-1.0,"value_high":0.1},{"band":1,"label":"Sparse","value_low":0.1,"value_high":0.3},{"band":2,"label":"Moderate","value_low":0.3,"value_high":0.5},{"band":3,"label":"Healthy","value_low":0.5,"value_high":0.7},{"band":4,"label":"Dense","value_low":0.7,"value_high":1.0}]' AS JSON), false),
+    ('EVI', 'Enhanced Vegetation Index', 'index', 'Sentinel-2', '16-day', CAST('[-1.0,1.0]' AS JSON), CAST('[]' AS JSON), false),
+    ('NDWI', 'Water Index (NDWI)', 'index', 'Sentinel-2', '16-day', CAST('[-1.0,1.0]' AS JSON), CAST('[]' AS JSON), false),
+    ('TREE_LOSS', 'Tree-Cover Loss', 'ha', 'GFW', 'annual', CAST(NULL AS JSON), CAST('[]' AS JSON), false),
+    ('DESERT_PROXY', 'Desertification Proxy', 'index', 'derived', 'daily', CAST('[0.0,1.0]' AS JSON), CAST('[]' AS JSON), false)
+) AS t(indicator_code, indicator_name, unit, source_family, native_cadence, normal_range, anomaly_bands, requires_new_ingest);
 
 -- --- Data products (materialized serving tables) ------------------------------
 
@@ -72,7 +80,8 @@ LEFT JOIN semantic.dim_aoi a ON d.aoi_key = a.aoi_key;
 CREATE OR REPLACE TABLE serving.serving_climate_indicator_daily AS
 SELECT
     c.aoi_key, a.aoi_name, c.date_key,
-    c.lst_c, c.lst_anomaly_c, c.sst_c, c.sst_anomaly_c, c.ndwi_mean,
+    c.lst_c, c.lst_anomaly_c, c.sst_c, c.sst_anomaly_c,
+    v.ndvi_mean, v.evi_mean, c.ndwi_mean,
     c.tree_cover_loss_ha, c.desertification_proxy, c.lst_anomaly_band,
     CASE c.lst_anomaly_band
         WHEN -1 THEN 'Cooler' WHEN 0 THEN 'Normal' WHEN 1 THEN 'Warm'
@@ -80,6 +89,8 @@ SELECT
     END AS lst_anomaly_label,
     c.warming_flag, c.desertification_flag, a.area_km2
 FROM read_parquet('s3://gold/fact_climate_indicator_daily/*.parquet') c
+LEFT JOIN read_parquet('s3://gold/fact_vegetation_health_daily/*.parquet') v
+    ON c.aoi_key = v.aoi_key AND c.date_key = v.date_key
 LEFT JOIN semantic.dim_aoi a ON c.aoi_key = a.aoi_key;
 
 -- Vegetation Health

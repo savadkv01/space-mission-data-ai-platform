@@ -44,8 +44,11 @@ def serve_wildfire_daily(wildfire_aoi_rows: list[dict[str, Any]],
     self-describing for dashboards and the ``/analytics/wildfire`` API.
     """
     aoi_idx = _index_dim(aoi_dim, "aoi_key")
-    corroborated = {r.get("aoi_key") for r in (validation_rows or [])
-                    if r.get("event_type") == "fire" and r.get("corroborated")}
+    corroborated = {
+        (r.get("aoi_key"), r.get("event_date"))
+        for r in (validation_rows or [])
+        if r.get("event_type") == "fire" and r.get("corroborated")
+    }
     out = []
     for r in wildfire_aoi_rows:
         aoi_key = r.get("aoi_key")
@@ -59,7 +62,7 @@ def serve_wildfire_daily(wildfire_aoi_rows: list[dict[str, Any]],
             "max_frp": r.get("max_frp"),
             "area_km2": dim.get("area_km2"),
             "severity": _fire_severity(r.get("max_frp")),
-            "ems_corroborated": aoi_key in corroborated,
+            "ems_corroborated": (aoi_key, r.get("date_key")) in corroborated,
         })
     return sorted(out, key=lambda x: (x["aoi_key"] or "", x["date_key"] or ""))
 
@@ -87,8 +90,11 @@ def serve_flood_daily(flood_aoi_rows: list[dict[str, Any]],
     metadata and EMS corroboration so flood-day rows are BI/API ready.
     """
     aoi_idx = _index_dim(aoi_dim, "aoi_key")
-    corroborated = {r.get("aoi_key") for r in (validation_rows or [])
-                    if r.get("event_type") == "flood" and r.get("corroborated")}
+    corroborated = {
+        (r.get("aoi_key"), r.get("event_date"))
+        for r in (validation_rows or [])
+        if r.get("event_type") == "flood" and r.get("corroborated")
+    }
     out = []
     for r in flood_aoi_rows:
         aoi_key = r.get("aoi_key")
@@ -102,7 +108,7 @@ def serve_flood_daily(flood_aoi_rows: list[dict[str, Any]],
             "valid_pixel_fraction": r.get("valid_pixel_fraction"),
             "flood_flag": bool(r.get("flood_flag")),
             "area_km2": dim.get("area_km2"),
-            "ems_corroborated": aoi_key in corroborated,
+            "ems_corroborated": (aoi_key, r.get("date_key")) in corroborated,
         })
     return sorted(out, key=lambda x: (x["aoi_key"] or "", x["date_key"] or ""))
 

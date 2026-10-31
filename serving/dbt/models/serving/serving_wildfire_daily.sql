@@ -8,7 +8,7 @@ aoi as (
     select * from {{ ref('dim_aoi') }}
 ),
 corr as (
-    select aoi_key
+    select aoi_key, event_date
     from {{ source('gold', 'kpi_aoi_validation') }}
     where event_type = 'fire' and corroborated
 )
@@ -30,4 +30,4 @@ select
     (c.aoi_key is not null)                               as ems_corroborated
 from fire f
 left join aoi  a on f.aoi_key = a.aoi_key
-left join corr c on f.aoi_key = c.aoi_key
+left join corr c on f.aoi_key = c.aoi_key and f.date_key = c.event_date

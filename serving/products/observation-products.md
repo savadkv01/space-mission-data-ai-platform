@@ -23,6 +23,16 @@ Every product below is built by a pure-Python builder in
 | Grain | 1 row / AOI / day |
 | KPIs | detections, mean_frp, max_frp, severity band, EMS corroboration |
 
+**Release restriction:** exploratory only; not certified for public-safety
+decisions. Use the [fire readiness contract](../../docs/source-data-analysis/16-live-readiness-and-fire-contract.md)
+and its [live evidence snapshot](../../docs/source-data-analysis/live-readiness-snapshot.json).
+The snapshot exposes field completeness, lineage, event freshness, and every
+matched/unmatched detection. Overlapping AOIs are intentionally non-additive.
+The curated reference seed is not independent EMS activation ground truth;
+`ems_corroborated` must not be interpreted as externally verified fire evidence.
+The source freshness objective remains six hours; the daily product SLA above
+does not waive that upstream requirement.
+
 ---
 
 ## Flood Extent (UC-16)

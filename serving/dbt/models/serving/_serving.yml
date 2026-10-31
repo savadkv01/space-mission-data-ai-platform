@@ -4,7 +4,12 @@ version: 2
 # Airflow serving-refresh DAG, enforcing grain, KPI bounds, and enumerated bands.
 models:
   - name: serving_wildfire_daily
-    description: "Wildfire Activity data product (UC-15), 1 row per AOI per day."
+    description: >-
+      Wildfire Activity (UC-15), 1 row per configured AOI per UTC day.
+      Exploratory only: domain approval is pending, overlapping AOIs are
+      non-additive, and curated AOI corroboration is not independent EMS evidence.
+      Consult docs/source-data-analysis/16-live-readiness-and-fire-contract.md
+      and live-readiness-snapshot.json for completeness, freshness, and reconciliation.
     columns:
       - name: aoi_key
         tests: [not_null]

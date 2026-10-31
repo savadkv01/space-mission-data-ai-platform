@@ -4,6 +4,10 @@
 with clim as (
     select * from {{ source('gold', 'fact_climate_indicator_daily') }}
 ),
+vegetation as (
+    select aoi_key, date_key, ndvi_mean, evi_mean
+    from {{ source('gold', 'fact_vegetation_health_daily') }}
+),
 aoi as (
     select * from {{ ref('dim_aoi') }}
 )
@@ -15,6 +19,8 @@ select
     c.lst_anomaly_c,
     c.sst_c,
     c.sst_anomaly_c,
+    v.ndvi_mean,
+    v.evi_mean,
     c.ndwi_mean,
     c.tree_cover_loss_ha,
     c.desertification_proxy,
@@ -31,4 +37,6 @@ select
     c.desertification_flag,
     a.area_km2
 from clim c
+left join vegetation v
+    on c.aoi_key = v.aoi_key and c.date_key = v.date_key
 left join aoi a on c.aoi_key = a.aoi_key

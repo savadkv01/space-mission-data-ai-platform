@@ -17,12 +17,14 @@ rather than forking it.
 | --- | --- | --- | --- |
 | `serving_air_quality_daily` | `fact_air_quality_daily` | AOI/day | [`climate_products.serve_air_quality_daily`](../../serving/marts/climate/climate_products.py) · [dbt](../../serving/dbt/models/climate/serving_air_quality_daily.sql) |
 | `serving_dust_event_daily` | `fact_dust_event_daily` | AOI/day | [`serve_dust_event_daily`](../../serving/marts/climate/climate_products.py) · [dbt](../../serving/dbt/models/climate/serving_dust_event_daily.sql) |
-| `serving_climate_indicator_daily` | `fact_climate_indicator_daily` | AOI/day | [`serve_climate_indicator_daily`](../../serving/marts/climate/climate_products.py) · [dbt](../../serving/dbt/models/climate/serving_climate_indicator_daily.sql) |
+| `serving_climate_indicator_daily` | `fact_climate_indicator_daily` + `fact_vegetation_health_daily` | AOI/day | [`serve_climate_indicator_daily`](../../serving/marts/climate/climate_products.py) · [dbt](../../serving/dbt/models/climate/serving_climate_indicator_daily.sql) |
 | `serving_vegetation_health_daily` | `fact_vegetation_health_daily` | AOI/day | [`serve_vegetation_health_daily`](../../serving/marts/climate/climate_products.py) · [dbt](../../serving/dbt/models/climate/serving_vegetation_health_daily.sql) |
 
 Each builder enriches the Gold row with `dim_aoi` display metadata and adds a
 business-friendly display label for its numeric band, then emits a wide,
-sorted, AOI-date-unique row. The dbt models and raw DDL
+sorted, AOI-date-unique row. The climate-indicator product joins NDVI/EVI from
+the vegetation-health Gold mart on the complete AOI-date key; missing dates
+remain null rather than borrowing a neighboring observation. The dbt models and raw DDL
 ([`serving/sql/climate/`](../../serving/sql/climate/)) reproduce the same shape.
 
 ## Architecture
@@ -50,6 +52,7 @@ flowchart LR
     FDU --> SDU
     FCI --> SCI
     FVH --> SVH
+    FVH --> SCI
     DA --> SAQ & SDU & SCI & SVH
     SAQ & SDU & SCI & SVH --> MV
     DP -. semantics .- SAQ
@@ -79,6 +82,11 @@ flowchart LR
   | `ndvi_health_mean` | vegetation | mean(`ndvi_mean`) |
   | `crop_stress_days` | vegetation | count where `crop_stress_flag` |
 
+- **Threshold references** — the pollutant and climate-indicator dimensions
+  expose the documented PM2.5/PM10 AQI breakpoints, AOD severity bands, LST
+  anomaly bands, and NDVI health bands as JSON fields. They are descriptive
+  reference data; Gold remains authoritative for the computed bands and flags.
+
 ## Materialized Aggregate
 
 `mv_kpi_climate_daily` (dbt [model](../../serving/dbt/models/marts_agg/mv_kpi_climate_daily.sql)
@@ -99,6 +107,30 @@ enforce, per product:
 
 No AOI is restricted, so no row-level security is required (the existing RLS
 approach is reused — none needed here).
+
+Serving contracts do not certify every Gold batch. Phase 10b quality-gate
+evidence and domain-owner approval are required before a batch is labeled
+`CERTIFIED`. The current Gold air-quality fact does not expose CH4; the pollutant
+dimension lists it as a reference species, but the serving product does not
+fabricate a measurement. Air-quality completeness and unit reconciliation remain
+upstream promotion requirements.
+
+## Validation snapshot
+
+The local MinIO Gold snapshot was built and contract-tested on 2026-10-31.
+These counts demonstrate serving behavior; they are not certification evidence.
+
+| Product | Rows | Gold date range | Readiness note |
+| --- | ---: | --- | --- |
+| `serving_air_quality_daily` | 72 | 2022-04-11 to 2024-10-19 | Stale; pollutant units and coverage remain under WP3 review. |
+| `serving_dust_event_daily` | 35 | 2024-06-01 to 2024-06-07 | Stale; wind context is unavailable per WP4 baseline. |
+| `serving_climate_indicator_daily` | 0 | — | No validated index rows; WP2 remains open. |
+| `serving_vegetation_health_daily` | 0 | — | No validated index rows; WP2 remains open. |
+
+The materialized daily KPI rollup contains 58 dates from the available
+air-quality and dust products. Downstream feature-store consumers must preserve
+these source and freshness limitations rather than interpret empty or stale
+products as certified observations.
 
 ## Tests
 

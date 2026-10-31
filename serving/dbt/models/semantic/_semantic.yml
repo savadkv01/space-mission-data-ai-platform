@@ -13,9 +13,19 @@ models:
         tests:
           - accepted_values:
               values: ['surface_concentration', 'column_density', 'optical']
+      - name: aqi_breakpoints
+        tests: [not_null]
+      - name: severity_bands
+        tests: [not_null]
 
   - name: dim_climate_indicator
     description: "Conformed climate/vegetation indicator dimension (unit, source family)."
     columns:
       - name: indicator_code
         tests: [not_null, unique]
+      - name: anomaly_bands
+        tests: [not_null]
+      - name: requires_new_ingest
+        tests:
+          - accepted_values:
+              values: [false]

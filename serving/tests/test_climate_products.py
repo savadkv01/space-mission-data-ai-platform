@@ -68,10 +68,31 @@ def test_climate_indicator_warming_label_and_flags():
              "ndwi_mean": 0.1, "tree_cover_loss_ha": None,
              "desertification_proxy": 0.6, "lst_anomaly_band": 2,
              "warming_flag": True, "desertification_flag": True}]
-    r = cp.serve_climate_indicator_daily(clim, AOI_DIM)[0]
+    r = cp.serve_climate_indicator_daily(
+        clim,
+        AOI_DIM,
+        [{"aoi_key": "EMS-A", "date_key": "2026-06-03",
+          "ndvi_mean": 0.62, "evi_mean": 0.31}],
+    )[0]
     assert r["lst_anomaly_label"] == "Hot"
+    assert r["ndvi_mean"] == 0.62
+    assert r["evi_mean"] == 0.31
     assert r["warming_flag"] is True
     assert r["desertification_flag"] is True
+
+
+def test_climate_indicator_joins_vegetation_only_on_matching_aoi_date():
+    rows = cp.serve_climate_indicator_daily(
+        [{"aoi_key": "EMS-A", "date_key": "2026-06-03"}],
+        vegetation_rows=[
+            {"aoi_key": "EMS-A", "date_key": "2026-06-02",
+             "ndvi_mean": 0.9, "evi_mean": 0.8},
+            {"aoi_key": "EMS-B", "date_key": "2026-06-03",
+             "ndvi_mean": 0.7, "evi_mean": 0.6},
+        ],
+    )
+    assert rows[0]["ndvi_mean"] is None
+    assert rows[0]["evi_mean"] is None
 
 
 def test_climate_indicator_cooler_band():
@@ -131,6 +152,33 @@ def test_reference_dimensions_have_expected_species():
     assert {"PM25", "PM10", "NO2", "AOD"} <= codes
     indicators = {i["indicator_code"] for i in semantic.CLIMATE_INDICATORS}
     assert {"LST", "NDVI", "DESERT_PROXY"} <= indicators
+    pm25 = next(p for p in semantic.POLLUTANTS if p["pollutant_code"] == "PM25")
+    assert pm25["aqi_breakpoints"][2]["value_low"] == 35.5
+    aod = next(p for p in semantic.POLLUTANTS if p["pollutant_code"] == "AOD")
+    assert aod["severity_bands"][2]["label"] == "Dusty"
+    lst_anomaly = next(
+        i for i in semantic.CLIMATE_INDICATORS
+        if i["indicator_code"] == "LST_ANOM"
+    )
+    assert lst_anomaly["anomaly_bands"][3]["label"] == "Hot"
+    ndvi = next(i for i in semantic.CLIMATE_INDICATORS if i["indicator_code"] == "NDVI")
+    assert ndvi["anomaly_bands"][3]["label"] == "Healthy"
+    assert all(not indicator["requires_new_ingest"] for indicator in semantic.CLIMATE_INDICATORS)
+
+
+def test_aqi_semantic_breakpoints_match_gold_calculation():
+    from transformation.batch.climate_silver_to_gold import aqi_pm10, aqi_pm25
+
+    calculators = {"PM25": aqi_pm25, "PM10": aqi_pm10}
+    for pollutant_code, calculator in calculators.items():
+        breakpoints = next(
+            pollutant["aqi_breakpoints"]
+            for pollutant in semantic.POLLUTANTS
+            if pollutant["pollutant_code"] == pollutant_code
+        )
+        for breakpoint in breakpoints:
+            assert calculator(breakpoint["value_low"]) == breakpoint["aqi_low"]
+            assert calculator(breakpoint["value_high"]) == breakpoint["aqi_high"]
 
 
 def test_compute_climate_kpis_over_serving_rows():
