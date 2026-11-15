@@ -50,21 +50,55 @@ SELECT * FROM (VALUES
 
 -- --- Data products (materialized serving tables) ------------------------------
 
--- Air Quality
+-- Air Quality (exceedance_flag null unless PM evidence decides it)
 CREATE OR REPLACE TABLE serving.serving_air_quality_daily AS
+WITH aq AS (
+    SELECT *,
+        CASE
+            WHEN COALESCE(exceedance_flag, false) THEN 'positive'
+            WHEN pm25_mean IS NOT NULL AND pm10_mean IS NOT NULL THEN 'negative'
+            WHEN pm25_mean IS NOT NULL OR pm10_mean IS NOT NULL THEN 'inconclusive'
+            ELSE 'not_evaluated'
+        END AS exceedance_status
+    FROM read_parquet('s3://gold/fact_air_quality_daily/*.parquet')
+)
 SELECT
-    q.aoi_key, a.aoi_name, q.date_key,
+    q.aoi_key, a.aoi_name, a.region, q.date_key,
     q.pm25_mean, q.pm25_max, q.pm10_mean, q.pm10_max,
     q.no2_column_mean, q.so2_column_mean, q.co_column_mean, q.o3_column_mean,
-    q.station_count, q.aqi_pm25, q.aqi_pm10, q.aqi_band, q.exceedance_flag,
+    q.station_count, q.aqi_pm25, q.aqi_pm10, q.aqi_band, q.aqi_standard,
+    CASE q.exceedance_status WHEN 'positive' THEN true WHEN 'negative' THEN false END AS exceedance_flag,
+    q.exceedance_status,
+    CASE
+        WHEN q.pm25_mean IS NOT NULL AND q.pm10_mean IS NOT NULL THEN 'pm25_and_pm10'
+        WHEN q.pm25_mean IS NOT NULL THEN 'pm25_only'
+        WHEN q.pm10_mean IS NOT NULL THEN 'pm10_only'
+        ELSE 'none'
+    END AS pm_coverage,
     a.area_km2
-FROM read_parquet('s3://gold/fact_air_quality_daily/*.parquet') q
+FROM aq q
 LEFT JOIN semantic.dim_aoi a ON q.aoi_key = a.aoi_key;
 
--- Dust Event
+-- Dust Event (dust/transport flags null unless evidence decides them)
 CREATE OR REPLACE TABLE serving.serving_dust_event_daily AS
+WITH dust AS (
+    SELECT *,
+        CASE
+            WHEN COALESCE(dust_flag, false) THEN 'positive'
+            WHEN aod_mean < 0.5 OR uv_aerosol_index_mean < 1.0 THEN 'negative'
+            WHEN aod_mean IS NOT NULL OR uv_aerosol_index_mean IS NOT NULL THEN 'inconclusive'
+            ELSE 'not_evaluated'
+        END AS dust_status,
+        CASE
+            WHEN COALESCE(transport_flag, false) THEN 'positive'
+            WHEN corridor_aod_max < 0.5 OR wind_speed_mean <= 0 THEN 'negative'
+            WHEN corridor_aod_max IS NOT NULL OR wind_speed_mean IS NOT NULL THEN 'inconclusive'
+            ELSE 'not_evaluated'
+        END AS transport_status
+    FROM read_parquet('s3://gold/fact_dust_event_daily/*.parquet')
+)
 SELECT
-    d.aoi_key, a.aoi_name, d.date_key,
+    d.aoi_key, a.aoi_name, a.region, d.date_key,
     d.aod_mean, d.aod_max, d.uv_aerosol_index_mean,
     d.wind_speed_mean, d.wind_dir_dominant, d.corridor_aod_max, d.valid_fraction,
     d.dust_severity_band,
@@ -72,14 +106,33 @@ SELECT
         WHEN 0 THEN 'Clear' WHEN 1 THEN 'Hazy' WHEN 2 THEN 'Dusty'
         WHEN 3 THEN 'Heavy dust' WHEN 4 THEN 'Severe' ELSE 'unknown'
     END AS dust_severity_label,
-    d.dust_flag, d.transport_flag, a.area_km2
-FROM read_parquet('s3://gold/fact_dust_event_daily/*.parquet') d
+    CASE d.dust_status WHEN 'positive' THEN true WHEN 'negative' THEN false END AS dust_flag,
+    d.dust_status,
+    CASE d.transport_status WHEN 'positive' THEN true WHEN 'negative' THEN false END AS transport_flag,
+    d.transport_status,
+    a.area_km2
+FROM dust d
 LEFT JOIN semantic.dim_aoi a ON d.aoi_key = a.aoi_key;
 
--- Climate Indicator
+-- Climate Indicator (warming/desertification flags null unless evidence decides them)
 CREATE OR REPLACE TABLE serving.serving_climate_indicator_daily AS
+WITH clim AS (
+    SELECT *,
+        CASE
+            WHEN COALESCE(warming_flag, false) THEN 'positive'
+            WHEN lst_anomaly_c IS NOT NULL AND sst_anomaly_c IS NOT NULL THEN 'negative'
+            WHEN lst_anomaly_c IS NOT NULL OR sst_anomaly_c IS NOT NULL THEN 'inconclusive'
+            ELSE 'not_evaluated'
+        END AS warming_status,
+        CASE
+            WHEN COALESCE(desertification_flag, false) THEN 'positive'
+            WHEN desertification_proxy IS NOT NULL THEN 'negative'
+            ELSE 'not_evaluated'
+        END AS desertification_status
+    FROM read_parquet('s3://gold/fact_climate_indicator_daily/*.parquet')
+)
 SELECT
-    c.aoi_key, a.aoi_name, c.date_key,
+    c.aoi_key, a.aoi_name, a.region, c.date_key,
     c.lst_c, c.lst_anomaly_c, c.sst_c, c.sst_anomaly_c,
     v.ndvi_mean, v.evi_mean, c.ndwi_mean,
     c.tree_cover_loss_ha, c.desertification_proxy, c.lst_anomaly_band,
@@ -87,19 +140,33 @@ SELECT
         WHEN -1 THEN 'Cooler' WHEN 0 THEN 'Normal' WHEN 1 THEN 'Warm'
         WHEN 2 THEN 'Hot' WHEN 3 THEN 'Extreme' ELSE 'unknown'
     END AS lst_anomaly_label,
-    c.warming_flag, c.desertification_flag, a.area_km2
-FROM read_parquet('s3://gold/fact_climate_indicator_daily/*.parquet') c
+    CASE c.warming_status WHEN 'positive' THEN true WHEN 'negative' THEN false END AS warming_flag,
+    c.warming_status,
+    CASE c.desertification_status WHEN 'positive' THEN true WHEN 'negative' THEN false END AS desertification_flag,
+    c.desertification_status,
+    a.area_km2
+FROM clim c
 LEFT JOIN read_parquet('s3://gold/fact_vegetation_health_daily/*.parquet') v
     ON c.aoi_key = v.aoi_key AND c.date_key = v.date_key
 LEFT JOIN semantic.dim_aoi a ON c.aoi_key = a.aoi_key;
 
--- Vegetation Health
+-- Vegetation Health (null trend = 'unknown'; crop_stress_flag null unless evidence decides it)
 CREATE OR REPLACE TABLE serving.serving_vegetation_health_daily AS
+WITH veg AS (
+    SELECT *,
+        CASE
+            WHEN COALESCE(crop_stress_flag, false) THEN 'positive'
+            WHEN ndvi_mean >= 0.3 OR ndvi_trend_30d >= 0 THEN 'negative'
+            WHEN ndvi_mean IS NOT NULL OR ndvi_trend_30d IS NOT NULL THEN 'inconclusive'
+            ELSE 'not_evaluated'
+        END AS crop_stress_status
+    FROM read_parquet('s3://gold/fact_vegetation_health_daily/*.parquet')
+)
 SELECT
-    v.aoi_key, a.aoi_name, v.date_key,
+    v.aoi_key, a.aoi_name, a.region, v.date_key,
     v.ndvi_mean, v.ndvi_max, v.evi_mean, v.ndvi_trend_30d,
     CASE
-        WHEN v.ndvi_trend_30d IS NULL THEN 'flat'
+        WHEN v.ndvi_trend_30d IS NULL THEN 'unknown'
         WHEN v.ndvi_trend_30d > 0     THEN 'improving'
         WHEN v.ndvi_trend_30d < 0     THEN 'declining'
         ELSE 'flat'
@@ -109,6 +176,8 @@ SELECT
         WHEN 0 THEN 'Bare / water' WHEN 1 THEN 'Sparse' WHEN 2 THEN 'Moderate'
         WHEN 3 THEN 'Healthy' WHEN 4 THEN 'Dense' ELSE 'unknown'
     END AS ndvi_health_label,
-    v.crop_stress_flag, a.area_km2
-FROM read_parquet('s3://gold/fact_vegetation_health_daily/*.parquet') v
+    CASE v.crop_stress_status WHEN 'positive' THEN true WHEN 'negative' THEN false END AS crop_stress_flag,
+    v.crop_stress_status,
+    a.area_km2
+FROM veg v
 LEFT JOIN semantic.dim_aoi a ON v.aoi_key = a.aoi_key;

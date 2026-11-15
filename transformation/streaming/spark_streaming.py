@@ -13,10 +13,68 @@ configuration source.
 
 from __future__ import annotations
 
+from typing import Any
+
 from transformation.common.logging_setup import get_logger
 from transformation.config.settings import settings
 
 log = get_logger("streaming")
+
+#: Field contract for ``telemetry.satellite.cleaned``. The validation consumer
+#: forwards producer records unchanged, and the telemetry generator nests
+#: ``health`` / ``label_anomaly`` under ``metadata``. Root-level fields remain a
+#: fallback for the flat demo NDJSON (``transformation/scripts/gen_stream_messages.py``).
+#: Paths are tried in order; the first non-null value wins.
+STREAM_FIELD_PATHS: dict[str, tuple[str, ...]] = {
+    "timestamp": ("timestamp",),
+    "satellite_id": ("satellite_id",),
+    "sensor_type": ("sensor_type",),
+    "health": ("metadata.health", "health"),
+    "label_anomaly": ("metadata.label_anomaly", "label_anomaly"),
+}
+
+
+def _resolve_path(record: dict[str, Any], path: str) -> Any:
+    value: Any = record
+    for part in path.split("."):
+        if not isinstance(value, dict):
+            return None
+        value = value.get(part)
+    return value
+
+
+def extract_stream_fields(record: dict[str, Any]) -> dict[str, Any]:
+    """Pure-Python reference of the Spark parser for one cleaned-topic record."""
+    out = {}
+    for name, paths in STREAM_FIELD_PATHS.items():
+        out[name] = next(
+            (v for v in (_resolve_path(record, p) for p in paths) if v is not None), None
+        )
+    return out
+
+
+def parse_telemetry_json(raw):  # pragma: no cover - requires Spark
+    """Parse a DataFrame with a JSON string ``value`` column per ``STREAM_FIELD_PATHS``."""
+    from pyspark.sql import functions as F
+    from pyspark.sql.types import BooleanType, StringType, StructField, StructType
+
+    metadata = StructType([
+        StructField("health", StringType()),
+        StructField("label_anomaly", BooleanType()),
+    ])
+    schema = StructType([
+        StructField("timestamp", StringType()),
+        StructField("satellite_id", StringType()),
+        StructField("sensor_type", StringType()),
+        StructField("health", StringType()),
+        StructField("label_anomaly", BooleanType()),
+        StructField("metadata", metadata),
+    ])
+    record = raw.select(F.from_json(F.col("value").cast("string"), schema).alias("r"))
+    return record.select(*[
+        F.coalesce(*[F.col(f"r.{path}") for path in paths]).alias(name)
+        for name, paths in STREAM_FIELD_PATHS.items()
+    ]).withColumn("event_time", F.to_timestamp("timestamp"))
 
 
 def run() -> None:  # pragma: no cover - requires Spark + Kafka
@@ -29,27 +87,12 @@ def run() -> None:  # pragma: no cover - requires Spark + Kafka
     - checkpointing to ``spark.checkpoint_dir`` for exactly-once state recovery
     """
     from pyspark.sql import functions as F
-    from pyspark.sql.types import (
-        BooleanType,
-        StringType,
-        StructField,
-        StructType,
-        TimestampType,
-    )
 
     from transformation.common.spark import build_spark_session
 
     st = settings.streaming
     spark = build_spark_session("telemetry-stream")
     spark.sparkContext.setLogLevel("WARN")
-
-    schema = StructType([
-        StructField("timestamp", StringType()),
-        StructField("satellite_id", StringType()),
-        StructField("sensor_type", StringType()),
-        StructField("health", StringType()),
-        StructField("label_anomaly", BooleanType()),
-    ])
 
     raw = (
         spark.readStream.format("kafka")
@@ -59,11 +102,7 @@ def run() -> None:  # pragma: no cover - requires Spark + Kafka
         .load()
     )
 
-    parsed = (
-        raw.select(F.from_json(F.col("value").cast("string"), schema).alias("r"))
-        .select("r.*")
-        .withColumn("event_time", F.to_timestamp("timestamp"))
-    )
+    parsed = parse_telemetry_json(raw)
 
     windowed = (
         parsed.withWatermark("event_time", st.watermark_delay)

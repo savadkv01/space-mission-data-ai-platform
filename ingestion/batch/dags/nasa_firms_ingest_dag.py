@@ -18,13 +18,23 @@ except ImportError:  # allows import/lint without Airflow installed
 from ingestion.api.nasa_firms import FirmsConnector
 from ingestion.batch.dags._defaults import DEFAULT_ARGS
 from ingestion.batch.ingest_task import run_connector_to_bronze
+from ingestion.config.settings import settings
 
-# AOI bounding boxes (lon/lat) for MVP wildfire monitoring regions.
-REGIONS = {"mena": "30,10,60,40", "med": "-10,30,40,46"}
+# Request boxes (lon/lat). "mena" covers the UAE-GULF region; "med" lies outside
+# every analysis region, so its detections stay unattributed (region = NULL).
+# INDIA is requested per fire-relevant AOI box (settings.climate.region_sources).
+REGIONS = {
+    "mena": "30,10,60,40",
+    "med": "-10,30,40,46",
+    **{aoi.lower().replace("-", "_"): settings.climate.firms_area(aoi)
+       for aoi in settings.climate.region_sources["INDIA"]["firms"]},
+}
 
 
 def _ingest_region(region: str, area: str, **_) -> dict:
-    return run_connector_to_bronze(FirmsConnector(), source="VIIRS_SNPP_NRT", area=area, days=1)
+    return run_connector_to_bronze(
+        FirmsConnector(), source=settings.climate.firms_source, area=area, days=1,
+        max_records=settings.climate.firms_max_records_per_request)
 
 
 if DAG is not None:

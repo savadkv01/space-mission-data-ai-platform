@@ -22,9 +22,12 @@ def run_connector_to_bronze(connector: ApiConnector, *, writer: LandingZoneWrite
     """Pull from ``connector`` and land records in Bronze. Returns run metadata."""
     writer = writer or LandingZoneWriter()
     envelopes = connector.ingest(**fetch_kwargs)
+    coverage = {"coverage": "capped", "coverage_notes": list(connector.coverage_notes)} \
+        if getattr(connector, "coverage_notes", None) else {"coverage": "complete"}
     if not envelopes:
         log.warning("connector %s produced no records", connector.source_code)
-        return {"source": connector.source_code, "records": 0, "key": None}
+        return {"source": connector.source_code, "records": 0, "key": None, **coverage}
     batch_id = envelopes[0]._batch_id
     key = writer.write_batch(connector.source_code, batch_id, envelopes)
-    return {"source": connector.source_code, "records": len(envelopes), "key": key, "batch_id": batch_id}
+    return {"source": connector.source_code, "records": len(envelopes), "key": key,
+            "batch_id": batch_id, **coverage}

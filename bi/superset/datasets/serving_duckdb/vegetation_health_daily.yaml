@@ -7,9 +7,10 @@ cache_timeout: 3600
 schema: null
 sql: |
   select
-      aoi_key, aoi_name, cast(date_key as date) as event_date,
+      aoi_key, aoi_name, region, cast(date_key as date) as event_date,
       ndvi_mean, ndvi_max, evi_mean, ndvi_trend_30d, ndvi_trend_dir,
-      valid_pixel_fraction, ndvi_health_band, ndvi_health_label, crop_stress_flag, area_km2
+      valid_pixel_fraction, ndvi_health_band, ndvi_health_label, crop_stress_flag,
+      crop_stress_status, area_km2
   from serving.serving_vegetation_health_daily
 params: null
 template_params: null
@@ -36,6 +37,9 @@ columns:
   - column_name: aoi_name
     type: VARCHAR
     groupby: true
+  - column_name: region
+    type: VARCHAR
+    groupby: true
   - column_name: event_date
     type: DATE
     is_dttm: true
@@ -59,6 +63,9 @@ columns:
     groupby: true
   - column_name: crop_stress_flag
     type: BOOLEAN
+    groupby: true
+  - column_name: crop_stress_status
+    type: VARCHAR
     groupby: true
   - column_name: area_km2
     type: DOUBLE

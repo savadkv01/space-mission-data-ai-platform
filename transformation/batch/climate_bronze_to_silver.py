@@ -30,8 +30,13 @@ from transformation.geospatial.spatial_transform import assign_aoi
 
 
 def _apply(records: list[dict[str, Any]], cleaner: Callable[[dict[str, Any]], CleanResult],
-           *, entity: str, key_fields: list[str]) -> SilverResult:
-    """Clean, quarantine failures, then dedup latest-by-event-time per key."""
+           *, entity: str, key_fields: list[str],
+           precedence: Callable[[dict[str, Any]], int] | None = None) -> SilverResult:
+    """Clean, quarantine failures, then dedup latest-by-event-time per key.
+
+    ``precedence`` breaks event-time ties deterministically: rows with a higher
+    value win (dedup keeps the last of equal event times, so sort ascending).
+    """
     kept: list[dict[str, Any]] = []
     quarantine: list[dict[str, Any]] = []
     for rec in records:
@@ -40,6 +45,8 @@ def _apply(records: list[dict[str, Any]], cleaner: Callable[[dict[str, Any]], Cl
             quarantine.append(_quarantine(rec, result.reasons, entity))
         else:
             kept.append(result.record)
+    if precedence is not None:
+        kept.sort(key=precedence)
     deduped = deduplicate(kept, key_fields=key_fields, order_field="event_ts")
     return SilverResult(entity=entity, rows=deduped, quarantine=quarantine)
 
@@ -75,7 +82,8 @@ def silver_air_quality(records: list[dict[str, Any]],
 def silver_aerosol(records: list[dict[str, Any]]) -> SilverResult:
     """Conform MODIS/VIIRS AOD buckets (AOI already carried from Bronze)."""
     return _apply(records, clean_aerosol, entity="silver_aerosol",
-                  key_fields=["aerosol_key"])
+                  key_fields=["aerosol_key"],
+                  precedence=lambda r: int(r.get("qa_mask") is not None))
 
 
 # --- obs_atmos_column (TROPOMI) --------------------------------------------
@@ -99,6 +107,7 @@ def silver_wind(records: list[dict[str, Any]]) -> SilverResult:
         clean_power_wind,
         entity="silver_wind",
         key_fields=["aoi_id", "stat_date", "parameter"],
+        precedence=lambda r: int(r.get("time_standard") == "UTC"),
     )
 
 
@@ -140,7 +149,7 @@ def _silver_spark_schema(entity: str):  # pragma: no cover - needs Spark
             _s("geo_key"), _s("bbox"), _s("sensor"), _d("aod_550nm"),
             _d("angstrom_exponent"), _d("uv_aerosol_index"),
             _b("bright_surface_flag"), _d("valid_fraction"), _s("quality_flag"),
-            _s("source"), _s("_ingest_id"), _s("_batch_id"),
+            _s("qa_mask"), _s("source"), _s("_ingest_id"), _s("_batch_id"),
         ]),
         "atmos_column": StructType([
             _s("atmos_key"), _s("stat_date"), _s("event_ts"), _s("aoi_id"),
@@ -151,7 +160,7 @@ def _silver_spark_schema(entity: str):  # pragma: no cover - needs Spark
         "wind": StructType([
             _s("wind_key"), _s("event_ts"), _s("stat_date"), _s("aoi_id"),
             _s("parameter"), _d("value_std"), _s("unit_std"), _d("latitude"),
-            _d("longitude"), _s("quality_flag"), _s("source"),
+            _d("longitude"), _s("time_standard"), _s("quality_flag"), _s("source"),
             _s("_ingest_id"), _s("_batch_id"),
         ]),
     }

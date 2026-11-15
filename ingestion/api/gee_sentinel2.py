@@ -98,17 +98,29 @@ class GeeSentinel2SceneConnector(EarthEngineStatsConnector):
         return properties.get("datetime")
 
 
+def index_band_order(index: str) -> list[str]:
+    """Band list for ``ee.Image.normalizedDifference``, which computes
+    ``(first - second) / (first + second)``."""
+    return list(GeeSentinel2IndexConnector.INDEX_BANDS[index.upper()])
+
+
 class GeeSentinel2IndexConnector(EarthEngineStatsConnector):
     """Calculate daily, cloud-masked Sentinel-2 NDVI, NDWI, or NBR statistics."""
 
     source_code = "SENTINELHUB_STATS"
     COLLECTION = "COPERNICUS/S2_SR_HARMONIZED"
     SCALE_M = 250.0
+    #: ``(first, second)`` for ``(first - second) / (first + second)``:
+    #: NDVI = (NIR - Red), NDWI (McFeeters) = (Green - NIR), NBR = (NIR - SWIR2).
     INDEX_BANDS = {
         "NDVI": ("B8", "B4"),
         "NDWI": ("B3", "B8"),
         "NBR": ("B8", "B12"),
     }
+    #: v1 (before 2026-11-14) passed the bands to ``normalizedDifference`` in
+    #: reverse, publishing the negated index. Silver quarantines unversioned
+    #: records from this collection as superseded.
+    FORMULA_VERSION = 2
 
     def fetch_raw(self, *, index: str = "NDVI",
                   bbox: list[float] | None = None,
@@ -133,6 +145,7 @@ class GeeSentinel2IndexConnector(EarthEngineStatsConnector):
                 "index": index_name,
                 "bbox": aoi,
                 "collection": self.COLLECTION,
+                "formula_version": self.FORMULA_VERSION,
             })
             records.append(enriched)
         return records, "json"
@@ -143,7 +156,6 @@ class GeeSentinel2IndexConnector(EarthEngineStatsConnector):
         ee = self._ee_client()
         self._ensure_init()
         geometry = ee.Geometry.Rectangle(bbox)
-        red_band, nir_band = self.INDEX_BANDS[band]
         images = (ee.ImageCollection(collection)
                   .filterDate(time_from, time_to)
                   .filterBounds(geometry))
@@ -154,7 +166,7 @@ class GeeSentinel2IndexConnector(EarthEngineStatsConnector):
             clear = (scl.neq(0).And(scl.neq(1)).And(scl.neq(3))
                      .And(scl.neq(8)).And(scl.neq(9)).And(scl.neq(10))
                      .And(scl.neq(11)))
-            return (image.normalizedDifference([nir_band, red_band])
+            return (image.normalizedDifference(index_band_order(band))
                     .rename("index").updateMask(clear))
 
         indexed = images.map(add_index)

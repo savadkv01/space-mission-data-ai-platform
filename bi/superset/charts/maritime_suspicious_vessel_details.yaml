@@ -14,6 +14,8 @@ params:
     - transmissions
     - active_span_days
     - review_priority
+    - signal_basis
+    - domain_review_status
   adhoc_filters:
     - clause: WHERE
       expressionType: SQL

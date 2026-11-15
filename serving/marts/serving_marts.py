@@ -15,7 +15,26 @@ Everything here is pure-Python and infra-free so it unit-tests on any laptop.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, Iterable
+
+#: FIRMS event-time freshness objective (hours) gating the wildfire product.
+#: Matches ``transformation.readiness`` ``freshness_within_6h`` and the dbt var
+#: ``wildfire_max_observation_age_hours``.
+FIRMS_MAX_OBSERVATION_AGE_HOURS = 6.0
+
+
+def _parse_ts(value: Any) -> datetime | None:
+    if isinstance(value, datetime):
+        ts = value
+    elif isinstance(value, str) and value:
+        try:
+            ts = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    else:
+        return None
+    return ts if ts.tzinfo else ts.replace(tzinfo=timezone.utc)
 
 # --------------------------------------------------------------------------- #
 # Helpers
@@ -32,17 +51,67 @@ def _index_dim(dim_rows: Iterable[dict[str, Any]] | None, key: str) -> dict[Any,
 # MVP Earth-observation data products
 # --------------------------------------------------------------------------- #
 
+def wildfire_freshness(attribution_rows: Iterable[dict[str, Any]], now: datetime,
+                       max_age_hours: float = FIRMS_MAX_OBSERVATION_AGE_HOURS,
+                       region: str | None = None,
+                       ) -> dict[str, Any]:
+    """FIRMS event-time freshness gate (``serving_wildfire_freshness``).
+
+    Source: ``fire_aoi_attribution`` (Gold, one row per detection, matched or
+    not). Uses the latest *acquired* detection time, not landing time, so a fresh
+    landing of zero or old records stays stale. With ``region`` only detections
+    in that region's envelope count, so regions are judged independently.
+    Wildfire rows are publishable (``exploratory``) only while ``current``;
+    otherwise ``blocked``, and absent AOI/day rows must not be read as "no fire".
+    """
+    rows = [r for r in attribution_rows if region is None or r.get("region") == region]
+    stamps = [ts for ts in (_parse_ts(r.get("event_ts")) for r in rows) if ts is not None]
+    latest = max(stamps) if stamps else None
+    now = now if now.tzinfo else now.replace(tzinfo=timezone.utc)
+    age = round((now - latest).total_seconds() / 3600, 3) if latest else None
+    if latest is None:
+        status = "no_observations"
+    elif 0 <= age <= max_age_hours:
+        status = "current"
+    else:
+        status = "stale"
+    return {
+        "region": region,
+        "latest_observation_ts": latest.isoformat() if latest else None,
+        "freshness_evaluated_at": now.isoformat(),
+        "observation_age_hours": age,
+        "max_observation_age_hours": max_age_hours,
+        "detections_total": len(rows),
+        "freshness_status": status,
+        "publication_status": "exploratory" if status == "current" else "blocked",
+    }
+
+
+_FRESHNESS_NOT_SUPPLIED = {
+    "latest_observation_ts": None,
+    "observation_age_hours": None,
+    "freshness_status": "no_observations",
+    "publication_status": "blocked",
+}
+
+
 def serve_wildfire_daily(wildfire_aoi_rows: list[dict[str, Any]],
                          aoi_dim: list[dict[str, Any]] | None = None,
                          validation_rows: list[dict[str, Any]] | None = None,
+                         freshness: dict[str, Any] | None = None,
+                         freshness_by_region: dict[str, dict[str, Any]] | None = None,
                          ) -> list[dict[str, Any]]:
     """Wildfire Activity data product (UC-15).
 
     Source: ``kpi_wildfire_aoi_daily`` (Gold). Enriches each AOI/day row with the
-    AOI display name/event metadata (``dim_aoi``) and the Copernicus-EMS
+    AOI display name/region/event metadata (``dim_aoi``) and the Copernicus-EMS
     cross-source corroboration flag (``kpi_aoi_validation``) so a single row is
-    self-describing for dashboards and the ``/analytics/wildfire`` API.
+    self-describing for dashboards and the ``/analytics/wildfire`` API. Every
+    row carries its region's FIRMS freshness gate (:func:`wildfire_freshness`;
+    ``freshness_by_region`` wins over a single ``freshness``); without evidence
+    the row is ``blocked`` rather than presumed current.
     """
+    freshness_by_region = freshness_by_region or {}
     aoi_idx = _index_dim(aoi_dim, "aoi_key")
     corroborated = {
         (r.get("aoi_key"), r.get("event_date"))
@@ -53,9 +122,12 @@ def serve_wildfire_daily(wildfire_aoi_rows: list[dict[str, Any]],
     for r in wildfire_aoi_rows:
         aoi_key = r.get("aoi_key")
         dim = aoi_idx.get(aoi_key, {})
+        region = dim.get("region")
+        gate = freshness_by_region.get(region) or freshness or _FRESHNESS_NOT_SUPPLIED
         out.append({
             "aoi_key": aoi_key,
             "aoi_name": dim.get("aoi_name"),
+            "region": region,
             "date_key": r.get("date_key"),
             "detections": r.get("detections", 0),
             "mean_frp": r.get("mean_frp"),
@@ -63,6 +135,10 @@ def serve_wildfire_daily(wildfire_aoi_rows: list[dict[str, Any]],
             "area_km2": dim.get("area_km2"),
             "severity": _fire_severity(r.get("max_frp")),
             "ems_corroborated": (aoi_key, r.get("date_key")) in corroborated,
+            "latest_observation_ts": gate["latest_observation_ts"],
+            "observation_age_hours": gate["observation_age_hours"],
+            "freshness_status": gate["freshness_status"],
+            "publication_status": gate["publication_status"],
         })
     return sorted(out, key=lambda x: (x["aoi_key"] or "", x["date_key"] or ""))
 
@@ -102,6 +178,7 @@ def serve_flood_daily(flood_aoi_rows: list[dict[str, Any]],
         out.append({
             "aoi_key": aoi_key,
             "aoi_name": dim.get("aoi_name"),
+            "region": dim.get("region"),
             "date_key": r.get("date_key"),
             "ndwi_mean": r.get("ndwi_mean"),
             "ndwi_max": r.get("ndwi_max"),
@@ -118,6 +195,8 @@ def serve_vessel_activity(vessel_rows: list[dict[str, Any]]) -> list[dict[str, A
 
     Source: ``fact_vessel_activity`` (Gold). Surfaces the suspicious-identity
     heuristic and a review-priority band for the illegal-fishing triage workflow.
+    These are triage signals (missing flag state / IMO), not verified alerts:
+    ``domain_review_status`` stays ``pending`` until the heuristic is approved.
     """
     out = []
     for r in vessel_rows:
@@ -131,8 +210,41 @@ def serve_vessel_activity(vessel_rows: list[dict[str, Any]]) -> list[dict[str, A
             "active_span_days": r.get("active_span_days"),
             "suspicious_flag": suspicious,
             "review_priority": "high" if suspicious else "normal",
+            "signal_basis": "identity_completeness_heuristic",
+            "domain_review_status": "pending",
         })
     return sorted(out, key=lambda x: (x["vessel_key"] or "", x["date_key"] or ""))
+
+
+def serve_maritime_activity_daily(maritime_rows: list[dict[str, Any]],
+                                  aoi_dim: list[dict[str, Any]] | None = None,
+                                  ) -> list[dict[str, Any]]:
+    """Maritime Activity data product (UC-18, area-based).
+
+    Source: ``fact_maritime_activity_daily`` (Gold, GFW 4Wings). One row per
+    AOI/day with apparent fishing hours, AIS vessel presence, and Sentinel-1 SAR
+    detections, including those with no AIS match (``sar_dark_fraction``). Unlike
+    ``serve_vessel_activity`` (identity-search demonstrator), this reflects real
+    traffic inside the AOI. ``*_status = 'not_published'`` means GFW has not yet
+    released that day (null, not zero). Unmatched SAR detections are candidates
+    for review, not confirmed illegal activity.
+    """
+    aoi_idx = _index_dim(aoi_dim, "aoi_key")
+    out = []
+    for r in maritime_rows:
+        dim = aoi_idx.get(r.get("aoi_key"), {})
+        out.append({
+            "aoi_key": r.get("aoi_key"),
+            "aoi_name": dim.get("aoi_name"),
+            "region": dim.get("region"),
+            "date_key": r.get("date_key"),
+            **{k: r.get(k) for k in (
+                "fishing_hours", "fishing_vessels", "fishing_status",
+                "presence_hours", "presence_vessels", "presence_status",
+                "sar_detections", "sar_unmatched_detections", "sar_dark_fraction",
+                "sar_status")},
+        })
+    return sorted(out, key=lambda x: (x["aoi_key"] or "", x["date_key"] or ""))
 
 
 def serve_scene_catalog(scene_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -225,6 +337,20 @@ def _health_status(score: Any) -> str:
     if score >= 0.5:
         return "degraded"
     return "critical"
+
+
+def launch_monthly_availability(launch_rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Availability state for the launch product.
+
+    The canonical Gold reader has no launch Silver input, so ``kpi_launch_monthly``
+    is currently schema-only. Zero rows means the data is unavailable, never that
+    zero launches occurred; consumers must check this before reporting counts.
+    """
+    if launch_rows:
+        return {"data_availability": "available", "row_count": len(launch_rows),
+                "interpretation": "simulation-track demonstrator rows"}
+    return {"data_availability": "unavailable", "row_count": 0,
+            "interpretation": "no launch input; not a zero-launch result"}
 
 
 def serve_launch_monthly(launch_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:

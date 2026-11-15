@@ -20,8 +20,13 @@ from ingestion.simulation.telemetry_generator import TelemetryGenerator
 log = get_logger("producer.telemetry")
 
 
-def run(max_records: int | None, rate_per_s: float, seed: int = 42) -> int:
+def run(max_records: int | None, rate_per_s: float, seed: int = 42,
+        failure_rate: float | None = None) -> int:
+    """``failure_rate`` overrides the generator default (1.0 / 0.0 give
+    deterministic all-anomalous / all-nominal waves for acceptance runs)."""
     generator = TelemetryGenerator(seed=seed)
+    if failure_rate is not None:
+        generator.failure_rate = failure_rate
     producer = create_producer()
     topic = settings.kafka.topic_telemetry_raw
     interval = 1.0 / rate_per_s if rate_per_s > 0 else 0.0

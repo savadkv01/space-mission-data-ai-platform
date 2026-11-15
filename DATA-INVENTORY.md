@@ -21,6 +21,19 @@ For phase status, see [README.md](README.md).
 
 Grain = one row per … . All facts/products conform to `dim_date` (UTC) and, where spatial, `dim_aoi`/`dim_geo`.
 
+### Analysis regions and AOIs
+
+Every AOI belongs to one analysis region, carried as `region` on `ref_aoi`, `dim_aoi`, every
+AOI-grained serving product, and both rollups. Regions are never summed together.
+
+| Region | AOIs | AQI standard | Notes |
+| --- | --- | --- | --- |
+| `UAE-GULF` | `AOI-UAE-NAT`, `AOI-AUH`, `AOI-DXB`, `AOI-COAST`, `AOI-DESERT`, `AOI-ARABIA`, `AOI-IRAQ`, `AOI-IRAN`, `AOI-GULF`, `EMSR-AE-FLOOD-2024` | `US_EPA_PRE2024` | Primary programme region + upwind dust corridors |
+| `INDIA` | `IN-DEL-NCR`, `IN-MUM`, `IN-PB-HR`, `IN-THAR`, `IN-GUJ-COAST`, `IN-ASSAM` | `IN_CPCB_NAQI_2014` | Regional tier (2026-11-14); 30-day backfill from 2026-10-15 |
+| `US-LEGACY` | `EMSR-CA-FIRE-2025` | — | Legacy reference; FIRMS no longer requested |
+
+Definitions and per-source budgets: [docs/source-data-analysis/climate/02-aoi-strategy.md](docs/source-data-analysis/climate/02-aoi-strategy.md#analysis-regions).
+
 ---
 
 ## 1. Bronze — Raw Landing (schema-on-read)
@@ -32,14 +45,15 @@ partitioned by `_source` + `ingest_date`. Object layout: `s3://bronze/<source>/i
 
 | Source code | Contains | Status |
 | --- | --- | --- |
-| `FIRMS` / `VIIRS` | Near-real-time active-fire alerts (lat/lon, brightness, FRP, confidence) | ✅ ⭐ |
+| `FIRMS` / `VIIRS` | Near-real-time active-fire alerts (lat/lon, brightness, FRP, confidence). VIIRS S-NPP through 2026-11-02, VIIRS NOAA-20 from 2026-11-03 (`FIRMS_SOURCE`); requested for the MENA box and per INDIA AOI box | ✅ ⭐ |
 | `S2` / `SENTINELHUB` / `EARTHDATA` / `LANDSAT` | Imagery scene metadata (tile/scene id, acquisition, cloud cover, bands) | ✅ ⭐ |
 | `SENTINELHUB_STATS` | Per-AOI spectral-index statistics (NDVI/NDWI/NBR buckets) | ✅ ⭐ |
-| `GFW` | Global Fishing Watch vessel transmissions (MMSI, position, speed, flag) | ✅ ⭐ |
-| `POWER` | NASA POWER daily weather (T2M, RH2M, WS2M, WD2M, precipitation) per AOI representative point | ✅ ⭐ |
-| `EMS` | Copernicus EMS activation footprints (file upload) | ✅ ⭐ |
+| `GFW` | Global Fishing Watch vessel **identity** search results (name/flag/IMO/type; no positions). Fixed name query, so `serving_vessel_activity` is a **demonstrator** (SG-05) | ✅ (demonstrator) |
+| `GFW_4WINGS` | GFW 4Wings area reports per maritime AOI (`AOI-GULF`, `AOI-COAST`, `IN-GUJ-COAST`, `IN-MUM`): apparent fishing effort, AIS presence, Sentinel-1 SAR detections, spatially aggregated to AOI × day × flag. Non-commercial use only | ✅ ⭐ |
+| `POWER` | NASA POWER daily weather (T2M, RH2M, WS2M, WD2M, precipitation) per AOI representative point; UTC days since 2026-11-15 (legacy rows `time_standard = LST`) | ✅ ⭐ |
 | `SWPC` | NOAA space-weather indices (Kp, Dst, solar wind) | ✅ 🔄 |
-| `CELESTRAK` | Orbital TLE/GP elements | ✅ 🔄 |
+| `CELESTRAK` | Orbital TLE/GP elements (landed every 6 h; not consumed yet — Phase 26 `orbit_object`, SG-07) | ✅ 🔄 |
+| `EMS` | Copernicus EMS activation footprints (file upload). **Upload path does not reach Silver** (SG-08); `ref_aoi` comes from the in-repo seed | 📐 |
 | `TELEMETRY` | Synthetic spacecraft telemetry stream | 📐 🔄 |
 
 ---
@@ -54,7 +68,8 @@ Cleaned, deduplicated, unit-standardized, AOI-tagged. Source: `docs/data-modelin
 | --- | --- | --- |
 | `obs_fire` | 1 / fire detection | Normalized FIRMS/VIIRS detections, canonical units + confidence |
 | `obs_flood` | 1 / scene / AOI | Cleaned flood-scene metadata (NDWI context) |
-| `obs_vessel` | 1 / vessel identity | Normalized maritime registry (MMSI/IMO/flag) |
+| `obs_vessel` | 1 / vessel identity | Normalized maritime registry (MMSI/IMO/flag) - demonstrator sample (SG-05) |
+| `silver_maritime_activity` | 1 / dataset / AOI / day / flag | GFW 4Wings spatially aggregated fishing hours, AIS presence hours, SAR detections; `ais_matched = false` for unmatched SAR |
 | `obs_scene` | 1 / scene granule | Normalized imagery metadata (Sentinel/Landsat/Earthdata) |
 | `obs_index` | 1 / AOI / index / date | Spectral-index stats (NDVI, NDWI, NBR) + valid-pixel fraction |
 | `ref_aoi` | 1 / EMS footprint | Copernicus EMS activation areas (reference dimension) |
@@ -82,7 +97,8 @@ Source: `docs/data-modeling/04-gold-layer.md`, `05-star-schemas.md`.
 | --- | --- | --- | --- |
 | `fact_fire_detection` | 1 / detection / AOI / day | FRP + confidence (UC-15) | ✅ ⭐ |
 | `fact_flood_extent` | 1 / AOI / scene | Open-water (NDWI) aggregates (UC-16) | ✅ ⭐ |
-| `fact_vessel_activity` | 1 / vessel / day | Activity + suspicious flag (UC-18) | ✅ ⭐ |
+| `fact_vessel_activity` | 1 / vessel / day | Identity sample + suspicious flag (UC-18 demonstrator) | ✅ |
+| `fact_maritime_activity_daily` | 1 / maritime AOI / day | Fishing hours/vessels, presence hours/vessels, SAR detections + unmatched share; `not_published` when GFW has not released a day | ✅ ⭐ |
 | `fact_scene_catalog` | 1 / scene | Imagery metadata + searchability score (UC-25) | ✅ ⭐ |
 | `fact_launch` | 1 / launch | Launch success/delay metrics | 🔄 |
 | `fact_sat_health` | 1 / sat / day | Health score + anomaly count | 🔄 |
@@ -94,7 +110,7 @@ Source: `docs/data-modeling/04-gold-layer.md`, `05-star-schemas.md`.
 | --- | --- | --- |
 | `dim_date` | 1 / calendar day (UTC) | Conformed date key |
 | `dim_geo` | 1 / grid cell | Quantized lat/lon tile for spatial joins |
-| `dim_aoi` | 1 / EMS AOI | Copernicus activation footprint |
+| `dim_aoi` | 1 / AOI | Curated AOI footprint + analysis `region` (UAE-GULF / INDIA / US-LEGACY) |
 | `dim_vessel` | 1 / vessel identity | Maritime vessel registry |
 | `dim_provider` | 1 / provider | Data/launch provider registry |
 | `dim_satellite` 🔄 | 1 / spacecraft | Satellite/mission identity |
@@ -123,9 +139,11 @@ Pre-denormalized, contract-tested (dbt schema tests + Python unit tests). Source
 
 | Product | Grain | Contains |
 | --- | --- | --- |
-| `serving_wildfire_daily` | 1 / AOI / day | Wildfire detections + intensity + EMS corroboration (UC-15) |
+| `serving_wildfire_daily` | 1 / AOI / day | Wildfire detections + intensity + EMS corroboration + region freshness gate (UC-15) |
+| `serving_wildfire_freshness` | 1 / region | FIRMS event-time freshness + publication status per analysis region |
 | `serving_flood_daily` | 1 / AOI / day | Open-water extent (NDWI) + valid-pixel fraction (UC-16) |
-| `serving_vessel_activity` | 1 / vessel / day | Vessel activity + suspicious-identity triage (UC-18, RLS) |
+| `serving_vessel_activity` | 1 / vessel / day | DEMONSTRATOR: identity-search sample + suspicious-identity triage (UC-18, RLS) |
+| `serving_maritime_activity_daily` | 1 / maritime AOI / day | Area-based maritime activity (GFW 4Wings) with region (UC-18) |
 | `serving_scene_catalog` | 1 / scene | Searchable imagery catalog + metadata-quality band (UC-25) |
 | `serving_aoi_validation` | 1 / EMS AOI | EMS ground-truth corroboration for damage prioritization (UC-27) |
 
@@ -133,7 +151,7 @@ Pre-denormalized, contract-tested (dbt schema tests + Python unit tests). Source
 
 | Object | Grain | Contains |
 | --- | --- | --- |
-| `mv_kpi_platform_daily` | 1 / day | Executive rollup across all EO products (detections, peak FRP, flood AOI-days, suspicious vessels) |
+| `mv_kpi_platform_daily` | 1 / day / region | Executive rollup across all EO products per analysis region (detections, peak FRP, flood AOI-days); vessels under `GLOBAL` |
 | `mv_catalog_quality` | 1 / collection | Catalog quality rollup (searchable rate, mean completeness, mean cloud cover) |
 
 ### Semantic layer
@@ -176,7 +194,8 @@ Apache Superset. Source: `bi/dashboards/`, `bi/datasets/certified-datasets.md`.
 | --- | --- | --- | --- | --- |
 | `wildfire_daily` | `serving.serving_wildfire_daily` | AOI/day | 1h | ✅ ⭐ |
 | `flood_daily` | `serving.serving_flood_daily` | AOI/day | 1h | ✅ ⭐ |
-| `vessel_activity` | `serving.serving_vessel_activity` | vessel/day | 1h | ✅ ⭐ |
+| `vessel_activity` | `serving.serving_vessel_activity` | vessel/day | 1h | ✅ (demonstrator) |
+| `maritime_activity_daily` | `serving.serving_maritime_activity_daily` | AOI/day | 1h | ✅ ⭐ |
 | `scene_catalog` | `serving.serving_scene_catalog` | scene | 1h | ✅ ⭐ |
 | `aoi_validation` | `serving.serving_aoi_validation` | AOI | 1h | ✅ ⭐ |
 | `platform_daily` | `serving_agg.mv_kpi_platform_daily` | day | 15m | ✅ ⭐ |

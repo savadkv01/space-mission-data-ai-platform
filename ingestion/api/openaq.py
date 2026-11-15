@@ -128,6 +128,8 @@ class OpenAqConnector(ApiConnector):
                                 "OpenAQ measurement pagination capped at %s pages for sensor %s",
                                 max_pages, sensor_id,
                             )
+                            self.coverage_notes.append(
+                                f"OpenAQ {aoi_id}: sensor {sensor_id} capped at {max_pages} pages")
                         measurement_page += 1
 
             if len(stations) < page_size:
@@ -137,6 +139,8 @@ class OpenAqConnector(ApiConnector):
                     "OpenAQ location coverage may be capped at max_locations=%s for AOI %s",
                     max_locations, aoi_id,
                 )
+                self.coverage_notes.append(
+                    f"OpenAQ {aoi_id}: stations capped at max_locations={max_locations}")
                 break
             page += 1
         return records, "json"

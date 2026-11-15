@@ -46,7 +46,7 @@ Example: `s3://bronze/EMS/ingest_date=2026-06-30/EMS-20260630T101500Z-ab12cd34/E
 
 | Trigger | Mechanism |
 | --- | --- |
-| Manual / CLI | `python -m ingestion.file.file_loader <path> --source EMS` |
+| Manual / CLI | `python -m ingestion.file.file_loader <path> --source EMS` (lands the raw file only; it does **not** currently reach Silver — multi-line GeoJSON is unreadable by the Spark JSON reader and `ems_aoi` is not in the batch DAG; see SG-08) |
 | Scheduled sweep | Airflow DAG calls `ingest_path` over a watch directory |
 | Event (future) | MinIO bucket notification → webhook |
 

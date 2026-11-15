@@ -485,12 +485,12 @@ def test_climate_and_eo_features_support_point_in_time_and_online_retrieval():
                 "vegetation_health_aoi_daily:ndvi_mean",
             ],
         ).to_df()
-        assert historical["air_quality_aoi_daily__pm25_mean"].tolist() == [12.0, 24.0]
-        assert historical["dust_aoi_daily__aod_mean"].tolist() == [0.3, 0.8]
-        assert historical["wildfire_aoi_daily__max_frp"].tolist() == [9.0, 9.0]
-        assert historical["dust_aoi_daily__wind_speed_mean"].tolist() == [5.0, 5.0]
-        assert historical["climate_indicator_aoi_daily__lst_anomaly_c"].tolist() == [1.0, 2.0]
-        assert historical["vegetation_health_aoi_daily__ndvi_mean"].tolist() == [0.4, 0.6]
+        assert historical["pm25_mean"].tolist() == [12.0, 24.0]
+        assert historical["aod_mean"].tolist() == [0.3, 0.8]
+        assert historical["max_frp"].tolist() == [9.0, 9.0]
+        assert historical["wind_speed_mean"].tolist() == [5.0, 5.0]
+        assert historical["lst_anomaly_c"].tolist() == [1.0, 2.0]
+        assert historical["ndvi_mean"].tolist() == [0.4, 0.6]
 
         online = store.get_online_features(
             features=[
@@ -501,10 +501,10 @@ def test_climate_and_eo_features_support_point_in_time_and_online_retrieval():
             ],
             entity_rows=[{"aoi_key": marker}],
         ).to_dict()
-        assert online["air_quality_aoi_daily__pm25_mean"] == pytest.approx([24.0])
-        assert online["dust_aoi_daily__aod_mean"] == pytest.approx([0.8])
-        assert online["climate_indicator_aoi_daily__lst_anomaly_c"] == pytest.approx([2.0])
-        assert online["vegetation_health_aoi_daily__ndvi_mean"] == pytest.approx([0.6])
+        assert online["pm25_mean"] == pytest.approx([24.0])
+        assert online["aod_mean"] == pytest.approx([0.8])
+        assert online["lst_anomaly_c"] == pytest.approx([2.0])
+        assert online["ndvi_mean"] == pytest.approx([0.6])
     finally:
         with connect() as connection:
             for table in (

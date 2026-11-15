@@ -1,13 +1,13 @@
 table_name: vessel_activity
 main_dttm_col: activity_date
-description: "Certified: Maritime Vessel Activity (UC-18), 1 row per vessel per day."
+description: "DEMONSTRATOR: GFW vessel identity sample from a fixed name search (not regional traffic); use maritime_activity_daily for AOI activity. Suspicious flags are identity-heuristic triage signals pending domain review, not verified illegal-fishing alerts."
 cache_timeout: 3600
 schema: null
 sql: |
   select
       vessel_key, cast(date_key as date) as activity_date,
       transmissions, flag, vessel_type, active_span_days,
-      suspicious_flag, review_priority
+      suspicious_flag, review_priority, signal_basis, domain_review_status
   from serving.serving_vessel_activity
 filter_select_enabled: true
 extra:
@@ -43,6 +43,12 @@ columns:
     type: BOOLEAN
     groupby: true
   - column_name: review_priority
+    type: VARCHAR
+    groupby: true
+  - column_name: signal_basis
+    type: VARCHAR
+    groupby: true
+  - column_name: domain_review_status
     type: VARCHAR
     groupby: true
 version: 1.0.0

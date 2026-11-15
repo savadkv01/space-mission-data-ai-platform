@@ -57,19 +57,20 @@ _SUBMIT = (
     " --conf spark.driver.host=localhost --conf spark.driver.bindAddress=127.0.0.1"
 )
 
-SILVER_ENTITIES = ["telemetry", "orbit", "space_weather", "fire", "vessel", "scene", "index"]
+SILVER_ENTITIES = ["telemetry", "orbit", "space_weather", "fire", "vessel", "maritime", "scene", "index"]
 CLIMATE_SILVER_ENTITIES = ["air_quality", "aerosol", "atmos_column", "wind"]
 
 # Gold mart names (transformation/batch/gold_lakehouse.py build_marts() keys).
 GOLD_MARTS = [
     "kpi_wildfire_aoi_daily", "kpi_flood_aoi_daily", "fact_vessel_activity",
+    "fact_maritime_activity_daily",
     "fact_scene_catalog", "kpi_eo_daily", "kpi_aoi_validation", "ref_aoi",
     "fact_air_quality_daily", "fact_dust_event_daily",
     "fact_climate_indicator_daily", "fact_vegetation_health_daily",
     "fact_sat_health", "kpi_launch_monthly", "fact_weather_impact",
 ]
 
-# Serving dbt model names (serving/dbt/models/**/*.sql) — matches the 14
+# Serving dbt model names (serving/dbt/models/**/*.sql) — matches the 16
 # models built by `dbt run` (semantic views + serving tables + serving_agg
 # materialized rollups). serving_sat_health/launch_monthly/weather_impact are
 # NOT dbt models (those are the pure-Python serving/marts/serving_marts.py
@@ -81,7 +82,15 @@ SERVING_MODELS = [
     "serving_vegetation_health_daily", "serving_wildfire_daily",
     "dim_aoi", "dim_climate_indicator", "dim_pollutant",
     "mv_kpi_climate_daily", "mv_kpi_platform_daily",
+    "serving_wildfire_freshness", "serving_maritime_activity_daily",
 ]
+
+# Zero rows from a source or mart is an availability state, not a measured
+# negative (e.g. zero FIRMS records != no fires; empty launch mart != zero launches).
+_EMPTY_UNIT_DETAILS = {
+    "data_availability": "unavailable",
+    "interpretation": "zero rows is not evidence of absence",
+}
 
 
 def _in_spark(inner: str, *, env: dict[str, str] | None = None) -> str:
@@ -120,11 +129,18 @@ def _run_ingestion(**context) -> dict:
         if isinstance(result, dict) and "error" in result:
             logger.log_unit(unit_name, status="FAILED", error=str(result["error"]))
         else:
+            details = {"batch_id": result.get("batch_id"), "key": result.get("key")}
+            if result.get("coverage"):
+                details["coverage"] = result["coverage"]
+            if result.get("coverage_notes"):
+                details["coverage_notes"] = result["coverage_notes"]
+            if not result.get("records"):
+                details.update(_EMPTY_UNIT_DETAILS)
             logger.log_unit(
                 unit_name,
                 status="SUCCESS",
                 rows=result.get("records"),
-                details={"batch_id": result.get("batch_id"), "key": result.get("key")},
+                details=details,
             )
     # Stage itself succeeds even if individual sources failed/produced 0 rows —
     # mirrors run_full_batch_ingest.py's existing tolerant, per-source design.
@@ -154,7 +170,10 @@ def _log_gold_marts(**context) -> None:
     logger = _stage_logger("transformation", context)
     for mart in GOLD_MARTS:
         rows = count_parquet_rows(f"s3://gold/{mart}/*.parquet")
-        logger.log_unit(f"gold_{mart}", status="SUCCESS", rows=rows, details={"layer": "gold"})
+        details = {"layer": "gold"}
+        if not rows:
+            details.update(_EMPTY_UNIT_DETAILS)
+        logger.log_unit(f"gold_{mart}", status="SUCCESS", rows=rows, details=details)
 
 
 def _log_gold_dbt_demonstrator(**context) -> None:
@@ -316,7 +335,9 @@ def build_dag() -> "DAG | None":
 
             gold_dbt = BashOperator(
                 task_id="gold_dbt_demonstrator",
-                bash_command=_in_spark("cd transformation/dbt && dbt deps && dbt run && dbt test"),
+                bash_command=_in_spark(
+                    "cd transformation/dbt && dbt deps && dbt run --no-partial-parse"
+                    " && dbt test --no-partial-parse"),
             )
             log_gold_dbt = PythonOperator(task_id="log_gold_dbt", python_callable=_log_gold_dbt_demonstrator)
 
@@ -345,8 +366,12 @@ def build_dag() -> "DAG | None":
                 # override DBT_PROFILES_DIR/SERVING_DUCKDB_PATH for this exec
                 # only, since the container's own env is pinned to the
                 # transformation Gold-dbt demonstrator project.
+                # --no-partial-parse: dbt's partial-parse cache missed YAML edits made
+                # through the Windows bind mount (a 2026-11-15 run silently tested 80
+                # of 112 tests). A full parse costs seconds and guarantees every
+                # contract test runs.
                 bash_command=_in_spark(
-                    "cd serving/dbt && dbt deps && dbt run && dbt test",
+                    "cd serving/dbt && dbt deps && dbt run --no-partial-parse && dbt test --no-partial-parse",
                     env={
                         "DBT_PROFILES_DIR": f"{_WORKDIR}/serving/dbt",
                         "SERVING_DUCKDB_PATH": f"{_WORKDIR}/serving/dbt/serving.duckdb",

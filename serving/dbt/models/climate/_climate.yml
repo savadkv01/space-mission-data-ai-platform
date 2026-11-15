@@ -6,7 +6,10 @@ version: 2
 # (reuses the existing RLS approach — none needed).
 models:
   - name: serving_air_quality_daily
-    description: "Air-Quality data product, 1 row per AOI per day."
+    description: >-
+      Air-Quality data product, 1 row per AOI per day. exceedance_flag is null
+      unless PM evidence decides it (exceedance_status); a null aqi_band means
+      no surface PM measurement, not "Good".
     columns:
       - name: aoi_key
         tests: [not_null]
@@ -26,13 +29,32 @@ models:
         tests:
           - accepted_values:
               values: ['Good', 'Moderate', 'Unhealthy (sensitive)', 'Unhealthy',
-                       'Very Unhealthy', 'Hazardous']
+                       'Very Unhealthy', 'Hazardous',
+                       'Satisfactory', 'Poor', 'Very Poor', 'Severe']
+      - name: aqi_standard
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['US_EPA_PRE2024', 'IN_CPCB_NAQI_2014']
+      - name: exceedance_status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['positive', 'negative', 'inconclusive', 'not_evaluated']
+      - name: pm_coverage
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['pm25_and_pm10', 'pm25_only', 'pm10_only', 'none']
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [aoi_key, date_key]
 
   - name: serving_dust_event_daily
-    description: "Dust-Event data product, 1 row per AOI per day."
+    description: >-
+      Dust-Event data product, 1 row per AOI per day. dust_flag / transport_flag
+      are null unless evidence decides them (dust_status / transport_status);
+      missing UV aerosol index or wind is not a negative.
     columns:
       - name: aoi_key
         tests: [not_null]
@@ -56,12 +78,25 @@ models:
           - dbt_utils.accepted_range:
               min_value: 0
               max_value: 1
+      - name: dust_status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['positive', 'negative', 'inconclusive', 'not_evaluated']
+      - name: transport_status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['positive', 'negative', 'inconclusive', 'not_evaluated']
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [aoi_key, date_key]
 
   - name: serving_climate_indicator_daily
-    description: "Climate-Indicator data product, 1 row per AOI per day."
+    description: >-
+      Climate-Indicator data product, 1 row per AOI per day. warming_flag /
+      desertification_flag are null unless evidence decides them
+      (warming_status / desertification_status); absent LST/SST is not "no warming".
     columns:
       - name: aoi_key
         tests: [not_null]
@@ -90,12 +125,26 @@ models:
           - dbt_utils.accepted_range:
               min_value: 0
               max_value: 1
+      - name: warming_status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['positive', 'negative', 'inconclusive', 'not_evaluated']
+      - name: desertification_status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['positive', 'negative', 'inconclusive', 'not_evaluated']
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [aoi_key, date_key]
 
   - name: serving_vegetation_health_daily
-    description: "Vegetation-Health data product, 1 row per AOI per day."
+    description: >-
+      Vegetation-Health data product, 1 row per AOI per day. ndvi_trend_dir is
+      'unknown' when no trend could be computed; crop_stress_flag is null unless
+      evidence decides it (crop_stress_status). A positive is a low/declining
+      NDVI signal, not a verified crop-stress event (no crop mask).
     columns:
       - name: aoi_key
         tests: [not_null]
@@ -117,7 +166,12 @@ models:
       - name: ndvi_trend_dir
         tests:
           - accepted_values:
-              values: ['improving', 'declining', 'flat']
+              values: ['improving', 'declining', 'flat', 'unknown']
+      - name: crop_stress_status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['positive', 'negative', 'inconclusive', 'not_evaluated']
       - name: valid_pixel_fraction
         tests:
           - dbt_utils.accepted_range:
@@ -128,7 +182,17 @@ models:
           combination_of_columns: [aoi_key, date_key]
 
   - name: mv_kpi_climate_daily
-    description: "Materialized climate/dust/air-quality daily KPI rollup (executive/weather view)."
+    description: >-
+      Materialized climate/dust/air-quality daily KPI rollup per analysis region
+      (executive/weather view). Regions are never summed together.
     columns:
       - name: date_key
-        tests: [not_null, unique]
+        tests: [not_null]
+      - name: region
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['UAE-GULF', 'INDIA', 'US-LEGACY', 'UNASSIGNED']
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [date_key, region]

@@ -44,6 +44,7 @@ from transformation.batch.silver_to_gold import (
     gold_aoi_validation, gold_earth_observation, gold_flood_aoi,
     gold_launch_performance, gold_satellite_health, gold_scene_catalog,
     gold_space_weather_impact, gold_vessel_activity, gold_wildfire_aoi,
+    gold_maritime_activity,
 )
 
 #: Default seed location inside the spark-master code mount.
@@ -82,6 +83,7 @@ def _ref_aoi_row(aoi: dict[str, Any]) -> dict[str, Any]:
         "aoi_key": aoi.get("aoi_key"),
         "aoi_name": aoi.get("aoi_name"),
         "event_type": aoi.get("event_type"),
+        "region": aoi.get("region"),
         "event_date": (aoi.get("event_date") or "")[:10] or None,
         "area_km2": aoi.get("area_km2"),
         "geo_key": aoi.get("geo_key"),
@@ -109,20 +111,22 @@ def build_marts(silver: dict[str, list[dict[str, Any]]],
             wind["wind_dir_dominant"] = float(row["value_std"])
     wildfire = gold_wildfire_aoi(fire, aois)
     flood = gold_flood_aoi(index, aois)
+    aoi_regions = {a.get("aoi_key"): a.get("region") for a in aois}
     return {
         # --- MVP Earth-observation marts ---
         "kpi_wildfire_aoi_daily": wildfire,
         "fire_aoi_attribution": fire_aoi_attribution(fire, aois),
         "kpi_flood_aoi_daily": flood,
         "fact_vessel_activity": gold_vessel_activity(silver.get("vessel", [])),
+        "fact_maritime_activity_daily": gold_maritime_activity(silver.get("maritime", [])),
         "fact_scene_catalog": gold_scene_catalog(silver.get("scene", [])),
         "kpi_eo_daily": gold_earth_observation(fire),
         "kpi_aoi_validation": gold_aoi_validation(aois, wildfire, flood),
         "ref_aoi": [_ref_aoi_row(a) for a in aois],
         # --- Climate / dust / air-quality marts (Phase 9b) ---
-        "fact_air_quality_daily": gold_air_quality_daily(air_quality, atmos),
+        "fact_air_quality_daily": gold_air_quality_daily(air_quality, atmos, aoi_regions),
         "fact_dust_event_daily": gold_dust_event_daily(
-            aerosol, atmos, wind_by_aoi_day=wind_by_aoi_day),
+            aerosol, atmos, wind_by_aoi_day=wind_by_aoi_day, aoi_regions=aoi_regions),
         "fact_climate_indicator_daily": gold_climate_indicator_daily(index, aois),
         "fact_vegetation_health_daily": gold_vegetation_health_daily(index, aois),
         # --- Simulation-track marts (post-MVP demonstrator, ADR-09) ---
@@ -155,7 +159,7 @@ def _gold_spark_schemas():  # pragma: no cover - needs Spark
         "fire_aoi_attribution": StructType([
             _s("fire_key"), _s("event_ts"), _s("date_key"),
             StructField("aoi_keys", ArrayType(StringType()), True),
-            _l("match_count"), _s("match_status"), _s("match_method"),
+            _l("match_count"), _s("match_status"), _s("match_method"), _s("region"),
             _d("latitude"), _d("longitude"), _d("frp"), _d("brightness"),
             _s("brightness_source_field"), _s("brightness_status"), _s("source"),
             _s("_ingest_id"), _s("_batch_id"),
@@ -172,6 +176,13 @@ def _gold_spark_schemas():  # pragma: no cover - needs Spark
             _s("vessel_key"), _s("date_key"), _l("transmissions"), _s("flag"),
             _s("vessel_type"), _b("suspicious_flag"), _l("active_span_days"),
         ]),
+        "fact_maritime_activity_daily": StructType([
+            _s("aoi_key"), _s("date_key"),
+            _d("fishing_hours"), _d("fishing_vessels"), _s("fishing_status"),
+            _d("presence_hours"), _d("presence_vessels"), _s("presence_status"),
+            _d("sar_detections"), _d("sar_unmatched_detections"), _d("sar_dark_fraction"),
+            _s("sar_status"),
+        ]),
         "fact_scene_catalog": StructType([
             _s("scene_key"), _s("date_key"), _s("collection"), _s("provider"),
             _s("platform"), _s("geo_key"), _d("cloud_cover"),
@@ -186,7 +197,7 @@ def _gold_spark_schemas():  # pragma: no cover - needs Spark
             _l("evidence_days"), _b("corroborated"),
         ]),
         "ref_aoi": StructType([
-            _s("aoi_key"), _s("aoi_name"), _s("event_type"), _s("event_date"),
+            _s("aoi_key"), _s("aoi_name"), _s("event_type"), _s("region"), _s("event_date"),
             _d("area_km2"), _s("geo_key"), _s("bbox"),
         ]),
         "fact_sat_health": StructType([
@@ -209,7 +220,7 @@ def _gold_spark_schemas():  # pragma: no cover - needs Spark
             _d("pm10_mean"), _d("pm10_max"), _d("no2_column_mean"),
             _d("so2_column_mean"), _d("co_column_mean"), _d("o3_column_mean"),
             _l("station_count"), _d("column_valid_fraction"), _l("aqi_pm25"),
-            _l("aqi_pm10"), _s("aqi_band"), _b("exceedance_flag"),
+            _l("aqi_pm10"), _s("aqi_band"), _s("aqi_standard"), _b("exceedance_flag"),
         ]),
         "fact_dust_event_daily": StructType([
             _s("aoi_key"), _s("date_key"), _d("aod_mean"), _d("aod_max"),
@@ -254,7 +265,8 @@ def run_gold_spark(seed_path: str | None = None) -> None:  # pragma: no cover - 
     silver = {
         entity: _read_silver(entity)
         for entity in ("telemetry", "space_weather", "fire", "vessel", "scene",
-                       "index", "air_quality", "aerosol", "atmos_column", "wind")
+                       "index", "air_quality", "aerosol", "atmos_column", "wind",
+                       "maritime")
     }
     aois = load_aoi_reference(seed_path)
     marts = build_marts(silver, aois)

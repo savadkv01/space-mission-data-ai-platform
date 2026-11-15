@@ -57,8 +57,12 @@ def clean_aerosol(record: dict[str, Any]) -> CleanResult:
     bbox_str, geo_key_val = bbox_centroid_geo_key(record.get("bbox"))
     vfrac = valid_fraction(stats)
     bright_surface = bool(record.get("bright_surface_flag"))
+    qa_mask = record.get("qa_mask") or None
     quality_flag = "valid"
     if bright_surface or (vfrac is not None and vfrac < MIN_VALID_FRACTION):
+        quality_flag = "suspect"
+    if qa_mask is None and record.get("collection") == "MODIS/061/MCD19A2_GRANULES":
+        # Legacy MAIAC pull averaged all pixels (cloud/low-quality included).
         quality_flag = "suspect"
 
     stat_date = ts[:10]
@@ -77,6 +81,7 @@ def clean_aerosol(record: dict[str, Any]) -> CleanResult:
         "bright_surface_flag": bright_surface,
         "valid_fraction": vfrac,
         "quality_flag": quality_flag,
+        "qa_mask": qa_mask,
         "source": record.get("_source") or "MODIS_AOD",
         "_ingest_id": record.get("_ingest_id"),
         "_batch_id": record.get("_batch_id"),

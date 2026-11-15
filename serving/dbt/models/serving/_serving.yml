@@ -19,9 +19,41 @@ models:
         tests:
           - accepted_values:
               values: ['extreme', 'high', 'moderate', 'low', 'unknown']
+      - name: freshness_status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['current', 'stale', 'no_observations']
+      - name: publication_status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['exploratory', 'blocked']
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [aoi_key, date_key]
+
+  - name: serving_wildfire_freshness
+    description: >-
+      FIRMS event-time freshness gate for serving_wildfire_daily, one row per
+      analysis region (UAE-GULF / INDIA / US-LEGACY). publication_status is
+      'blocked' unless the latest acquired detection inside that region's
+      envelope is within max_observation_age_hours (default 6). A zero-record or
+      stale feed is never a current "no fire" negative; absent AOI/day rows are
+      only interpretable while the region's freshness_status = 'current'.
+    columns:
+      - name: region
+        tests: [not_null, unique]
+      - name: freshness_status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['current', 'stale', 'no_observations']
+      - name: publication_status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['exploratory', 'blocked']
 
   - name: serving_flood_daily
     description: "Flood Extent data product (UC-16), 1 row per AOI per day."
@@ -38,13 +70,65 @@ models:
           combination_of_columns: [aoi_key, date_key]
 
   - name: serving_vessel_activity
-    description: "Maritime Vessel Activity data product (UC-18)."
+    description: >-
+      DEMONSTRATOR — Maritime Vessel identity sample (UC-18). Sourced from a fixed
+      GFW identity name search, not regional traffic; use
+      serving_maritime_activity_daily for real AOI activity.
+      suspicious_flag / review_priority are
+      triage signals from an identity-completeness heuristic (missing flag state
+      or IMO), not verified illegal-fishing alerts; domain review is pending.
+      transmissions counts retained identity records, not AIS pings.
     columns:
       - name: vessel_key
         tests: [not_null]
       - name: review_priority
         tests:
           - accepted_values: { values: ['high', 'normal'] }
+      - name: signal_basis
+        tests:
+          - accepted_values: { values: ['identity_completeness_heuristic'] }
+      - name: domain_review_status
+        tests:
+          - accepted_values: { values: ['pending'] }
+
+  - name: serving_maritime_activity_daily
+    description: >-
+      Maritime Activity (UC-18), 1 row per maritime AOI per UTC day from GFW
+      4Wings (apparent fishing hours, AIS presence, Sentinel-1 SAR detections).
+      Null measures with status 'not_published' are unreleased days, not zero.
+      sar_dark_fraction = SAR detections without an AIS match / all detections;
+      a review signal, not confirmed illegal activity. Overlapping AOIs are
+      non-additive. GFW data is free for non-commercial use only.
+    columns:
+      - name: aoi_key
+        tests: [not_null]
+      - name: date_key
+        tests: [not_null]
+      - name: region
+        tests:
+          - not_null
+          - accepted_values: { values: ['UAE-GULF', 'INDIA'] }
+      - name: fishing_status
+        tests:
+          - not_null
+          - accepted_values: { values: ['measured', 'not_published'] }
+      - name: presence_status
+        tests:
+          - not_null
+          - accepted_values: { values: ['measured', 'not_published'] }
+      - name: sar_status
+        tests:
+          - not_null
+          - accepted_values: { values: ['measured', 'not_published'] }
+      - name: fishing_hours
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0 }
+      - name: sar_dark_fraction
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 1 }
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [aoi_key, date_key]
 
   - name: serving_scene_catalog
     description: "Imagery Catalog data product (UC-25), 1 row per scene."
@@ -66,7 +150,17 @@ models:
           - accepted_values: { values: ['corroborated', 'unconfirmed'] }
 
   - name: mv_kpi_platform_daily
-    description: "Materialized platform-wide daily KPI rollup (executive view)."
+    description: >-
+      Materialized daily KPI rollup per analysis region (executive view).
+      Vessel identity records have no position and are reported under 'GLOBAL'.
     columns:
       - name: date_key
-        tests: [not_null, unique]
+        tests: [not_null]
+      - name: region
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['UAE-GULF', 'INDIA', 'US-LEGACY', 'GLOBAL', 'UNASSIGNED']
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [date_key, region]

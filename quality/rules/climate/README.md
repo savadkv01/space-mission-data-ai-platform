@@ -39,7 +39,7 @@ Every rule below is realized as an `Expectation` in a `*_suite()` and run throug
 | `gas_code` | `NO2`, `SO2`, `CO`, `O3`, `CH4`, `AER_AI` |
 | `unit_std` (column) | `mol/m2`, `ppb`, `unitless` |
 | `quality_flag` | `valid`, `suspect`, `low_coverage` |
-| `aqi_band` | `Good`, `Moderate`, `Unhealthy (sensitive)`, `Unhealthy`, `Very Unhealthy`, `Hazardous` |
+| `aqi_band` | `Good`, `Moderate`, `Unhealthy (sensitive)`, `Unhealthy`, `Very Unhealthy`, `Hazardous` (US EPA, UAE-GULF); `Good`, `Satisfactory`, `Moderate`, `Poor`, `Very Poor`, `Severe` (CPCB NAQI, INDIA) |
 | `dust_severity_band` | `0`, `1`, `2`, `3`, `4` |
 | `lst_anomaly_band` | `-1`, `0`, `1`, `2`, `3` |
 | `ndvi_health_band` | `0`, `1`, `2`, `3`, `4` |

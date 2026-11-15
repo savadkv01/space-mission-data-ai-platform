@@ -1,13 +1,19 @@
 table_name: launch_monthly
 main_dttm_col: null
-description: "Certified (sim): monthly launch performance. Reads Gold Parquet via httpfs."
+description: "Certified (sim): monthly launch performance. Reads Gold Parquet via httpfs. An empty mart yields one data_availability = 'unavailable' row with NULL measures, never zero launches."
 cache_timeout: 3600
 schema: null
 sql: |
-  select
-      provider_key, month_key, launches, successes,
-      success_rate, cadence_per_month, mean_delay_days
-  from read_parquet('s3://gold/kpi_launch_monthly/*.parquet')
+  with launches as (
+      select
+          provider_key, month_key, launches, successes,
+          success_rate, cadence_per_month, mean_delay_days
+      from read_parquet('s3://gold/kpi_launch_monthly/*.parquet')
+  )
+  select *, 'available' as data_availability from launches
+  union all
+  select null, null, null, null, null, null, null, 'unavailable'
+  where not exists (select 1 from launches)
 filter_select_enabled: true
 extra:
   certification:
@@ -38,5 +44,8 @@ columns:
     type: BIGINT
   - column_name: mean_delay_days
     type: DOUBLE
+  - column_name: data_availability
+    type: VARCHAR
+    groupby: true
 version: 1.0.0
 database_uuid: b1000000-0000-4000-8000-000000000001

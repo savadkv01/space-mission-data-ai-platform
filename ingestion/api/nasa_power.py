@@ -29,6 +29,8 @@ class PowerConnector(ApiConnector):
             "start": start,
             "end": end,
             "format": "JSON",
+            # Daily API defaults to Local Solar Time; the platform grain is UTC days.
+            "time-standard": "UTC",
         }
         data = self.http.get_json(self.URL, params=params)
         # Flatten the POWER nested structure into one record per (date, param).
@@ -42,6 +44,7 @@ class PowerConnector(ApiConnector):
                     "value": value,
                     "latitude": latitude,
                     "longitude": longitude,
+                    "time_standard": "UTC",
                 }
                 if aoi_id is not None:
                     record["aoi_id"] = aoi_id

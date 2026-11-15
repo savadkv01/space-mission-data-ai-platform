@@ -1,17 +1,18 @@
 table_name: climate_daily
 main_dttm_col: kpi_date
-description: "Certified (12b, materialized): platform-wide daily climate KPIs from mv_kpi_climate_daily. Exec/weather rollup."
+description: "Certified (12b, materialized): daily climate KPIs per analysis region from mv_kpi_climate_daily. Filter or group by region; regions use different AQI standards and must not be summed together."
 default_endpoint: null
 offset: 0
 cache_timeout: 900
 schema: null
 sql: |
   select
-      cast(date_key as date) as kpi_date,
-      mean_aqi_pm25, aqi_exceedance_days, air_quality_aois,
-      dust_event_days, peak_aod, dust_aois,
-      mean_lst_anomaly, warming_days, desertification_days,
-      mean_ndvi, crop_stress_days
+      cast(date_key as date) as kpi_date, region,
+      mean_aqi_pm25, aqi_exceedance_days, aqi_exceedance_evaluated_aois, air_quality_aois,
+      dust_event_days, dust_evaluated_aois, peak_aod, dust_aois,
+      mean_lst_anomaly, warming_days, warming_evaluated_aois,
+      desertification_days, desertification_evaluated_aois,
+      mean_ndvi, crop_stress_days, crop_stress_evaluated_aois
   from serving_agg.mv_kpi_climate_daily
 params: null
 template_params: null
@@ -42,13 +43,20 @@ columns:
   - column_name: kpi_date
     type: DATE
     is_dttm: true
+  - column_name: region
+    type: VARCHAR
+    groupby: true
   - column_name: mean_aqi_pm25
     type: DOUBLE
   - column_name: aqi_exceedance_days
     type: BIGINT
+  - column_name: aqi_exceedance_evaluated_aois
+    type: BIGINT
   - column_name: air_quality_aois
     type: BIGINT
   - column_name: dust_event_days
+    type: BIGINT
+  - column_name: dust_evaluated_aois
     type: BIGINT
   - column_name: peak_aod
     type: DOUBLE
@@ -58,11 +66,17 @@ columns:
     type: DOUBLE
   - column_name: warming_days
     type: BIGINT
+  - column_name: warming_evaluated_aois
+    type: BIGINT
   - column_name: desertification_days
+    type: BIGINT
+  - column_name: desertification_evaluated_aois
     type: BIGINT
   - column_name: mean_ndvi
     type: DOUBLE
   - column_name: crop_stress_days
+    type: BIGINT
+  - column_name: crop_stress_evaluated_aois
     type: BIGINT
 version: 1.0.0
 database_uuid: b1000000-0000-4000-8000-000000000001

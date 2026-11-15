@@ -1,15 +1,29 @@
 table_name: wildfire_daily
 main_dttm_col: event_date
-description: "Certified: Wildfire Activity (UC-15), 1 row per AOI per day."
+description: "Certified: Wildfire Activity (UC-15), 1 row per AOI per day. Blocked unless freshness_status = current (FIRMS event time <= 6 h); missing rows are not 'no fire'."
 default_endpoint: null
 offset: 0
 cache_timeout: 3600
 schema: null
 sql: |
+  -- Freshness is re-evaluated at query time so a materialized product cannot
+  -- look current after its FIRMS observations age past the 6 h objective.
+  with product as (
+      select *, date_diff('second', latest_observation_ts, now()) / 3600.0 as age_hours
+      from serving.serving_wildfire_daily
+  )
   select
-      aoi_key, aoi_name, cast(date_key as date) as event_date,
-      detections, mean_frp, max_frp, area_km2, severity, ems_corroborated
-  from serving.serving_wildfire_daily
+      aoi_key, aoi_name, region, cast(date_key as date) as event_date,
+      detections, mean_frp, max_frp, area_km2, severity, ems_corroborated,
+      latest_observation_ts,
+      round(age_hours, 3) as observation_age_hours,
+      case
+          when latest_observation_ts is null then 'no_observations'
+          when age_hours between 0 and 6 then 'current'
+          else 'stale'
+      end as freshness_status,
+      case when age_hours between 0 and 6 then 'exploratory' else 'blocked' end as publication_status
+  from product
 params: null
 template_params: null
 filter_select_enabled: true
@@ -35,6 +49,9 @@ columns:
   - column_name: aoi_name
     type: VARCHAR
     groupby: true
+  - column_name: region
+    type: VARCHAR
+    groupby: true
   - column_name: event_date
     type: DATE
     is_dttm: true
@@ -51,6 +68,16 @@ columns:
     groupby: true
   - column_name: ems_corroborated
     type: BOOLEAN
+    groupby: true
+  - column_name: latest_observation_ts
+    type: TIMESTAMP WITH TIME ZONE
+  - column_name: observation_age_hours
+    type: DOUBLE
+  - column_name: freshness_status
+    type: VARCHAR
+    groupby: true
+  - column_name: publication_status
+    type: VARCHAR
     groupby: true
 version: 1.0.0
 database_uuid: b1000000-0000-4000-8000-000000000001

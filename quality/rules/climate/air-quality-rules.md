@@ -50,7 +50,7 @@ Grain: **1 row / AOI / day** (`aoi_key`, `date_key` unique).
 | Range | `aqi_pm25`, `aqi_pm10` `∈ [0, 500]` (US EPA scale) | critical |
 | Range | `station_count ≥ 0`; `column_valid_fraction ∈ [0, 1]` | critical / warn |
 | Range | `no2/so2/co/o3_column_mean ≥ 0` | warn |
-| Enum | `aqi_band ∈ {Good, Moderate, Unhealthy (sensitive), Unhealthy, Very Unhealthy, Hazardous}` | critical |
+| Enum | `aqi_band ∈ {Good, Moderate, Unhealthy (sensitive), Unhealthy, Very Unhealthy, Hazardous}` (`aqi_standard = US_EPA_PRE2024`, UAE-GULF) or `{Good, Satisfactory, Moderate, Poor, Very Poor, Severe}` (`aqi_standard = IN_CPCB_NAQI_2014`, INDIA) | critical |
 | Consistency | `aqi_pm25` populated **only** when `station_count ≥ 1` | critical |
 | Completeness | every AOI-day has `station_count ≥ 1` | warn |
 

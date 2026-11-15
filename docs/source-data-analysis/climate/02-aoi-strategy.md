@@ -22,6 +22,7 @@ AOI clipping is **mandatory, not optional**, for the atmospheric expansion. TROP
 
 - **Primary AOIs** — UAE national + operational sub-regions (where air-quality and urban-heat questions are asked).
 - **Secondary AOIs** — regional dust-source corridors upwind of the UAE (where dust plumes originate and transport from).
+- **Regional tier (INDIA)** — focused Indian AOIs in their own analysis region; see [Analysis Regions](#analysis-regions).
 
 ## Bounding-Box Reference Table
 
@@ -45,6 +46,57 @@ AOI clipping is **mandatory, not optional**, for the atmospheric expansion. TROP
 | AOI-IRAQ | Iraq / Mesopotamia basin | 42.0 | 29.0 | 48.5 | 36.0 | Shamal dust source (Tigris–Euphrates) |
 | AOI-IRAN | Iran SW basins | 47.0 | 28.0 | 55.0 | 34.0 | Cross-Gulf dust transport source |
 | AOI-GULF | Arabian (Persian) Gulf water body | 48.0 | 24.0 | 57.0 | 30.5 | Marine aerosol, transport pathway |
+
+## Analysis Regions
+
+Every AOI belongs to exactly one **analysis region** (`region` on the seed,
+`ref_aoi`, `dim_aoi`, every AOI-grained serving product, and both rollups).
+Regions are never combined: rollups are `(date_key, region)`, dust corridors
+only consider AOIs of the same region, AQI uses the region's standard, and FIRMS
+freshness is judged per region.
+
+| Region | AOIs | AQI standard | FIRMS request | Status |
+| --- | --- | --- | --- | --- |
+| `UAE-GULF` | 9 UAE/corridor AOIs + `EMSR-AE-FLOOD-2024` | `US_EPA_PRE2024` (legacy EPA bands, V03) | One box `30,10,60,40` | Primary programme region |
+| `INDIA` | 6 AOIs below | `IN_CPCB_NAQI_2014` | One request per fire-relevant AOI box, 10,000-detection cap per request | Regional tier added 2026-11-14 |
+| `US-LEGACY` | `EMSR-CA-FIRE-2025` | n/a | Not requested | Legacy reference; freshness reports `stale` / `no_observations` |
+
+### INDIA Regional Tier
+
+Focused AOIs instead of a national rectangle: a national box would include
+neighbouring countries and sea, break Earth Engine compute limits, and dilute
+every aggregate.
+
+| AOI ID | Name | min_lon | min_lat | max_lon | max_lat | Purpose |
+| --- | --- | --- | --- | --- | --- | --- |
+| IN-DEL-NCR | Delhi NCR | 76.8 | 28.3 | 77.6 | 28.9 | Urban air quality (PM2.5/PM10), NO₂ |
+| IN-MUM | Mumbai metropolitan | 72.75 | 18.85 | 73.2 | 19.35 | Coastal urban air quality |
+| IN-PB-HR | Punjab–Haryana crop-fire belt | 73.8 | 29.0 | 77.4 | 32.5 | Crop-residue fires, crop stress (NDVI) |
+| IN-THAR | Thar Desert | 69.5 | 24.5 | 74.5 | 29.0 | Regional dust source |
+| IN-GUJ-COAST | Gujarat coast (Arabian Sea) | 68.5 | 20.0 | 73.0 | 24.0 | Arabian/Gulf dust arrival, coastal aerosol |
+| IN-ASSAM | Brahmaputra flood basin | 89.7 | 25.8 | 96.0 | 27.9 | Monsoon flood extent (NDWI) |
+
+INDIA AOIs are deliberately non-overlapping with each other and with the
+UAE-GULF envelope (INDIA starts at 68.5°E; UAE-GULF ends at 57°E).
+
+| Source | INDIA AOIs | Budget control |
+| --- | --- | --- |
+| FIRMS VIIRS (`FIRMS_SOURCE`, default NOAA-20 NRT; S-NPP NRT ended 2026-11-02) | PB-HR, DEL-NCR, THAR, GUJ-COAST, ASSAM | Per-AOI box; ≤ 10,000 detections per request (most recent kept); truncation recorded as `coverage = capped` |
+| OpenAQ | DEL-NCR, MUM | PM2.5/PM10 only; ≤ 25 stations, 3 × 200-row pages per sensor; caps recorded as `coverage = capped` |
+| TROPOMI (GEE) | DEL-NCR, PB-HR | Same products as UAE |
+| MODIS AOD (GEE) | THAR, GUJ-COAST, DEL-NCR, PB-HR | Dust source + arrival |
+| Sentinel-2 NDVI / NDWI (GEE) | NDVI: PB-HR · NDWI: ASSAM | `bestEffort` reduceRegion coarsens large boxes |
+| NASA POWER wind | all AOIs | Point at AOI centroid |
+
+Backfill: `python -m ingestion.scripts.regional_ingest --region INDIA --days 30`
+(FIRMS walked in 5-day `DATE` windows, the API maximum). The daily batch driver
+then ingests the same plan over the rolling 14-day window, with the latest FIRMS day.
+
+**Known limitations:** daily grain is the UTC day (IST is UTC+5:30, so local
+evening crop burning can split across dates); AOIs are hand-drawn rectangles;
+June–September monsoon cloud reduces Sentinel-2 coverage (surfaced as
+`not_evaluated`); the NAQI "Severe" band is interpolated to 500 at PM2.5 500 /
+PM10 600 µg/m³ pending domain approval.
 
 ## AOI-to-Source Applicability
 

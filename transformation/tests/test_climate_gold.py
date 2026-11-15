@@ -248,3 +248,42 @@ def test_gold_climate_indicator_ndwi_and_grain():
     # No LST/SST ingested -> anomalies null, flags false.
     assert r["lst_c"] is None
     assert r["warming_flag"] is False
+
+
+# --- Regional tier (INDIA) ---------------------------------------------------
+
+def test_india_aoi_uses_cpcb_naqi_while_uae_keeps_epa():
+    from transformation.batch.climate_silver_to_gold import gold_air_quality_daily
+
+    def row(aoi, code, value):
+        return {"aoi_id": aoi, "stat_date": "2026-11-01", "quality_flag": "valid",
+                "pollutant_code": code, "value_std": value, "location_id": f"{aoi}-1"}
+
+    rows = [row("IN-DEL-NCR", "PM25", 75.0), row("AOI-DXB", "PM25", 75.0)]
+    out = {r["aoi_key"]: r for r in gold_air_quality_daily(
+        rows, aoi_regions={"IN-DEL-NCR": "INDIA", "AOI-DXB": "UAE-GULF"})}
+    india, uae = out["IN-DEL-NCR"], out["AOI-DXB"]
+    assert (india["aqi_standard"], india["aqi_pm25"], india["aqi_band"]) == (
+        "IN_CPCB_NAQI_2014", 150, "Moderate")
+    assert uae["aqi_standard"] == "US_EPA_PRE2024"
+    assert uae["aqi_band"] == "Unhealthy"
+
+
+def test_naqi_bands_are_contiguous_and_monotonic():
+    from transformation.batch.climate_silver_to_gold import aqi_for_standard
+
+    values = [aqi_for_standard("IN_CPCB_NAQI_2014", c / 10, None)[0] for c in range(0, 5001)]
+    assert values == sorted(values)
+    assert aqi_for_standard("IN_CPCB_NAQI_2014", 250.0, 430.0) == (400, 400, "Very Poor")
+    assert aqi_for_standard("IN_CPCB_NAQI_2014", 260.0, None)[2] == "Severe"
+
+
+def test_dust_corridor_never_crosses_regions():
+    from transformation.batch.climate_silver_to_gold import gold_dust_event_daily
+
+    aerosol = [{"aoi_id": aoi, "stat_date": "2026-11-01", "aod_550nm": aod}
+               for aoi, aod in (("AOI-DXB", 0.3), ("AOI-ARABIA", 0.6), ("IN-THAR", 1.4))]
+    regions = {"AOI-DXB": "UAE-GULF", "AOI-ARABIA": "UAE-GULF", "IN-THAR": "INDIA"}
+    out = {r["aoi_key"]: r for r in gold_dust_event_daily(aerosol, aoi_regions=regions)}
+    assert out["AOI-DXB"]["corridor_aod_max"] == 0.6
+    assert out["IN-THAR"]["corridor_aod_max"] is None

@@ -4,6 +4,17 @@ version: 2
 # dimensions carry the units/thresholds the climate products reference; their
 # business keys must be unique and non-null.
 models:
+  - name: dim_aoi
+    description: "Conformed AOI dimension; every AOI belongs to exactly one analysis region."
+    columns:
+      - name: aoi_key
+        tests: [not_null, unique]
+      - name: region
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['UAE-GULF', 'INDIA', 'US-LEGACY']
+
   - name: dim_pollutant
     description: "Conformed pollutant/aerosol dimension (units, AQI scheme, WHO thresholds)."
     columns:

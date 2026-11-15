@@ -21,6 +21,14 @@ Built by `serve_launch_monthly` in [../marts/serving_marts.py](../marts/serving_
 | Grain | 1 row / provider / month |
 | KPIs | launches, successes, success_rate, mean_delay_days |
 
+**Availability:** the canonical Gold reader has no launch input, so
+`kpi_launch_monthly` is currently schema-only. Zero rows means **unavailable
+data, not zero launches**. `launch_monthly_availability()` reports
+`data_availability = 'unavailable'`; the Superset `launch_monthly` dataset
+returns one `unavailable` row with NULL measures (so `SUM(launches)` is NULL,
+not 0); and the batch DAG logs empty Gold marts with
+`data_availability = unavailable`.
+
 ---
 
 ## Launch Delays

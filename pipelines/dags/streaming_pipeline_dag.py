@@ -68,6 +68,10 @@ _WAIT_AFTER_WAVE_1_SECONDS = 210
 _WAIT_AFTER_WAVE_2_SECONDS = 60
 _STREAM_READY_TIMEOUT_SECONDS = 120
 _MIN_STREAM_OUTPUT_ROWS = 3
+# Wave 1 is all-anomalous and wave 2 all-nominal, so the Silver windows have a
+# known expected anomaly contribution (see _assert_injected_anomalies).
+_WAVE_1_FAILURE_RATE = 1.0
+_WAVE_2_FAILURE_RATE = 0.0
 
 
 def _in_spark(cmd: str) -> str:
@@ -106,8 +110,9 @@ def _produce_and_consume(**context) -> None:
     from ingestion.streaming.producers.telemetry_producer import run as produce_telemetry
 
     start = time.monotonic()
-    sent = produce_telemetry(_WAVE_1_RECORDS, rate_per_s=200.0)
-    logger.log_unit("telemetry_produce", status="SUCCESS", rows=sent, duration_seconds=time.monotonic() - start)
+    sent = produce_telemetry(_WAVE_1_RECORDS, rate_per_s=200.0, failure_rate=_WAVE_1_FAILURE_RATE)
+    logger.log_unit("telemetry_produce", status="SUCCESS", rows=sent, duration_seconds=time.monotonic() - start,
+                    details={"injected_anomalies": sent})
 
     from ingestion.streaming.consumers.raw_ingest_consumer import run as consume_raw
 
@@ -161,7 +166,7 @@ def _advance_watermark_and_stop(**context) -> None:
     from ingestion.streaming.consumers.validation_consumer import run as validate
 
     start = time.monotonic()
-    sent = produce_telemetry(_WAVE_2_RECORDS, rate_per_s=200.0)
+    sent = produce_telemetry(_WAVE_2_RECORDS, rate_per_s=200.0, failure_rate=_WAVE_2_FAILURE_RATE)
     outcome = validate(max_records=_WAVE_2_RECORDS)
     logger.log_unit(
         "telemetry_produce_wave_2",
@@ -195,7 +200,38 @@ def _advance_watermark_and_stop(**context) -> None:
         logger.finish(status="FAILED", error=error)
         raise RuntimeError(error)
 
-    logger.log_unit("stream_sat_health_1m", status="SUCCESS", rows=rows, details={"path": _STREAM_OUTPUT_PATH})
+    _assert_injected_anomalies(logger, rows)
+
+
+def _assert_injected_anomalies(logger: StageRunLogger, rows: int) -> None:
+    """End-to-end contract check: injected anomalies must reach Silver windows.
+
+    Every wave-1 record is anomalous and lands in at least one flushed window, so
+    the flushed anomaly contribution must be >= ``_WAVE_1_RECORDS``; wave-1 and
+    wave-2 never share a window, so no window may be partially anomalous.
+    """
+    from pipelines.common.lake_metrics import stream_window_anomaly_summary
+
+    summary = stream_window_anomaly_summary(_STREAM_OUTPUT_PATH)
+    details = {"path": _STREAM_OUTPUT_PATH, **summary, "expected_min_anomaly_samples": _WAVE_1_RECORDS}
+    error = None
+    if summary["anomaly_samples"] < _WAVE_1_RECORDS:
+        error = (
+            f"Silver windows carry {summary['anomaly_samples']} anomaly contributions; "
+            f"expected at least {_WAVE_1_RECORDS} from the injected anomalous wave "
+            "(streaming field contract broken?)"
+        )
+    elif summary["mixed_windows"]:
+        error = (
+            f"{summary['mixed_windows']} Silver windows mix anomalous and nominal samples; "
+            "injected and nominal waves must not overlap"
+        )
+    if error:
+        logger.log_unit("stream_sat_health_1m", status="FAILED", rows=rows, details={**details, "reason": error})
+        logger.finish(status="FAILED", error=error)
+        raise RuntimeError(error)
+
+    logger.log_unit("stream_sat_health_1m", status="SUCCESS", rows=rows, details=details)
 
 
 def _streaming_finish(**context) -> None:

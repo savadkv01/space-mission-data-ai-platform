@@ -35,8 +35,26 @@ Phase numbering aligns with the authored phase prompts in [.github/prompts/](.gi
 | 23 | Documentation | 🔜 Upcoming |
 | 24 | Interview Preparation | 🔜 Upcoming |
 | 25 | Project Review | 🔜 Upcoming |
+| 26 | Space & Galactic 3D Analytics | 🔜 Upcoming |
 
 > **Parallel track:** a Climate, Dust & Air-Quality expansion (extension prompts `05b`–`16b`) — see [Planned Expansion](#planned-expansion--climate-dust--air-quality-monitoring) below. The source-analysis → BI layers (`05b`–`12b`) are **implemented**; `13b`–`16b` (feature store, ML, RAG, API) are upcoming with the AI/ML track.
+
+---
+
+## Recent Updates (November 2026)
+
+Data-trust and coverage work driven by the [end-to-end validation](docs/validation/README.md), all verified with orchestrated `platform_batch_pipeline` runs:
+
+| Area | Change | Evidence |
+| --- | --- | --- |
+| Analysis regions | AOIs grouped into `UAE-GULF`, `INDIA` (6 focused AOIs, 30-day backfill) and `US-LEGACY`; regions never combined in rollups, dust corridors, AQI standards, or fire freshness. India uses the CPCB National AQI. | [ADR-11](docs/data-modeling/17-adr.md), [INDIA E2E report](docs/validation/2026-11-14-india-regional-e2e.md) |
+| Maritime | Area-based **GFW 4Wings** product (`serving_maritime_activity_daily`): fishing hours, AIS presence, and Sentinel-1 SAR detections (incl. no-AIS-match share) per maritime AOI. The old identity-search vessel product is a labelled demonstrator. | [ADR-08-08](docs/ingestion/16-adr.md) |
+| Honest "unknown" states | Air-quality, dust, climate, and vegetation flags carry `positive / negative / inconclusive / not_evaluated`; missing evidence is no longer published as a negative. | [Priority remediation](docs/validation/2026-11-14-priority-remediation.md) |
+| Freshness and availability | Wildfire rows carry a per-region FIRMS event-time freshness gate (`publication_status`); zero-row sources and empty marts (e.g. launch) are reported as unavailable, not zero. | same |
+| Source fixes | FIRMS moved to VIIRS NOAA-20 (S-NPP NRT ended 2026-11-02); Sentinel-2 NDVI/NDWI sign inversion fixed; MODIS MAIAC per-pixel QA mask; NASA POWER requested in UTC days; streaming anomaly labels now reach Silver (with an end-to-end assertion). | [Source guides](docs/source-data-analysis/source-guides/README.md) |
+| Pipeline reliability | Ingestion caps are logged as `coverage = capped`; dbt steps run with `--no-partial-parse` after a stale cache silently skipped tests. | [OPERATIONS.md](OPERATIONS.md) |
+
+**Known open items:** flood flags need a permanent-water baseline; the 6 h fire freshness objective is unreachable with one polar-orbiting sensor; EMS uploads do not reach Silver (the in-repo AOI seed is the reference); CelesTrak GP data is consumed from Phase 26.
 
 ---
 
@@ -62,12 +80,13 @@ Two operator references complement the runbook:
 | `architecture/` | System overview, patterns, HLA, container design, technology mapping, data/AI/ML/observability/security/deployment architecture |
 | `docs/business/` | MVP definition, use-case ranking, roadmap, stakeholders, KPIs, risks |
 | `docs/domain-research/` | Ecosystem overview, 30-source dataset catalog, data flows, quality, prioritization |
-| `docs/source-data-analysis/` | 45-dataset inventory, profiling, structure, quality, use-case mapping, prioritization |
+| `docs/source-data-analysis/` | 45-dataset inventory, profiling, structure, quality, use-case mapping, prioritization; per-source guides and known-issues register (`source-guides/`) |
 | `docs/data-modeling/` | Medallion design, Bronze/Silver/Gold models, star schemas, time-series, geospatial, feature store, vector model, governance, ADRs |
 | `docs/ingestion/` | Ingestion design (streaming, batch, API/file, simulation, landing zone, quality, observability, ADRs) |
 | `docs/transformation/` | Transformation design (processing engines, Bronze→Silver→Gold, streaming/batch, cleaning, feature engineering, geospatial, time-series, lineage, ADRs) |
 | `docs/data-quality/` | Data-quality design (dimensions, validation rules, medallion validation, profiling, reconciliation, monitoring, governance, SLAs/KPIs, ADRs) |
 | `docs/bi/` | BI design (strategy, dashboard catalog, KPIs, dashboard standards, personas, datasets, reporting, alerting, security, ADRs) |
+| `docs/validation/` | Timestamped end-to-end validation reports with measured evidence, limitations, and release decisions |
 | `infrastructure/` | Docker Compose stacks, configs (Kafka, MinIO, Spark, Postgres, Prometheus, Grafana, OpenTelemetry) |
 | `ingestion/` | Ingestion layer implementation — Kafka producers/consumers, Airflow DAGs, API/file connectors, synthetic data generators, quality/quarantine |
 | `transformation/` | Transformation layer implementation — Bronze→Silver→Gold (PySpark + dbt/DuckDB), geospatial/time-series/feature engineering, Spark streaming, Airflow orchestration |
@@ -114,7 +133,7 @@ Two operator references complement the runbook:
 `docs/ingestion/` (17 design docs) + `ingestion/` (implementation):
 - Streaming ingestion (Kafka producers/consumers, topic architecture, at-least-once delivery, DLQ)
 - Batch ingestion (Airflow DAGs, scheduling, retry/backoff, idempotent re-runs)
-- API connectors (NASA FIRMS/POWER, NOAA SWPC, CelesTrak, Sentinel Hub) with retry, rate-limiting and backoff
+- API connectors (NASA FIRMS/POWER, NOAA SWPC, CelesTrak, Global Fishing Watch 4Wings, OpenAQ, Google Earth Engine) with retry, rate-limiting and backoff; per-region source plans and a regional backfill driver (`ingestion/scripts/regional_ingest.py`)
 - File ingestion + MinIO landing-zone layout (Hive-style `ingest_date` partitions)
 - Synthetic data generators (satellite telemetry, orbit via SGP4, space weather)
 - Bronze envelope (provenance + checksum), ingestion-time validation and quarantine
@@ -135,7 +154,7 @@ Two operator references complement the runbook:
 - Governance, SLAs/KPIs, production incidents, trade-offs, ADRs. See [quality/README.md](quality/README.md).
 
 ### Phase 11 — Serving Layer
-`serving/` — Gold data products (wildfire, flood, vessel, scene-catalog, AOI-validation daily), a semantic layer (business dimensions + metric registry), dbt marts and raw DDL, a materialized KPI aggregate, REST API design, and LLM/RAG serving models. Contract-tested with dbt schema tests and offline Python unit tests. See [serving/README.md](serving/README.md).
+`serving/` — Gold data products (wildfire with per-region freshness gate, flood, area-based maritime activity, scene-catalog, AOI-validation daily, plus a vessel-identity demonstrator), climate products with explicit evidence states, a semantic layer (business dimensions + metric registry), dbt marts and raw DDL, region-keyed materialized KPI aggregates, REST API design, and LLM/RAG serving models. Contract-tested with dbt schema tests and offline Python unit tests. See [serving/README.md](serving/README.md).
 
 ### Phase 12 — Business Intelligence
 `docs/bi/` (14 design docs) + `bi/` (implementation):
@@ -150,6 +169,9 @@ Two operator references complement the runbook:
 - Dockerized, readiness-aware online retrieval, scheduled/incremental materialization, source sync, quality/drift checks, incidents, and ADRs
 - Source-analysis blockers are enforced: only synthetic demo data and restricted catalog metadata are materialized; other domains remain blocked pending source evidence
 
+### Phase 26 — Space & Galactic 3D Analytics
+The phase prompt is authored in [.github/prompts/26-space-galactic-3d-analytics.prompt.md](.github/prompts/26-space-galactic-3d-analytics.prompt.md); implementation is upcoming. It plans a bounded Gaia DR3 data slice alongside the existing CelesTrak GP feed to deliver orbital and stellar 3D mapping and motion analytics through the medallion, serving, and BI layers. Pairwise conjunction screening and ML are explicitly out of scope.
+
 ---
 
 ## Technology Stack
@@ -158,9 +180,12 @@ Two operator references complement the runbook:
 | --- | --- |
 | Containerization | Docker Desktop |
 | Streaming | Apache Kafka |
-| Processing | Apache Spark, DuckDB |
-| Storage | MinIO (object), Apache Iceberg (table format), PostgreSQL |
+| Processing | Apache Spark, DuckDB, dbt |
+| Storage | MinIO (object, Parquet in the MVP tier), PostgreSQL; Apache Iceberg deferred to the scale tier ([ADR-10](docs/data-modeling/17-adr.md)) |
 | Orchestration | Apache Airflow |
+| BI | Apache Superset (Power BI report generated from the same certified datasets) |
+| Feature store | Feast (PostgreSQL offline/online/registry) |
+| Remote sensing access | Google Earth Engine (free, non-commercial) |
 | Observability | Prometheus, Grafana, OpenTelemetry |
 | AI / ML | Python, scikit-learn, PyTorch |
 | LLM / RAG | Qdrant, LangChain |
@@ -176,6 +201,8 @@ Simulates a real enterprise aerospace data platform end-to-end: from raw open da
 ## Planned Expansion — Climate, Dust & Air-Quality Monitoring
 
 A post-MVP initiative extends the platform into **climate change, dust storm, and air-quality monitoring** (high value for UAE contexts). It is delivered as a set of authored phase prompts and requires **no architectural change** — it reuses the existing `ApiConnector` → JSONL Bronze → Silver/Gold → serving → BI pattern, plus the existing Feast, MLflow, and Qdrant/Ollama stacks.
+
+**Geographic scope:** AOIs are grouped into analysis regions — `UAE-GULF` (primary, with upwind dust corridors) and an `INDIA` regional tier (Delhi NCR, Mumbai, Punjab–Haryana fire belt, Thar, Gujarat coast, Assam), plus a `US-LEGACY` reference. Regions are never combined in rollups, dust corridors, AQI standards, or fire freshness. See [ADR-11](docs/data-modeling/17-adr.md) and the [AOI strategy](docs/source-data-analysis/climate/02-aoi-strategy.md#analysis-regions).
 
 **Scope decision (Strategy A — tabular / statistical-API sources only):**
 

@@ -1,13 +1,13 @@
 {
   "type": "FeatureCollection",
   "name": "copernicus_ems_aoi_reference",
-  "description": "Curated Copernicus-EMS-style Area-of-Interest footprints used as reference/master data (ref_aoi) and independent validation ground truth. Footprints intentionally cover the live ingest bounding boxes: the FIRMS active-fire request area (California) and the Sentinel Hub NDWI statistics AOI (Dubai). Shipped in-repo because Copernicus EMS rapid-mapping products are portal downloads, not an automated API (see ADR-09 / data-modeling ref_aoi).",
+  "description": "Curated, hand-drawn rectangular Area-of-Interest footprints used as reference/master data (ref_aoi). Every feature carries an analysis `region` (UAE-GULF, INDIA, US-LEGACY); rollups, dust corridors, AQI standards and fire freshness never combine regions. EMSR-* features are Copernicus-EMS-style references, not verified activations; EMSR-CA-FIRE-2025 is retained as US-LEGACY because FIRMS is no longer requested for California. Shipped in-repo because Copernicus EMS rapid-mapping products are portal downloads, not an automated API (see ADR-09 / data-modeling ref_aoi).",
   "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
   "features": [
     {
       "type": "Feature",
       "properties": {
-        "id": "EMSR-CA-FIRE-2025",
+        "id": "EMSR-CA-FIRE-2025", "region": "US-LEGACY",
         "name": "California Statewide Fire Monitoring",
         "aoiName": "California Statewide Fire Monitoring",
         "eventType": "Wildfire",
@@ -33,7 +33,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "EMSR-AE-FLOOD-2024",
+        "id": "EMSR-AE-FLOOD-2024", "region": "UAE-GULF",
         "name": "Dubai Coastal Flood Monitoring",
         "aoiName": "Dubai Coastal Flood Monitoring",
         "eventType": "Flood",
@@ -59,7 +59,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "AOI-UAE-NAT", "name": "UAE (national)", "aoiName": "UAE (national)",
+        "id": "AOI-UAE-NAT", "region": "UAE-GULF", "name": "UAE (national)", "aoiName": "UAE (national)",
         "category": "climate", "tier": "primary", "aoi_role": "monitored",
         "note": "Phase 5b climate AOI (dim_aoi extension, Phase 6b/9b)."
       },
@@ -68,7 +68,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "AOI-AUH", "name": "Abu Dhabi", "aoiName": "Abu Dhabi",
+        "id": "AOI-AUH", "region": "UAE-GULF", "name": "Abu Dhabi", "aoiName": "Abu Dhabi",
         "category": "climate", "tier": "primary", "aoi_role": "monitored"
       },
       "geometry": { "type": "Polygon", "coordinates": [[[53.3,23.5],[55.3,23.5],[55.3,24.7],[53.3,24.7],[53.3,23.5]]] }
@@ -76,7 +76,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "AOI-DXB", "name": "Dubai", "aoiName": "Dubai",
+        "id": "AOI-DXB", "region": "UAE-GULF", "name": "Dubai", "aoiName": "Dubai",
         "category": "climate", "tier": "primary", "aoi_role": "monitored"
       },
       "geometry": { "type": "Polygon", "coordinates": [[[54.9,24.8],[55.6,24.8],[55.6,25.4],[54.9,25.4],[54.9,24.8]]] }
@@ -84,7 +84,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "AOI-COAST", "name": "UAE coastal zone", "aoiName": "UAE coastal zone",
+        "id": "AOI-COAST", "region": "UAE-GULF", "name": "UAE coastal zone", "aoiName": "UAE coastal zone",
         "category": "climate", "tier": "primary", "aoi_role": "monitored"
       },
       "geometry": { "type": "Polygon", "coordinates": [[[51.5,24.0],[56.4,24.0],[56.4,26.1],[51.5,26.1],[51.5,24.0]]] }
@@ -92,7 +92,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "AOI-DESERT", "name": "Desert interior", "aoiName": "Desert interior",
+        "id": "AOI-DESERT", "region": "UAE-GULF", "name": "Desert interior", "aoiName": "Desert interior",
         "category": "climate", "tier": "primary", "aoi_role": "monitored"
       },
       "geometry": { "type": "Polygon", "coordinates": [[[52.0,22.5],[55.5,22.5],[55.5,23.8],[52.0,23.8],[52.0,22.5]]] }
@@ -100,7 +100,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "AOI-ARABIA", "name": "Arabian Peninsula interior", "aoiName": "Arabian Peninsula interior",
+        "id": "AOI-ARABIA", "region": "UAE-GULF", "name": "Arabian Peninsula interior", "aoiName": "Arabian Peninsula interior",
         "category": "climate", "tier": "secondary", "aoi_role": "dust_corridor"
       },
       "geometry": { "type": "Polygon", "coordinates": [[[42.0,18.0],[55.0,18.0],[55.0,30.0],[42.0,30.0],[42.0,18.0]]] }
@@ -108,7 +108,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "AOI-IRAQ", "name": "Iraq / Mesopotamia basin", "aoiName": "Iraq / Mesopotamia basin",
+        "id": "AOI-IRAQ", "region": "UAE-GULF", "name": "Iraq / Mesopotamia basin", "aoiName": "Iraq / Mesopotamia basin",
         "category": "climate", "tier": "secondary", "aoi_role": "dust_corridor"
       },
       "geometry": { "type": "Polygon", "coordinates": [[[42.0,29.0],[48.5,29.0],[48.5,36.0],[42.0,36.0],[42.0,29.0]]] }
@@ -116,7 +116,7 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "AOI-IRAN", "name": "Iran SW basins", "aoiName": "Iran SW basins",
+        "id": "AOI-IRAN", "region": "UAE-GULF", "name": "Iran SW basins", "aoiName": "Iran SW basins",
         "category": "climate", "tier": "secondary", "aoi_role": "dust_corridor"
       },
       "geometry": { "type": "Polygon", "coordinates": [[[47.0,28.0],[55.0,28.0],[55.0,34.0],[47.0,34.0],[47.0,28.0]]] }
@@ -124,10 +124,64 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "AOI-GULF", "name": "Arabian Gulf water body", "aoiName": "Arabian Gulf water body",
+        "id": "AOI-GULF", "region": "UAE-GULF", "name": "Arabian Gulf water body", "aoiName": "Arabian Gulf water body",
         "category": "climate", "tier": "secondary", "aoi_role": "monitored"
       },
       "geometry": { "type": "Polygon", "coordinates": [[[48.0,24.0],[57.0,24.0],[57.0,30.5],[48.0,30.5],[48.0,24.0]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "IN-DEL-NCR", "region": "INDIA", "name": "Delhi NCR", "aoiName": "Delhi NCR",
+        "category": "climate", "tier": "primary", "aoi_role": "monitored",
+        "note": "INDIA regional tier: Urban air quality (PM2.5/PM10), NO2."
+      },
+      "geometry": { "type": "Polygon", "coordinates": [[[76.8,28.3],[77.6,28.3],[77.6,28.9],[76.8,28.9],[76.8,28.3]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "IN-MUM", "region": "INDIA", "name": "Mumbai metropolitan", "aoiName": "Mumbai metropolitan",
+        "category": "climate", "tier": "primary", "aoi_role": "monitored",
+        "note": "INDIA regional tier: Coastal urban air quality."
+      },
+      "geometry": { "type": "Polygon", "coordinates": [[[72.75,18.85],[73.2,18.85],[73.2,19.35],[72.75,19.35],[72.75,18.85]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "IN-PB-HR", "region": "INDIA", "name": "Punjab-Haryana crop-fire belt", "aoiName": "Punjab-Haryana crop-fire belt",
+        "category": "climate", "tier": "primary", "aoi_role": "monitored",
+        "note": "INDIA regional tier: Crop-residue fires, crop stress (NDVI)."
+      },
+      "geometry": { "type": "Polygon", "coordinates": [[[73.8,29.0],[77.4,29.0],[77.4,32.5],[73.8,32.5],[73.8,29.0]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "IN-THAR", "region": "INDIA", "name": "Thar Desert", "aoiName": "Thar Desert",
+        "category": "climate", "tier": "secondary", "aoi_role": "dust_corridor",
+        "note": "INDIA regional tier: Regional dust source."
+      },
+      "geometry": { "type": "Polygon", "coordinates": [[[69.5,24.5],[74.5,24.5],[74.5,29.0],[69.5,29.0],[69.5,24.5]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "IN-GUJ-COAST", "region": "INDIA", "name": "Gujarat coast (Arabian Sea)", "aoiName": "Gujarat coast (Arabian Sea)",
+        "category": "climate", "tier": "secondary", "aoi_role": "dust_corridor",
+        "note": "INDIA regional tier: Arabian/Gulf dust arrival, coastal aerosol."
+      },
+      "geometry": { "type": "Polygon", "coordinates": [[[68.5,20.0],[73.0,20.0],[73.0,24.0],[68.5,24.0],[68.5,20.0]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "IN-ASSAM", "region": "INDIA", "name": "Brahmaputra flood basin (Assam)", "aoiName": "Brahmaputra flood basin (Assam)",
+        "category": "climate", "tier": "primary", "aoi_role": "monitored",
+        "note": "INDIA regional tier: Monsoon flood extent (NDWI)."
+      },
+      "geometry": { "type": "Polygon", "coordinates": [[[89.7,25.8],[96.0,25.8],[96.0,27.9],[89.7,27.9],[89.7,25.8]]] }
     }
   ]
 }

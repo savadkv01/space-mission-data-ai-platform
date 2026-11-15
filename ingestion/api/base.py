@@ -25,6 +25,9 @@ class ApiConnector(ABC):
     def __init__(self, http: HttpClient | None = None) -> None:
         self.log = get_logger(f"connector.{self.source_code}")
         self.http = http or HttpClient(rate_limit=RateLimiter(self.rate_limit_per_s, 1.0))
+        #: Reasons the last fetch is known to be incomplete (caps, truncation).
+        #: Reset per ``ingest``; surfaced by ``run_connector_to_bronze``.
+        self.coverage_notes: list[str] = []
 
     @abstractmethod
     def fetch_raw(self, **kwargs) -> tuple[list[dict[str, Any]], str]:
@@ -37,6 +40,7 @@ class ApiConnector(ABC):
     def ingest(self, **kwargs) -> list[BronzeEnvelope]:
         """Pull, then wrap each record in a Bronze envelope with provenance."""
         batch_id = new_batch_id(self.source_code)
+        self.coverage_notes = []
         records, fmt = self.fetch_raw(**kwargs)
         envelopes = [
             build_envelope(

@@ -54,10 +54,12 @@ WIND_UNITS = {"WS2M": "m/s", "WD2M": "degree"}
 #: Silver quality-flag vocabulary across climate entities.
 QUALITY_FLAGS = {"valid", "suspect", "low_coverage"}
 
-#: AQI category labels (``fact_air_quality_daily.aqi_band``).
+#: AQI category labels (``fact_air_quality_daily.aqi_band``): US EPA (UAE-GULF)
+#: plus CPCB NAQI (INDIA); ``aqi_standard`` says which scheme applies.
 AQI_BANDS = {
     "Good", "Moderate", "Unhealthy (sensitive)", "Unhealthy",
     "Very Unhealthy", "Hazardous",
+    "Satisfactory", "Poor", "Very Poor", "Severe",
 }
 
 # --- Local expectation helpers ---------------------------------------------

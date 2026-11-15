@@ -5,7 +5,7 @@ cache_timeout: 3600
 schema: null
 sql: |
   select
-      aoi_key, aoi_name, cast(date_key as date) as event_date,
+      aoi_key, aoi_name, region, cast(date_key as date) as event_date,
       ndwi_mean, ndwi_max, valid_pixel_fraction, flood_flag, area_km2, ems_corroborated
   from serving.serving_flood_daily
 filter_select_enabled: true
@@ -24,6 +24,9 @@ columns:
   - column_name: aoi_key
     type: VARCHAR
   - column_name: aoi_name
+    type: VARCHAR
+    groupby: true
+  - column_name: region
     type: VARCHAR
     groupby: true
   - column_name: event_date

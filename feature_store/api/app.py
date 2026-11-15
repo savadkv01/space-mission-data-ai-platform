@@ -15,7 +15,7 @@ from feature_store.api.cache import FeatureResponseCache, cache_key
 from feature_store.database import connect
 from feature_store.materialize.gold_sync import sync_enabled_gold_sources
 from feature_store.materialize.runner import materialize_report
-from feature_store.readiness import FEATURE_READINESS
+from feature_store.readiness import FEATURE_READINESS, READINESS_AS_OF
 
 app = FastAPI(title="Space Mission Feature Store", version="1.0.0")
 _CLIMATE_FEATURE_VIEWS = {
@@ -196,7 +196,7 @@ def health() -> dict[str, str]:
 @app.get("/readiness")
 def readiness() -> dict[str, Any]:
     return {
-        "as_of": "2026-10-31",
+        "as_of": READINESS_AS_OF,
         "features": _readiness_payload(list(FEATURE_READINESS)),
     }
 

@@ -13,6 +13,7 @@ corr as (
 select
     f.aoi_key,
     a.aoi_name,
+    a.region,
     f.date_key,
     f.ndwi_mean,
     f.ndwi_max,

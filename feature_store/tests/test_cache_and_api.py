@@ -30,6 +30,7 @@ def test_feature_cache_serves_fresh_and_explicitly_stale_values():
 def test_readiness_endpoint_discloses_blockers_and_use_limits():
     response = TestClient(feature_api.app).get("/readiness")
     assert response.status_code == 200
+    assert response.json()["as_of"] == feature_api.READINESS_AS_OF
     readiness = {item["view"]: item for item in response.json()["features"]}
     assert readiness["scene_catalog_metadata"]["allowed_use"] == "catalog_discovery_only"
     assert readiness["wildfire_aoi_daily"]["status"] == "blocked"

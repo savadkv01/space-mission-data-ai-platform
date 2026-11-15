@@ -70,3 +70,41 @@ def test_index_connector_rejects_unknown_index():
 def test_scene_connector_rejects_nonpositive_limit():
     with pytest.raises(ValueError, match="limit must be positive"):
         GeeSentinel2SceneConnector(scene_fn=lambda **kwargs: []).ingest(limit=0)
+
+
+def test_index_band_order_passes_first_minus_second_to_earth_engine(monkeypatch):
+    from ingestion.api.gee_sentinel2 import GeeSentinel2IndexConnector
+
+    calls = []
+
+    class Chain:
+        def __getattr__(self, _name):
+            return lambda *_a, **_k: self
+
+    class FakeImage(Chain):
+        def normalizedDifference(self, bands):
+            calls.append(list(bands))
+            return Chain()
+
+    class FakeCollection(Chain):
+        def map(self, fn):
+            fn(FakeImage())
+            return self
+
+        def size(self):
+            return type("N", (), {"getInfo": lambda _s: 0})()
+
+    class FakeEE:
+        Geometry = type("G", (), {"Rectangle": staticmethod(lambda _b: object())})
+        ImageCollection = staticmethod(lambda _c: FakeCollection())
+        Image = staticmethod(lambda image: image)
+
+    conn = GeeSentinel2IndexConnector.__new__(GeeSentinel2IndexConnector)
+    monkeypatch.setattr(conn, "_ee_client", lambda: FakeEE, raising=False)
+    monkeypatch.setattr(conn, "_ensure_init", lambda: None, raising=False)
+    for band in ("NDVI", "NDWI"):
+        conn._ee_reduce_region(band=band, collection="c", bbox=[0, 0, 1, 1],
+                               time_from="2026-11-01", time_to="2026-11-02")
+
+    # NDVI = (NIR B8 - Red B4); McFeeters NDWI = (Green B3 - NIR B8).
+    assert calls == [["B8", "B4"], ["B3", "B8"]]

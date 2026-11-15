@@ -22,6 +22,7 @@ Deep technical analysis of all data sources for the Space Mission Data & AI Plat
 | 14 | [References & Access Prerequisites](./14-references.md) | Access points + auth requirements |
 | 15 | [Data Analysis Readiness Implementation Plan](./15-data-analysis-readiness-implementation-plan.md) | Prioritized work packages to make populated data analytically trustworthy |
 | 16 | [Live Readiness and Fire Contract](./16-live-readiness-and-fire-contract.md) | WP0 snapshot operation and WP1/WP6 fire mapping, coverage, and release evidence |
+| — | [Source Field Guides](./source-guides/README.md) | Per-source provenance, collection method, access, raw vs stored format, field dictionaries, how to read, known issues (start here if new to geospatial/space data) |
 
 The [generated live snapshot](./live-readiness-snapshot.json) records observed
 state separately from the historical Phase 5 catalog.

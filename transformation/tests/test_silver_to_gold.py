@@ -173,3 +173,72 @@ def test_gold_aoi_validation_uncorroborated_when_no_evidence():
     gold = gold_aoi_validation([_FIRE_AOI], [], [])
     assert gold[0]["corroborated"] is False
     assert gold[0]["evidence_days"] == 0
+
+
+def test_fire_attribution_assigns_region_by_envelope_including_unmatched():
+    from transformation.batch.gold_lakehouse import load_aoi_reference
+    from transformation.batch.silver_to_gold import fire_aoi_attribution
+
+    aois = load_aoi_reference()
+    fires = [
+        {"fire_key": "pb", "event_ts": "2026-11-01T08:00:00Z", "latitude": 30.5, "longitude": 75.5},
+        {"fire_key": "in-gap", "event_ts": "2026-11-01T08:00:00Z", "latitude": 22.0, "longitude": 80.0},
+        {"fire_key": "uae", "event_ts": "2026-11-01T08:00:00Z", "latitude": 25.0, "longitude": 55.2},
+        {"fire_key": "africa", "event_ts": "2026-11-01T08:00:00Z", "latitude": 5.0, "longitude": 35.0},
+    ]
+    out = {r["fire_key"]: r for r in fire_aoi_attribution(fires, aois)}
+    assert (out["pb"]["region"], out["pb"]["aoi_keys"]) == ("INDIA", ["IN-PB-HR"])
+    assert (out["in-gap"]["region"], out["in-gap"]["match_status"]) == ("INDIA", "unmatched")
+    assert out["uae"]["region"] == "UAE-GULF"
+    assert out["africa"]["region"] is None
+
+
+def test_aoi_seed_assigns_every_footprint_a_region():
+    from collections import Counter
+
+    from transformation.batch.gold_lakehouse import load_aoi_reference
+
+    regions = Counter(a["region"] for a in load_aoi_reference())
+    assert regions == {"UAE-GULF": 10, "INDIA": 6, "US-LEGACY": 1}
+
+
+def _maritime(dataset, aoi, day, flag, value, vessels, ingest="2026-11-14T00:00:00Z"):
+    measure = {"detections": value} if dataset == "sar" else {"hours": value}
+    return {"dataset": dataset, "aoi_id": aoi, "date": day, "flag": flag,
+            "vessel_count": vessels, "_ingest_ts": ingest, **measure}
+
+
+def test_silver_maritime_latest_pull_wins_and_flags_unmatched():
+    from transformation.batch.bronze_to_silver import silver_maritime_activity
+
+    result = silver_maritime_activity([
+        _maritime("presence", "AOI-GULF", "2026-11-01", "SAU", 10.0, 2, "2026-11-13T00:00:00Z"),
+        _maritime("presence", "AOI-GULF", "2026-11-01", "SAU", 12.0, 3, "2026-11-14T00:00:00Z"),
+        _maritime("sar", "AOI-GULF", "2026-11-01", None, 7, 1),
+        _maritime("tracks", "AOI-GULF", "2026-11-01", "SAU", 1.0, 1),
+    ])
+    rows = {(r["dataset"], r["flag"]): r for r in result.rows}
+    assert rows[("presence", "SAU")]["hours"] == 12.0
+    assert rows[("sar", None)]["ais_matched"] is False
+    assert result.quarantine[0]["_reasons"] == ["unknown:dataset"]
+
+
+def test_gold_maritime_zero_only_where_published_else_not_published():
+    from transformation.batch.bronze_to_silver import silver_maritime_activity
+    from transformation.batch.silver_to_gold import gold_maritime_activity
+
+    silver = silver_maritime_activity([
+        _maritime("presence", "AOI-GULF", "2026-11-01", "SAU", 10.0, 2),
+        _maritime("presence", "AOI-GULF", "2026-11-03", "SAU", 8.0, 1),
+        _maritime("fishing_effort", "AOI-GULF", "2026-11-01", "IRN", 5.0, 1),
+        _maritime("sar", "AOI-GULF", "2026-11-01", None, 6, 2),
+        _maritime("sar", "AOI-GULF", "2026-11-01", "SAU", 2, 2),
+    ]).rows
+    rows = {r["date_key"]: r for r in gold_maritime_activity(silver)}
+
+    assert sorted(rows) == ["2026-11-01", "2026-11-02", "2026-11-03"]
+    d1, d2, d3 = rows["2026-11-01"], rows["2026-11-02"], rows["2026-11-03"]
+    assert (d1["sar_detections"], d1["sar_unmatched_detections"], d1["sar_dark_fraction"]) == (8, 6, 0.75)
+    assert (d2["presence_hours"], d2["presence_status"]) == (0.0, "measured")
+    assert (d3["fishing_hours"], d3["fishing_status"]) == (None, "not_published")
+    assert (d3["sar_detections"], d3["sar_status"]) == (None, "not_published")

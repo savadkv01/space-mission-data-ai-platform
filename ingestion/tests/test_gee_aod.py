@@ -52,3 +52,40 @@ def test_aod_rejects_unknown_sensor():
     conn = GeeAodConnector(stats_fn=_canned_stats)
     with pytest.raises(ValueError):
         conn.ingest(sensor="SEVIRI", aoi_id="AOI-DESERT")
+
+
+def test_maiac_qa_mask_keeps_only_clear_best_quality_pixels():
+    from ingestion.api.gee_aod import GeeAodConnector
+
+    class Px:
+        def __init__(self, v):
+            self.v = v
+
+        def bitwiseAnd(self, m):
+            return Px(self.v & m)
+
+        def rightShift(self, n):
+            return Px(self.v >> n)
+
+        def eq(self, x):
+            return Px(int(self.v == x))
+
+        def And(self, other):
+            return Px(int(bool(self.v) and bool(other.v)))
+
+    def ok(qa):
+        return GeeAodConnector.maiac_qa_ok(None, Px(qa)).v
+
+    assert ok(0b001) == 1                       # clear, best quality
+    assert ok(0b011) == 0                       # cloudy
+    assert ok(0b001 | (5 << 8)) == 0            # clear flag but "no retrieval"
+    assert ok(0b001 | (2 << 13)) == 1           # dust aerosol model is still kept
+
+
+def test_aod_records_are_stamped_with_qa_mask():
+    from ingestion.api.gee_aod import GeeAodConnector
+
+    stats = {"mean": 0.5, "min": 0.1, "max": 0.9, "stDev": 0.1, "sampleCount": 9, "noDataCount": 1}
+    conn = GeeAodConnector(stats_fn=lambda **_: stats)
+    records, _ = conn.fetch_raw(aoi_id="IN-THAR", datetime_range="2026-11-01/2026-11-01")
+    assert records[0]["qa_mask"] == GeeAodConnector.QA_MASK

@@ -53,6 +53,28 @@ def count_parquet_rows(s3_glob: str) -> int:
         con.close()
 
 
+def stream_window_anomaly_summary(s3_glob: str) -> dict[str, int]:
+    """Totals for the windowed streaming sink (``samples`` / ``anomaly_samples``).
+
+    ``mixed_windows`` counts windows whose anomaly count is neither 0 nor equal to
+    ``samples``; with an all-anomalous wave followed by an all-nominal wave far
+    enough apart, every flushed window must be pure. Raises if unreadable, so a
+    missing sink cannot masquerade as "no anomalies".
+    """
+    con = _duckdb_connection()
+    try:
+        row = con.execute(
+            "select count(*), coalesce(sum(samples), 0), coalesce(sum(anomaly_samples), 0), "
+            "coalesce(sum(case when anomaly_samples not in (0, samples) then 1 else 0 end), 0) "
+            f"from read_parquet('{s3_glob}')"
+        ).fetchone()
+    finally:
+        con.close()
+    windows, samples, anomalies, mixed = (int(v) for v in row)
+    return {"windows": windows, "samples": samples, "anomaly_samples": anomalies,
+            "mixed_windows": mixed}
+
+
 def count_duckdb_table_rows(db_path: str, qualified_table: str) -> int:
     """Row count for a table/view in a local DuckDB file, e.g. the serving
     warehouse (``serving.serving_wildfire_daily``). Read-only, non-destructive."""

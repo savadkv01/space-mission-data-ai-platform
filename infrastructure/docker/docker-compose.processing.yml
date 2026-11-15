@@ -144,6 +144,11 @@ services:
         airflow standalone
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      # Bound scheduler fan-out for the 1.5 GiB Airflow container on laptop runs.
+      AIRFLOW__CORE__PARALLELISM: "2"
+      AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG: "2"
+      AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG: "1"
+      AIRFLOW__SCHEDULER__PARSING_PROCESSES: "1"
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?options=-csearch_path%3Dairflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "false"

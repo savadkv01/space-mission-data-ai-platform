@@ -8,29 +8,36 @@
 
 CREATE SCHEMA IF NOT EXISTS serving_agg;
 
--- Platform-wide daily KPI rollup (executive dashboard reads this single table).
+-- Daily KPI rollup per analysis region (executive dashboard). Regions are never
+-- summed together; vessel identity records have no position -> region 'GLOBAL'.
 CREATE OR REPLACE TABLE serving_agg.mv_kpi_platform_daily AS
 WITH fire AS (
-    SELECT date_key,
+    SELECT date_key, region,
            SUM(detections)          AS fire_detections,
            MAX(max_frp)             AS peak_frp,
            COUNT(DISTINCT aoi_key)  AS fire_aois
-    FROM serving.serving_wildfire_daily GROUP BY date_key
+    FROM serving.serving_wildfire_daily GROUP BY date_key, region
 ),
 flood AS (
-    SELECT date_key,
+    SELECT date_key, region,
            SUM(CASE WHEN flood_flag THEN 1 ELSE 0 END) AS flood_aoi_days,
            COUNT(DISTINCT aoi_key)                     AS flood_aois
-    FROM serving.serving_flood_daily GROUP BY date_key
+    FROM serving.serving_flood_daily GROUP BY date_key, region
 ),
 vessel AS (
-    SELECT date_key,
+    SELECT date_key, 'GLOBAL' AS region,
            COUNT(*)                                       AS vessel_days,
            SUM(CASE WHEN suspicious_flag THEN 1 ELSE 0 END) AS suspicious_vessels
     FROM serving.serving_vessel_activity GROUP BY date_key
+),
+spine AS (
+    SELECT date_key, region FROM fire
+    UNION SELECT date_key, region FROM flood
+    UNION SELECT date_key, region FROM vessel
 )
 SELECT
-    COALESCE(fire.date_key, flood.date_key, vessel.date_key) AS date_key,
+    s.date_key,
+    COALESCE(s.region, 'UNASSIGNED')       AS region,
     COALESCE(fire.fire_detections, 0)      AS fire_detections,
     fire.peak_frp,
     COALESCE(fire.fire_aois, 0)            AS fire_aois,
@@ -38,9 +45,10 @@ SELECT
     COALESCE(flood.flood_aois, 0)          AS flood_aois,
     COALESCE(vessel.vessel_days, 0)        AS vessel_days,
     COALESCE(vessel.suspicious_vessels, 0) AS suspicious_vessels
-FROM fire
-FULL OUTER JOIN flood  ON fire.date_key = flood.date_key
-FULL OUTER JOIN vessel ON COALESCE(fire.date_key, flood.date_key) = vessel.date_key;
+FROM spine s
+LEFT JOIN fire   ON fire.date_key   = s.date_key AND fire.region   IS NOT DISTINCT FROM s.region
+LEFT JOIN flood  ON flood.date_key  = s.date_key AND flood.region  IS NOT DISTINCT FROM s.region
+LEFT JOIN vessel ON vessel.date_key = s.date_key AND vessel.region = s.region;
 
 -- Catalog-quality rollup (data-steward dashboard).
 CREATE OR REPLACE TABLE serving_agg.mv_catalog_quality AS

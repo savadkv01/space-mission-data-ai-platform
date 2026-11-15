@@ -49,3 +49,7 @@ Format: Context · Decision · Consequences. Status: Accepted unless noted.
 ## Cross References
 
 - [15-trade-offs.md](15-trade-offs.md) · [architecture/14-adr.md](../../architecture/14-adr.md)
+
+## ADR-08-08: Area-based GFW 4Wings Reports for Maritime Activity
+
+Status: Accepted (2026-11-15). Context: the original GFW connector searched vessel identities by name (`query="Maria"`), so maritime KPIs described 20 arbitrary vessels worldwide, not Gulf or Indian traffic (SG-05). Decision: add a `GFW_4WINGS` source that posts each maritime AOI polygon to the 4Wings report API with **server-side spatial aggregation**, daily, grouped by flag, for apparent fishing effort, AIS vessel presence, and Sentinel-1 SAR detections. The grain is AOI × day × flag. The same free, non-commercial GFW token is reused, and the identity product stays as a labelled demonstrator. Alt A: grid-cell reports — rejected (≈ 180k rows per 30 days for the Gulf alone; exceeds the laptop budget for no Gold benefit). Alt B: AIS track/position downloads — rejected (not offered by the free API for arbitrary vessels; far larger volume). Alt C: other free AIS feeds (MarineCadastre, Danish Maritime Authority, AISHub) — rejected (national coverage only, or require contributing a receiver). Trade-offs: no cell-level map; GFW publication latency (fishing ~96 h, SAR ~5 days) means recent days are `not_published`; Cloudflare in front of GFW requires an explicit `User-Agent`; data use is restricted to non-commercial purposes.

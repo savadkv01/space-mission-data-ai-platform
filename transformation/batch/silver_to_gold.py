@@ -20,6 +20,7 @@ Gold marts produced here:
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import date, timedelta
 from math import fsum
 from typing import Any
 
@@ -225,6 +226,69 @@ def gold_vessel_activity(silver_vessel: list[dict[str, Any]]) -> list[dict[str, 
     return out
 
 
+# --- 5b. Maritime Activity (GFW 4Wings, AOI-level) ---------------------------
+
+_MARITIME_MEASURE = {"fishing_effort": "hours", "presence": "hours", "sar": "detections"}
+
+
+def gold_maritime_activity(silver_maritime: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Daily maritime activity per AOI (``fact_maritime_activity_daily``).
+
+    GFW 4Wings only returns days with activity, so absence is ambiguous. A
+    dataset is ``0`` on a day only if that AOI's pull returned the dataset at all
+    and the day is on/before the dataset's latest published date across the
+    pull; later days are ``None`` with status ``not_published`` (fishing effort
+    lags ~96 h, SAR ~5 days). ``*_vessels`` sums per-flag distinct vessels, so a
+    vessel is counted once per day (one flag per vessel).
+    """
+    sums: dict[tuple[str, str, str], dict[str, float]] = defaultdict(
+        lambda: {"measure": 0.0, "vessels": 0.0, "unmatched": 0.0})
+    aoi_datasets: set[tuple[str, str]] = set()
+    published: dict[str, str] = {}
+    aoi_first: dict[str, str] = {}
+    for r in silver_maritime:
+        ds, aoi, day = r.get("dataset"), r.get("aoi_id"), r.get("stat_date")
+        if ds not in _MARITIME_MEASURE or not aoi or not day:
+            continue
+        value = r.get(_MARITIME_MEASURE[ds]) or 0.0
+        acc = sums[(aoi, day, ds)]
+        acc["measure"] += float(value)
+        acc["vessels"] += float(r.get("vessel_count") or 0.0)
+        if not r.get("ais_matched"):
+            acc["unmatched"] += float(value)
+        aoi_datasets.add((aoi, ds))
+        published[ds] = max(published.get(ds, day), day)
+        aoi_first[aoi] = min(aoi_first.get(aoi, day), day)
+
+    last_day = max(published.values(), default=None)
+    out = []
+    for aoi, first in sorted(aoi_first.items()):
+        day = date.fromisoformat(first)
+        while last_day and day.isoformat() <= last_day:
+            key = day.isoformat()
+            row: dict[str, Any] = {"aoi_key": aoi, "date_key": key}
+            for ds, prefix in (("fishing_effort", "fishing"), ("presence", "presence"),
+                               ("sar", "sar")):
+                acc = sums.get((aoi, key, ds))
+                measured = (aoi, ds) in aoi_datasets and key <= published.get(ds, "")
+                status = "measured" if acc is not None or measured else "not_published"
+                total = acc["measure"] if acc else (0.0 if measured else None)
+                vessels = acc["vessels"] if acc else (0.0 if measured else None)
+                row[f"{prefix}_status"] = status
+                if ds == "sar":
+                    unmatched = acc["unmatched"] if acc else (0.0 if measured else None)
+                    row["sar_detections"] = total
+                    row["sar_unmatched_detections"] = unmatched
+                    row["sar_dark_fraction"] = (round(unmatched / total, 4)
+                                                if total else None)
+                else:
+                    row[f"{prefix}_hours"] = round(total, 3) if total is not None else None
+                    row[f"{prefix}_vessels"] = vessels
+            out.append(row)
+            day += timedelta(days=1)
+    return out
+
+
 # --- 6. Catalog Quality Analytics ------------------------------------------
 
 def gold_scene_catalog(silver_scene: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -262,9 +326,43 @@ def gold_scene_catalog(silver_scene: list[dict[str, Any]]) -> list[dict[str, Any
 
 # --- 7. Wildfire per-AOI Analytics -----------------------------------------
 
+def region_envelopes(aois: list[dict[str, Any]]) -> dict[str, tuple[float, float, float, float]]:
+    """Union ``(min_lon, min_lat, max_lon, max_lat)`` of each region's AOI bboxes."""
+    envelopes: dict[str, tuple[float, float, float, float]] = {}
+    for aoi in aois:
+        region, bbox = aoi.get("region"), aoi.get("bbox")
+        if not region or not bbox or len(bbox) != 4:
+            continue
+        w, s, e, n = (float(v) for v in bbox)
+        if region in envelopes:
+            pw, ps, pe, pn = envelopes[region]
+            w, s, e, n = min(w, pw), min(s, ps), max(e, pe), max(n, pn)
+        envelopes[region] = (w, s, e, n)
+    return envelopes
+
+
+def region_for_point(lat: Any, lon: Any,
+                     envelopes: dict[str, tuple[float, float, float, float]]) -> str | None:
+    """First region (sorted) whose envelope contains the point; ``None`` if outside all."""
+    try:
+        y, x = float(lat), float(lon)
+    except (TypeError, ValueError):
+        return None
+    for region in sorted(envelopes):
+        w, s, e, n = envelopes[region]
+        if w <= x <= e and s <= y <= n:
+            return region
+    return None
+
+
 def fire_aoi_attribution(silver_fire: list[dict[str, Any]],
                          aois: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Account for every detection once, retaining all overlapping AOI matches."""
+    """Account for every detection once, retaining all overlapping AOI matches.
+
+    ``region`` places every detection (matched or not) in an analysis region by
+    its regional envelope, so FIRMS freshness can be judged per region.
+    """
+    envelopes = region_envelopes(aois)
     out = []
     for r in silver_fire:
         day = _day(r.get("event_ts"))
@@ -278,6 +376,7 @@ def fire_aoi_attribution(silver_fire: list[dict[str, Any]],
             "match_count": len(keys) if day else 0,
             "match_status": status,
             "match_method": "wgs84_point_in_polygon",
+            "region": region_for_point(r.get("latitude"), r.get("longitude"), envelopes),
             "latitude": r.get("latitude"),
             "longitude": r.get("longitude"),
             "frp": r.get("frp"),

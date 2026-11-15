@@ -94,6 +94,50 @@ def aqi_category(aqi: int | None) -> str | None:
     return "Hazardous"
 
 
+# --- Region-specific AQI standards -------------------------------------------
+#: The legacy EPA helpers above are labelled ``US_EPA_PRE2024`` (older PM2.5 bands,
+#: no truncation; see V03). INDIA uses the CPCB National AQI (NAQI, 2014)
+#: categories. NAQI bands are contiguous here (upper bound of one band = lower
+#: bound of the next) so there are no concentration gaps; the open-ended
+#: "Severe" band is interpolated to 500 at PM2.5 500 / PM10 600 µg/m³, a
+#: platform assumption pending domain approval.
+AQI_STANDARD_DEFAULT = "US_EPA_PRE2024"
+AQI_STANDARD_BY_REGION = {"INDIA": "IN_CPCB_NAQI_2014"}
+
+_NAQI_PM25 = [
+    (0.0, 30.0, 0, 50), (30.0, 60.0, 50, 100), (60.0, 90.0, 100, 200),
+    (90.0, 120.0, 200, 300), (120.0, 250.0, 300, 400), (250.0, 500.0, 400, 500),
+]
+_NAQI_PM10 = [
+    (0.0, 50.0, 0, 50), (50.0, 100.0, 50, 100), (100.0, 250.0, 100, 200),
+    (250.0, 350.0, 200, 300), (350.0, 430.0, 300, 400), (430.0, 600.0, 400, 500),
+]
+
+
+def naqi_category(aqi: int | None) -> str | None:
+    """CPCB NAQI category label."""
+    if aqi is None:
+        return None
+    for ceiling, label in ((50, "Good"), (100, "Satisfactory"), (200, "Moderate"),
+                           (300, "Poor"), (400, "Very Poor")):
+        if aqi <= ceiling:
+            return label
+    return "Severe"
+
+
+def aqi_for_standard(standard: str, pm25_mean: float | None,
+                     pm10_mean: float | None) -> tuple[int | None, int | None, str | None]:
+    """``(aqi_pm25, aqi_pm10, band)`` under ``standard``; band uses the worst sub-index."""
+    if standard == "IN_CPCB_NAQI_2014":
+        a25 = _aqi_from_breakpoints(pm25_mean, _NAQI_PM25)
+        a10 = _aqi_from_breakpoints(pm10_mean, _NAQI_PM10)
+        overall = max([a for a in (a25, a10) if a is not None], default=None)
+        return a25, a10, naqi_category(overall)
+    a25, a10 = aqi_pm25(pm25_mean), aqi_pm10(pm10_mean)
+    overall = max([a for a in (a25, a10) if a is not None], default=None)
+    return a25, a10, aqi_category(overall)
+
+
 def air_quality_exceedance(pm25_mean: float | None, pm10_mean: float | None) -> bool:
     """``True`` when a daily pollutant mean exceeds its WHO 2021 guideline."""
     return bool(
@@ -228,13 +272,16 @@ def _attribute_index(index_rows: list[dict[str, Any]], aois: list[dict[str, Any]
 
 def gold_air_quality_daily(silver_air_quality: list[dict[str, Any]],
                            silver_atmos_column: list[dict[str, Any]] | None = None,
+                           aoi_regions: dict[str, str | None] | None = None,
                            ) -> list[dict[str, Any]]:
     """Daily air-quality KPIs per AOI (``fact_air_quality_daily``).
 
     Surface PM/pollutants come from AOI-tagged OpenAQ rows; the TROPOMI column
     means are joined in on ``aoi_id`` + ``stat_date``. AQI is computed only where
-    at least one station contributed (``station_count`` >= 1).
+    at least one station contributed (``station_count`` >= 1), under the AOI
+    region's standard (``aqi_standard``; ``AQI_STANDARD_BY_REGION``).
     """
+    aoi_regions = aoi_regions or {}
     surface: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for r in silver_air_quality:
         aoi = r.get("aoi_id")
@@ -278,9 +325,11 @@ def gold_air_quality_daily(silver_air_quality: list[dict[str, Any]],
         pm25_mean = _mean(pm25)
         pm10_mean = _mean(pm10)
         station_count = len(stations)
-        aqi25 = aqi_pm25(pm25_mean) if station_count >= 1 else None
-        aqi10 = aqi_pm10(pm10_mean) if station_count >= 1 else None
-        overall = max([a for a in (aqi25, aqi10) if a is not None], default=None)
+        standard = AQI_STANDARD_BY_REGION.get(aoi_regions.get(aoi), AQI_STANDARD_DEFAULT)
+        if station_count >= 1:
+            aqi25, aqi10, band = aqi_for_standard(standard, pm25_mean, pm10_mean)
+        else:
+            aqi25 = aqi10 = band = None
 
         out.append({
             "aoi_key": aoi,
@@ -297,7 +346,8 @@ def gold_air_quality_daily(silver_air_quality: list[dict[str, Any]],
             "column_valid_fraction": _mean(valid_fracs),
             "aqi_pm25": aqi25,
             "aqi_pm10": aqi10,
-            "aqi_band": aqi_category(overall),
+            "aqi_band": band,
+            "aqi_standard": standard,
             "exceedance_flag": air_quality_exceedance(pm25_mean, pm10_mean),
         })
     return out
@@ -310,16 +360,19 @@ def gold_air_quality_daily(silver_air_quality: list[dict[str, Any]],
 def gold_dust_event_daily(silver_aerosol: list[dict[str, Any]],
                           silver_atmos_column: list[dict[str, Any]] | None = None,
                           wind_by_aoi_day: dict[tuple[str, str], dict[str, float]] | None = None,
+                          aoi_regions: dict[str, str | None] | None = None,
                           ) -> list[dict[str, Any]]:
     """Daily dust KPIs per AOI (``fact_dust_event_daily``).
 
     AOD comes from ``obs_aerosol``; the UV aerosol index is taken from the aerosol
     row when present, otherwise denormalized from the TROPOMI ``AER_AI`` column.
-    ``corridor_aod_max`` is the strongest AOD over the *other* AOIs on the same
-    day — an upwind source signal — and ``wind_*`` context is joined from NASA
-    POWER when supplied (nullable otherwise).
+    ``corridor_aod_max`` is the strongest AOD over the *other* AOIs of the same
+    analysis region on the same day — an upwind source signal that never crosses
+    regions — and ``wind_*`` context is joined from NASA POWER when supplied
+    (nullable otherwise).
     """
     wind_by_aoi_day = wind_by_aoi_day or {}
+    aoi_regions = aoi_regions or {}
 
     aer: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for r in silver_aerosol:
@@ -355,8 +408,10 @@ def gold_dust_event_daily(silver_aerosol: list[dict[str, Any]],
         uv_mean = _mean(uv_from_aer) if uv_from_aer else _mean(aer_ai.get((aoi, day), []))
         valid = [r["valid_fraction"] for r in rows if r.get("valid_fraction") is not None]
 
-        # corridor = strongest AOD over OTHER AOIs the same day.
-        others = [v for a, v in day_aod_by_aoi.get(day, {}).items() if a != aoi]
+        # corridor = strongest AOD over OTHER AOIs of the same region the same day.
+        region = aoi_regions.get(aoi)
+        others = [v for a, v in day_aod_by_aoi.get(day, {}).items()
+                  if a != aoi and aoi_regions.get(a) == region]
         corridor = round(max(others), 6) if others else None
         wind = wind_by_aoi_day.get((aoi, day), {})
         wind_speed = wind.get("wind_speed_mean")

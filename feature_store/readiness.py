@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import yaml
 
@@ -22,9 +22,12 @@ class FeatureReadiness:
     publication_sla_minutes: int | None
 
 
-def load_readiness(path: Path | None = None) -> dict[str, FeatureReadiness]:
+def _load_manifest(path: Path | None = None) -> dict[str, Any]:
     manifest_path = path or Path(__file__).with_name("readiness.yaml")
-    manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    return yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+
+
+def _parse_readiness(manifest: dict[str, Any]) -> dict[str, FeatureReadiness]:
     entries: dict[str, FeatureReadiness] = {}
     for raw in manifest["features"]:
         status = raw["status"]
@@ -50,7 +53,13 @@ def load_readiness(path: Path | None = None) -> dict[str, FeatureReadiness]:
     return entries
 
 
-FEATURE_READINESS = load_readiness()
+def load_readiness(path: Path | None = None) -> dict[str, FeatureReadiness]:
+    return _parse_readiness(_load_manifest(path))
+
+
+_READINESS_MANIFEST = _load_manifest()
+READINESS_AS_OF = str(_READINESS_MANIFEST["as_of"])
+FEATURE_READINESS = _parse_readiness(_READINESS_MANIFEST)
 
 
 def may_materialize(status: str, *, allow_demo: bool, allow_restricted: bool) -> bool:

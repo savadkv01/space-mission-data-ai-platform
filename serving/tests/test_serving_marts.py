@@ -47,6 +47,32 @@ def test_wildfire_missing_dim_and_frp_is_safe():
     assert r["aoi_name"] is None
     assert r["severity"] == "unknown"
     assert r["ems_corroborated"] is False
+    assert r["publication_status"] == "blocked"
+
+
+def test_wildfire_freshness_current_stale_and_empty():
+    from datetime import datetime, timezone
+
+    now = datetime(2026, 11, 1, 20, 0, tzinfo=timezone.utc)
+    current = sm.wildfire_freshness([{"event_ts": "2026-11-01T15:00:00Z"}], now)
+    stale = sm.wildfire_freshness([{"event_ts": "2026-10-31T14:20:00+00:00"}], now)
+    empty = sm.wildfire_freshness([], now)
+
+    assert (current["freshness_status"], current["publication_status"]) == ("current", "exploratory")
+    assert current["observation_age_hours"] == 5.0
+    assert (stale["freshness_status"], stale["publication_status"]) == ("stale", "blocked")
+    assert (empty["freshness_status"], empty["publication_status"]) == ("no_observations", "blocked")
+
+
+def test_wildfire_rows_carry_blocked_status_when_firms_is_stale():
+    from datetime import datetime, timezone
+
+    gate = sm.wildfire_freshness([{"event_ts": "2026-10-31T14:20:00Z"}],
+                                 datetime(2026, 11, 14, tzinfo=timezone.utc))
+    r = sm.serve_wildfire_daily([{"aoi_key": "A", "date_key": "2026-10-31", "detections": 4}],
+                                freshness=gate)[0]
+    assert (r["freshness_status"], r["publication_status"]) == ("stale", "blocked")
+    assert r["latest_observation_ts"] == "2026-10-31T14:20:00+00:00"
 
 
 def test_flood_flag_and_corroboration():
@@ -76,6 +102,8 @@ def test_vessel_review_priority_from_suspicious():
     by_key = {r["vessel_key"]: r for r in rows}
     assert by_key["V1"]["review_priority"] == "high"
     assert by_key["V2"]["review_priority"] == "normal"
+    assert {(r["signal_basis"], r["domain_review_status"]) for r in rows} == {
+        ("identity_completeness_heuristic", "pending")}
 
 
 def test_scene_catalog_quality_bands():
@@ -120,6 +148,13 @@ def test_launch_monthly_passthrough_marks_sim():
     assert rows[0]["success_rate"] == 0.75
 
 
+def test_empty_launch_mart_is_unavailable_not_zero_launches():
+    assert sm.launch_monthly_availability([])["data_availability"] == "unavailable"
+    assert sm.launch_monthly_availability(
+        [{"provider_key": "P", "month_key": "2026-06", "launches": 0}]
+    )["data_availability"] == "available"
+
+
 def test_weather_impact_storm_day_flag():
     rows = sm.serve_weather_impact([
         {"date_key": "d1", "max_kp_index": 6, "anomaly_rate": 0.3},
@@ -136,3 +171,35 @@ def test_output_is_deterministically_sorted():
     ]
     keys = [r["vessel_key"] for r in sm.serve_vessel_activity(vessels)]
     assert keys == ["V1", "V2"]
+
+
+def test_wildfire_freshness_is_judged_per_region():
+    from datetime import datetime, timezone
+
+    now = datetime(2026, 11, 14, 12, tzinfo=timezone.utc)
+    attribution = [
+        {"event_ts": "2026-11-14T08:00:00Z", "region": "INDIA"},
+        {"event_ts": "2026-10-31T14:20:00Z", "region": "UAE-GULF"},
+    ]
+    gates = {r: sm.wildfire_freshness(attribution, now, region=r)
+             for r in ("INDIA", "UAE-GULF", "US-LEGACY")}
+    aoi_dim = [{"aoi_key": "IN-PB-HR", "region": "INDIA"},
+               {"aoi_key": "AOI-UAE-NAT", "region": "UAE-GULF"}]
+    rows = {r["aoi_key"]: r for r in sm.serve_wildfire_daily(
+        [{"aoi_key": "IN-PB-HR", "date_key": "2026-11-14", "detections": 9},
+         {"aoi_key": "AOI-UAE-NAT", "date_key": "2026-10-31", "detections": 2}],
+        aoi_dim, freshness_by_region=gates)}
+
+    assert (rows["IN-PB-HR"]["region"], rows["IN-PB-HR"]["publication_status"]) == (
+        "INDIA", "exploratory")
+    assert rows["AOI-UAE-NAT"]["publication_status"] == "blocked"
+    assert gates["US-LEGACY"]["freshness_status"] == "no_observations"
+
+
+def test_maritime_activity_enriches_region_and_keeps_unpublished_null():
+    rows = sm.serve_maritime_activity_daily(
+        [{"aoi_key": "IN-MUM", "date_key": "2026-11-12", "fishing_hours": None,
+          "fishing_status": "not_published", "sar_detections": 4.0, "sar_status": "measured"}],
+        [{"aoi_key": "IN-MUM", "aoi_name": "Mumbai metropolitan", "region": "INDIA"}])
+    assert (rows[0]["region"], rows[0]["fishing_hours"], rows[0]["fishing_status"]) == (
+        "INDIA", None, "not_published")

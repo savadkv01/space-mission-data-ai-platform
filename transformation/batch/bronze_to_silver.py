@@ -342,6 +342,74 @@ def silver_vessel(records: list[dict[str, Any]]) -> SilverResult:
                   key_fields=["vessel_key"])
 
 
+# --- Maritime activity (GFW 4Wings, AOI x day x flag) -------------------------
+
+MARITIME_DATASETS = {"fishing_effort", "presence", "sar"}
+
+
+def clean_maritime_activity(record: dict[str, Any]) -> CleanResult:
+    """Conform a spatially aggregated GFW 4Wings row to ``obs_maritime_activity``.
+
+    ``flag`` is ``None`` when GFW could not match the activity to an AIS flag;
+    for ``sar`` that marks a radar detection with no AIS broadcast.
+    """
+    dataset = _clean_str(record.get("dataset"))
+    aoi_id = _clean_str(record.get("aoi_id"))
+    stat_date = _clean_str(record.get("date"))
+    hours = to_float(record.get("hours"))
+    detections = to_float(record.get("detections"))
+    vessels = to_float(record.get("vessel_count"))
+
+    reasons: list[str] = []
+    if dataset not in MARITIME_DATASETS:
+        reasons.append("unknown:dataset")
+    if aoi_id is None:
+        reasons.append("null:aoi_id")
+    if stat_date is None or normalize_timestamp(stat_date) is None:
+        reasons.append("timestamp:unparseable")
+    measure = detections if dataset == "sar" else hours
+    if measure is None:
+        reasons.append("null:measure")
+    elif measure < 0 or (vessels is not None and vessels < 0):
+        reasons.append("range:negative")
+    if reasons:
+        return CleanResult.reject(reasons)
+
+    flag = _clean_str(record.get("flag"))
+    stat_date = stat_date[:10]
+    return CleanResult.keep({
+        "activity_key": stable_key(dataset, aoi_id, stat_date, flag or "NONE"),
+        "dataset": dataset,
+        "aoi_id": aoi_id,
+        "stat_date": stat_date,
+        "event_ts": f"{stat_date}T00:00:00+00:00",
+        "flag": flag,
+        "ais_matched": flag is not None,
+        "hours": hours,
+        "detections": detections,
+        "vessel_count": vessels,
+        "gfw_dataset_version": _clean_str(record.get("gfw_dataset_version")),
+        "source": _clean_str(record.get("_source")) or "GFW_4WINGS",
+        "_ingest_id": record.get("_ingest_id"),
+        "_batch_id": record.get("_batch_id"),
+        "_ingest_ts": record.get("_ingest_ts"),
+    })
+
+
+def silver_maritime_activity(records: list[dict[str, Any]]) -> SilverResult:
+    """GFW revises recent days, so the most recent pull wins per natural key."""
+    kept: list[dict[str, Any]] = []
+    quarantine: list[dict[str, Any]] = []
+    for rec in records:
+        result = clean_maritime_activity(rec)
+        if result.rejected or result.record is None:
+            quarantine.append(_quarantine(rec, result.reasons, "silver_maritime_activity"))
+        else:
+            kept.append(result.record)
+    rows = deduplicate(kept, key_fields=["activity_key"], order_field="_ingest_ts")
+    return SilverResult(entity="silver_maritime_activity", rows=rows, quarantine=quarantine)
+
+
 # --- Scene metadata catalog (Sentinel Hub / Earthdata) ----------------------
 
 _SCENE_META_FIELDS = ("collection", "platform", "bbox", "geo_key", "cloud_cover")
@@ -451,6 +519,10 @@ def clean_index(record: dict[str, Any]) -> CleanResult:
     bbox_str, geo_key_val = _scene_geo(record)
 
     reasons: list[str] = []
+    if (_clean_str(record.get("collection")) == "COPERNICUS/S2_SR_HARMONIZED"
+            and to_float(record.get("formula_version")) != 2):
+        # GEE index records before formula v2 published the negated index.
+        reasons.append("superseded:gee_index_sign_v1")
     if ts is None:
         reasons.append("timestamp:unparseable")
     if index_name is None:
@@ -563,6 +635,7 @@ def clean_ems_aoi(record: dict[str, Any]) -> CleanResult:
         "aoi_key": aoi_id,
         "aoi_name": _clean_str(props.get("name") or props.get("aoiName")) or aoi_id,
         "event_type": _ems_event_type(props),
+        "region": _clean_str(props.get("region")),
         "event_date": event_date,
         "event_ts": event_date,
         "bbox": bbox,
@@ -612,7 +685,7 @@ def _silver_spark_schema(entity: str):  # pragma: no cover - needs Spark
     Simulation entities keep schema inference (they are fully typed).
     """
     from pyspark.sql.types import (
-        DoubleType, IntegerType, LongType, StringType, StructField, StructType,
+        BooleanType, DoubleType, IntegerType, LongType, StringType, StructField, StructType,
     )
 
     def _s(name: str) -> StructField:
@@ -650,6 +723,13 @@ def _silver_spark_schema(entity: str):  # pragma: no cover - needs Spark
             _d("stddev"), _d("valid_pixel_fraction"), _s("collection"),
             _s("source"), _s("_ingest_id"), _s("_batch_id"),
         ]),
+        "maritime": StructType([
+            _s("activity_key"), _s("dataset"), _s("aoi_id"), _s("stat_date"),
+            _s("event_ts"), _s("flag"), StructField("ais_matched", BooleanType(), True),
+            _d("hours"), _d("detections"), _d("vessel_count"),
+            _s("gfw_dataset_version"), _s("source"),
+            _s("_ingest_id"), _s("_batch_id"), _s("_ingest_ts"),
+        ]),
     }
     _ = LongType  # reserved for future numeric contracts
     return schemas.get(entity)
@@ -674,6 +754,8 @@ def run_spark(entity: str) -> None:  # pragma: no cover - needs Spark/MinIO
         "space_weather": (["space_weather", "SWPC"], silver_space_weather),
         "fire": (["FIRMS"], silver_fire),
         "vessel": (["GFW"], silver_vessel),
+        # Area-based maritime activity (GFW 4Wings) per AOI x day x flag.
+        "maritime": (["GFW_4WINGS"], silver_maritime_activity),
         # Imagery metadata from every source unions into one obs_scene entity.
         "scene": (["SENTINELHUB", "LANDSAT", "EARTHDATA"], silver_scene),
         # Spectral index statistics (NDVI/NDWI/NBR) per AOI/date.

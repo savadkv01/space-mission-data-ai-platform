@@ -1,8 +1,17 @@
 -- Serving data product: Vegetation Health. Mirrors
 -- serving.marts.climate.climate_products.serve_vegetation_health_daily. Wide,
 -- business-named, and pre-joined to dim_aoi so BI/API read with no runtime joins.
+-- A null trend (< 2 NDVI observations) is 'unknown', not 'flat'. crop_stress_flag
+-- (NDVI < 0.3 AND declining) is null unless evidence decides it (crop_stress_status).
 with veg as (
-    select * from {{ source('gold', 'fact_vegetation_health_daily') }}
+    select
+        *,
+        {{ evidence_status(
+            'crop_stress_flag',
+            'ndvi_mean >= 0.3 or ndvi_trend_30d >= 0',
+            'ndvi_mean is not null or ndvi_trend_30d is not null'
+        ) }} as crop_stress_status
+    from {{ source('gold', 'fact_vegetation_health_daily') }}
 ),
 aoi as (
     select * from {{ ref('dim_aoi') }}
@@ -10,13 +19,14 @@ aoi as (
 select
     v.aoi_key,
     a.aoi_name,
+    a.region,
     v.date_key,
     v.ndvi_mean,
     v.ndvi_max,
     v.evi_mean,
     v.ndvi_trend_30d,
     case
-        when v.ndvi_trend_30d is null then 'flat'
+        when v.ndvi_trend_30d is null then 'unknown'
         when v.ndvi_trend_30d > 0     then 'improving'
         when v.ndvi_trend_30d < 0     then 'declining'
         else 'flat'
@@ -31,7 +41,8 @@ select
         when 4 then 'Dense'
         else 'unknown'
     end                                                   as ndvi_health_label,
-    v.crop_stress_flag,
+    {{ decided_flag('v.crop_stress_status') }}            as crop_stress_flag,
+    v.crop_stress_status,
     a.area_km2
 from veg v
 left join aoi a on v.aoi_key = a.aoi_key

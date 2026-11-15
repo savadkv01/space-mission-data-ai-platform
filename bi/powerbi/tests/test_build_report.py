@@ -81,7 +81,7 @@ def test_all_checked_in_metrics_and_chart_types_translate(tmp_path: Path) -> Non
     }
     columns["ReportDate"] = [("Date", "DATE"), ("Month", "VARCHAR"), ("Day", "INTEGER")]
     model, measures = builder.make_model(source, columns, tmp_path / "data")
-    assert len(model["model"]["tables"]) == 16
+    assert len(model["model"]["tables"]) == 17
     names = [measure["name"] for table in model["model"]["tables"] for measure in table.get("measures", [])]
     assert len(names) == len(set(names)), "Desktop requires model-wide unique measure names"
     coverage = builder.make_report(source, measures, tmp_path)

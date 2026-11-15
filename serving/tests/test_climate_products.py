@@ -37,7 +37,24 @@ def test_air_quality_missing_dim_is_safe():
         [{"aoi_key": "X", "date_key": "d", "pm25_mean": 5.0}])
     r = rows[0]
     assert r["aoi_name"] is None
-    assert r["exceedance_flag"] is False
+    # PM10 unobserved: a low PM2.5 alone cannot rule out a WHO exceedance.
+    assert r["exceedance_flag"] is None
+    assert r["exceedance_status"] == "inconclusive"
+    assert r["pm_coverage"] == "pm25_only"
+
+
+def test_air_quality_without_surface_pm_is_not_evaluated_not_clean():
+    r = cp.serve_air_quality_daily([{"aoi_key": "X", "date_key": "d",
+                                     "no2_column_mean": 1e-4, "exceedance_flag": False}])[0]
+    assert (r["exceedance_flag"], r["exceedance_status"], r["pm_coverage"]) == (
+        None, "not_evaluated", "none")
+    assert r["aqi_band"] is None
+
+
+def test_air_quality_negative_requires_both_pollutants_observed():
+    r = cp.serve_air_quality_daily([{"aoi_key": "X", "date_key": "d", "pm25_mean": 5.0,
+                                     "pm10_mean": 20.0, "exceedance_flag": False}])[0]
+    assert (r["exceedance_flag"], r["exceedance_status"]) == (False, "negative")
 
 
 # --- Dust Event ------------------------------------------------------------ #
@@ -58,6 +75,30 @@ def test_dust_event_labels_and_flags():
 def test_dust_severity_label_unknown_when_band_missing():
     r = cp.serve_dust_event_daily([{"aoi_key": "A", "date_key": "d"}])[0]
     assert r["dust_severity_label"] == "unknown"
+    assert (r["dust_flag"], r["dust_status"]) == (None, "not_evaluated")
+    assert (r["transport_flag"], r["transport_status"]) == (None, "not_evaluated")
+
+
+def test_dust_missing_uv_index_is_inconclusive_unless_aod_rules_it_out():
+    high_aod = cp.serve_dust_event_daily([{"aoi_key": "A", "date_key": "d", "aod_mean": 0.8,
+                                           "dust_flag": False}])[0]
+    low_aod = cp.serve_dust_event_daily([{"aoi_key": "A", "date_key": "d", "aod_mean": 0.2,
+                                          "dust_flag": False}])[0]
+    assert (high_aod["dust_flag"], high_aod["dust_status"]) == (None, "inconclusive")
+    assert (low_aod["dust_flag"], low_aod["dust_status"]) == (False, "negative")
+
+
+def test_transport_missing_wind_is_inconclusive():
+    r = cp.serve_dust_event_daily([{"aoi_key": "A", "date_key": "d", "corridor_aod_max": 0.9,
+                                    "transport_flag": False}])[0]
+    assert (r["transport_flag"], r["transport_status"]) == (None, "inconclusive")
+
+
+def test_dust_thresholds_match_gold_rule():
+    from transformation.batch import climate_silver_to_gold as gold
+
+    assert cp.DUST_AOD_THRESHOLD == gold.DUST_AOD_THRESHOLD
+    assert cp.DUST_UV_AI_THRESHOLD == gold.DUST_UV_AI_THRESHOLD
 
 
 # --- Climate Indicator ----------------------------------------------------- #
@@ -101,6 +142,24 @@ def test_climate_indicator_cooler_band():
     assert r["lst_anomaly_label"] == "Cooler"
 
 
+def test_climate_without_lst_sst_or_proxy_is_not_a_no_warming_finding():
+    r = cp.serve_climate_indicator_daily([{"aoi_key": "A", "date_key": "d", "ndwi_mean": 0.1,
+                                           "warming_flag": False,
+                                           "desertification_flag": False}])[0]
+    assert (r["warming_flag"], r["warming_status"]) == (None, "not_evaluated")
+    assert (r["desertification_flag"], r["desertification_status"]) == (None, "not_evaluated")
+
+
+def test_climate_warming_negative_requires_lst_and_sst_anomalies():
+    partial, full = cp.serve_climate_indicator_daily([
+        {"aoi_key": "A", "date_key": "d1", "lst_anomaly_c": 0.5, "warming_flag": False},
+        {"aoi_key": "A", "date_key": "d2", "lst_anomaly_c": 0.5, "sst_anomaly_c": 0.2,
+         "warming_flag": False},
+    ])
+    assert (partial["warming_flag"], partial["warming_status"]) == (None, "inconclusive")
+    assert (full["warming_flag"], full["warming_status"]) == (False, "negative")
+
+
 # --- Vegetation Health ----------------------------------------------------- #
 
 def test_vegetation_health_trend_direction_and_bands():
@@ -120,9 +179,33 @@ def test_vegetation_health_trend_direction_and_bands():
     assert by_day["d2"]["crop_stress_flag"] is True
 
 
-def test_vegetation_health_flat_trend_when_missing():
+def test_vegetation_health_unknown_trend_when_missing():
     r = cp.serve_vegetation_health_daily([{"aoi_key": "A", "date_key": "d"}])[0]
+    assert r["ndvi_trend_dir"] == "unknown"
+    assert (r["crop_stress_flag"], r["crop_stress_status"]) == (None, "not_evaluated")
+
+
+def test_vegetation_computed_zero_trend_is_flat():
+    r = cp.serve_vegetation_health_daily([{"aoi_key": "A", "date_key": "d",
+                                           "ndvi_trend_30d": 0.0}])[0]
     assert r["ndvi_trend_dir"] == "flat"
+
+
+def test_crop_stress_low_ndvi_without_trend_is_inconclusive():
+    low, healthy = cp.serve_vegetation_health_daily([
+        {"aoi_key": "A", "date_key": "d1", "ndvi_mean": 0.1, "crop_stress_flag": False},
+        {"aoi_key": "A", "date_key": "d2", "ndvi_mean": 0.6, "crop_stress_flag": False},
+    ])
+    assert (low["crop_stress_flag"], low["crop_stress_status"]) == (None, "inconclusive")
+    assert (healthy["crop_stress_flag"], healthy["crop_stress_status"]) == (False, "negative")
+
+
+def test_crop_stress_threshold_matches_gold_rule():
+    from transformation.batch.climate_silver_to_gold import crop_stress_flag
+
+    t = cp.CROP_STRESS_NDVI_THRESHOLD
+    assert crop_stress_flag(t - 1e-9, -0.01) is True
+    assert crop_stress_flag(t, -0.01) is False
 
 
 # --- Grain + determinism --------------------------------------------------- #

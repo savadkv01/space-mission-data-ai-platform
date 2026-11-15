@@ -1,4 +1,4 @@
-as_of: "2026-10-31"
+as_of: "2026-11-14"
 source_plan: ../docs/source-data-analysis/15-data-analysis-readiness-implementation-plan.md
 features:
   - view: satellite_health_daily
@@ -67,7 +67,7 @@ features:
   - view: air_quality_aoi_daily
     status: blocked
     source: Phase 11b serving_air_quality_daily
-    blocker: "Per-measure completeness and native/canonical O3 units require reconciliation before feature use."
+    blocker: "2026-11-14 refresh: PM2.5/PM10 null rates are 65.2%/77.4% across 181 AOI-days (only 25 have both); latest date is 2026-11-13 and exceeds the 24-hour limit. Native/canonical O3 units also require reconciliation."
     work_package: WP3
     use: not_available
     max_age_hours: 24
@@ -75,21 +75,21 @@ features:
   - view: dust_aoi_daily
     status: blocked
     source: Phase 11b serving_dust_event_daily
-    blocker: "Wind speed and direction are null for all 35 rows; transport features are unsupported."
+    blocker: "2026-11-14 refresh: wind speed/direction are null in 20.2% of 173 AOI-days, above the 10% limit; latest date is 2026-11-11 and exceeds the 24-hour limit."
     work_package: WP4
     use: not_available
     max_age_hours: 24
   - view: climate_indicator_aoi_daily
     status: blocked
     source: Phase 11b serving_climate_indicator_daily
-    blocker: "Climate-indicator source product has no validated rows; WP2 remains open."
+    blocker: "2026-11-14 refresh: 55 AOI-days are present through 2026-11-08, but LST and SST are entirely null and the product exceeds the 24-hour limit; WP2 validation remains open."
     work_package: WP2
     use: not_available
     max_age_hours: 24
   - view: vegetation_health_aoi_daily
     status: blocked
     source: Phase 11b serving_vegetation_health_daily
-    blocker: "Vegetation-health source product has no validated rows; WP2 remains open."
+    blocker: "2026-11-14 refresh: 55 AOI-days contain NDVI and valid-pixel coverage through 2026-11-08, but EVI is unavailable and the product exceeds the 24-hour limit; WP2 lineage/approval remains open."
     work_package: WP2
     use: not_available
     max_age_hours: 24

@@ -178,3 +178,59 @@ def test_landsat_connector_parses_features():
     assert len(envelopes) == 1
     assert envelopes[0]._source == "LANDSAT"
     assert envelopes[0]._event_ts == "2024-01-01T07:00:00Z"
+
+
+def test_firms_header_only_csv_is_a_genuine_zero_detection_response():
+    from ingestion.api.nasa_firms import FirmsConnector
+
+    conn = FirmsConnector(http=FakeHttp(text="latitude,longitude,acq_date,acq_time\n"), map_key="k")
+    assert conn.ingest() == []
+
+
+def test_firms_non_csv_body_fails_instead_of_reading_as_no_fires():
+    import pytest
+
+    from ingestion.api.nasa_firms import FirmsConnector
+
+    conn = FirmsConnector(http=FakeHttp(text="Invalid MAP_KEY."), map_key="k")
+    with pytest.raises(RuntimeError, match="non-CSV response"):
+        conn.ingest()
+
+
+def test_firms_backfill_date_and_cap_are_reported_as_capped_coverage():
+    from ingestion.api.nasa_firms import FirmsConnector
+    from ingestion.batch.ingest_task import run_connector_to_bronze
+
+    csv = "latitude,longitude,acq_date,acq_time\n" + "\n".join(
+        f"30.1,75.2,2026-10-2{d},0{h}00" for d in range(1, 4) for h in range(1, 3))
+    http = FakeHttp(text=csv)
+    calls = []
+    http.get = lambda url, **kw: (calls.append(url), FakeResponse(text=csv))[1]
+
+    class NullWriter:
+        def write_batch(self, *_args):
+            return "key"
+
+    result = run_connector_to_bronze(FirmsConnector(http=http, map_key="k"), writer=NullWriter(),
+                                     area="73.8,29.0,77.4,32.5", days=5, date="2026-10-21",
+                                     max_records=4)
+    assert calls[0].endswith("/73.8,29.0,77.4,32.5/5/2026-10-21")
+    assert result["records"] == 4 and result["coverage"] == "capped"
+    assert "kept 4 most recent of 6" in result["coverage_notes"][0]
+
+
+def test_firms_rejects_day_range_above_api_limit():
+    import pytest
+
+    from ingestion.api.nasa_firms import FirmsConnector
+
+    with pytest.raises(ValueError, match="1..5"):
+        FirmsConnector(http=FakeHttp(text=""), map_key="k").fetch_raw(days=6)
+
+
+def test_power_requests_utc_days_and_stamps_time_standard():
+    payload = {"properties": {"parameter": {"WS2M": {"20261101": 4.0}}}}
+    http = FakeHttp(json_data=payload)
+    records, _ = PowerConnector(http=http).fetch_raw(aoi_id="AOI-DXB")
+    assert http.calls[0][1]["params"]["time-standard"] == "UTC"
+    assert records[0]["time_standard"] == "UTC"

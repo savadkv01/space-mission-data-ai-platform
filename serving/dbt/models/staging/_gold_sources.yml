@@ -18,12 +18,16 @@ sources:
         description: "Daily flood NDWI KPIs per AOI (UC-16)."
       - name: fact_vessel_activity
         description: "Daily vessel activity per vessel (UC-18)."
+      - name: fact_maritime_activity_daily
+        description: "Daily GFW 4Wings maritime activity per AOI (fishing, presence, SAR)."
       - name: fact_scene_catalog
         description: "Per-scene imagery catalog + searchability (UC-25)."
       - name: kpi_eo_daily
         description: "Daily fire-detection KPIs per grid cell (UC-14)."
       - name: kpi_aoi_validation
         description: "EMS ground-truth corroboration per AOI (UC-27)."
+      - name: fire_aoi_attribution
+        description: "Per-detection FIRMS AOI attribution ledger (event-time freshness source)."
       - name: ref_aoi
         description: "Copernicus-EMS AOI footprints (AOI dimension source)."
       # --- Climate / dust / air-quality marts (Phase 9b) ---

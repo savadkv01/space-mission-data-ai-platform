@@ -184,3 +184,25 @@ def test_silver_wind_conforms_power_speed_and_direction():
     reasons = [reason for row in result.quarantine for reason in row["_reasons"]]
     assert "range:wind_direction" in reasons
     assert "range:wind_speed" in reasons
+
+
+def test_silver_aerosol_prefers_qa_masked_record_and_flags_legacy_unmasked():
+    legacy = _bucket(1.9, "AOD", "MODIS_AOD", sensor="MODIS",
+                     collection="MODIS/061/MCD19A2_GRANULES")
+    masked = _bucket(0.6, "AOD", "MODIS_AOD", sensor="MODIS",
+                     collection="MODIS/061/MCD19A2_GRANULES", qa_mask="maiac_clear_bestqa_v1")
+    for order in ([legacy, masked], [masked, legacy]):
+        rows = silver_aerosol(order).rows
+        assert [(r["aod_550nm"], r["qa_mask"], r["quality_flag"]) for r in rows] == [
+            (0.6, "maiac_clear_bestqa_v1", "valid")]
+    only_legacy = silver_aerosol([legacy]).rows[0]
+    assert only_legacy["quality_flag"] == "suspect"
+
+
+def test_silver_wind_prefers_utc_days_over_legacy_local_solar_time():
+    base = {"date": "20261101", "parameter": "WS2M", "aoi_id": "AOI-DXB"}
+    lst = {**base, "value": 3.0}
+    utc = {**base, "value": 4.0, "time_standard": "UTC"}
+    for order in ([lst, utc], [utc, lst]):
+        rows = silver_wind(order).rows
+        assert [(r["value_std"], r["time_standard"]) for r in rows] == [(4.0, "UTC")]

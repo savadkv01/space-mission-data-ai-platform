@@ -180,3 +180,12 @@ def test_silver_ems_aoi_rejects_missing_geometry():
     result = silver_ems_aoi(bad)
     assert not result.rows
     assert "null:geometry" in result.quarantine[0]["_reasons"]
+
+
+def test_silver_index_quarantines_gee_records_before_sign_fix():
+    gee_v1 = {**_stats_bucket("01", -0.39), "collection": "COPERNICUS/S2_SR_HARMONIZED"}
+    gee_v2 = {**_stats_bucket("01", 0.39), "collection": "COPERNICUS/S2_SR_HARMONIZED",
+              "formula_version": 2}
+    result = silver_index([gee_v2, gee_v1, _stats_bucket("02", 0.5)])
+    assert sorted(r["mean"] for r in result.rows) == [0.39, 0.5]
+    assert result.quarantine[0]["_reasons"] == ["superseded:gee_index_sign_v1"]

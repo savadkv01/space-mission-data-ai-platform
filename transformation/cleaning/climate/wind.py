@@ -53,6 +53,8 @@ def clean_power_wind(record: dict[str, Any]) -> CleanResult:
         "unit_std": "m/s" if parameter == "WS2M" else "degree",
         "latitude": to_float(record.get("latitude")),
         "longitude": to_float(record.get("longitude")),
+        # Records before 2026-11-15 used POWER's default Local Solar Time days.
+        "time_standard": record.get("time_standard") or "LST",
         "quality_flag": "valid",
         "source": record.get("_source") or "POWER",
         "_ingest_id": record.get("_ingest_id"),

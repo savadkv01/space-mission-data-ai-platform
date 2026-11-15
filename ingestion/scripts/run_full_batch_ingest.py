@@ -17,7 +17,7 @@ use Google Earth Engine.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from ingestion.batch.ingest_task import run_connector_to_bronze
 from ingestion.config.settings import settings
@@ -63,7 +63,7 @@ def main() -> dict:
     from ingestion.api.nasa_firms import FirmsConnector
     try:
         results["FIRMS"] = run_connector_to_bronze(
-            FirmsConnector(), source="VIIRS_SNPP_NRT", area="30,10,60,40", days=1,
+            FirmsConnector(), source=settings.climate.firms_source, area="30,10,60,40", days=1,
         )
     except Exception as exc:  # noqa: BLE001
         results["FIRMS"] = {"error": str(exc)}
@@ -140,6 +140,12 @@ def main() -> dict:
             )
         except Exception as exc:  # noqa: BLE001
             results[f"MODIS_AOD:{aoi}"] = {"error": str(exc)}
+
+    # --- regional tiers (INDIA): same rolling window, latest FIRMS day ---------
+    from ingestion.scripts.regional_ingest import ingest_region
+    for region in settings.climate.region_sources:
+        results.update(ingest_region(
+            region, date.fromisoformat(recent_start), date.fromisoformat(recent_end)))
 
     return results
 

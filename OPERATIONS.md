@@ -833,12 +833,40 @@ orchestration — this is the manual full-run helper):
 docker exec space-ingest-runner python -m ingestion.scripts.run_full_batch_ingest
 ```
 
-Lands SWPC, CelesTrak, NASA POWER, FIRMS (MENA), GFW, Sentinel-2 scene metadata
-and indices, OpenAQ, TROPOMI, and MODIS/VIIRS AOD to Bronze. The full-run driver
-uses recent rolling UTC windows (including today for OpenAQ) instead of a fixed
-historical sample. Sentinel-2 metadata and indices use the
+Lands SWPC, CelesTrak, NASA POWER, FIRMS (MENA box + INDIA AOI boxes), GFW,
+Sentinel-2 scene metadata and indices, OpenAQ, TROPOMI, and MODIS/VIIRS AOD to
+Bronze for both analysis regions (UAE-GULF and INDIA; see
+[02-aoi-strategy.md](docs/source-data-analysis/climate/02-aoi-strategy.md#analysis-regions)).
+The full-run driver uses recent rolling UTC windows (including today for OpenAQ)
+instead of a fixed historical sample. Sentinel-2 metadata and indices use the
 configured Google Earth Engine service account because the current Sentinel Hub
-account returns `403 Invalid or expired account`.
+account returns `403 Invalid or expired account`. FIRMS uses `FIRMS_SOURCE`
+(default `VIIRS_NOAA20_NRT`; the S-NPP NRT feed ended 2026-11-02). Any request
+truncated by a cap is returned (and logged by the batch DAG) as
+`coverage = capped` with `coverage_notes`.
+
+#### Step 4b — One-off regional backfill (INDIA)
+
+Run once when a region is added (or to fill a gap), from a container that has
+the source credentials (the Airflow container, or `space-ingest-runner`):
+
+```powershell
+# 30 days of all INDIA sources (FIRMS walked in 5-day DATE windows)
+docker exec -w /opt/airflow/repo -e PYTHONPATH=/opt/airflow/repo space-platform-airflow-1 `
+  python -m ingestion.scripts.regional_ingest --region INDIA --days 30
+
+# FIRMS-only gap fill (e.g. after the S-NPP -> NOAA-20 switch), incl. the UAE-GULF envelope
+docker exec -w /opt/airflow/repo -e PYTHONPATH=/opt/airflow/repo space-platform-airflow-1 `
+  python -m ingestion.scripts.regional_ingest --region INDIA --only firms `
+  --start 2026-11-03 --end 2026-11-13 --extra-firms-area uae_gulf_envelope=42,18,57,36
+
+# GFW 4Wings maritime activity only (per region's maritime AOIs; ~seconds)
+docker exec -w /opt/airflow/repo -e PYTHONPATH=/opt/airflow/repo space-platform-airflow-1 `
+  python -m ingestion.scripts.regional_ingest --region UAE-GULF --only gfw --days 30
+```
+
+Do not backfill a second VIIRS satellite over days already covered by another:
+the satellite is part of the Silver fire key, so that would double count.
 
 ### Step 5 — Seed the simulation-track Bronze entities (fresh start / `down -v` only)
 
@@ -1411,6 +1439,7 @@ What is operationally available today, and what each future phase will add to th
 | 09 — Transformation | §11 one-command Bronze→Silver→Gold pipeline (hardened `spark-master` image with dbt baked in); sim + MVP Earth-observation Silver entities; Spark Gold-lakehouse writer materialising all ten marts to `s3://gold` (the serving source, with the Copernicus-EMS AOI seed); Kafka→Silver structured streaming | ✅ Available |
 | 11 — Serving | Serving dbt data products (wildfire/flood/vessel/scene/AOI-validation + platform KPI MV) built from `s3://gold` Parquet via DuckDB+httpfs; `dbt run` + 18 contract tests | ✅ Data products available (FastAPI 🔜) |
 | 8b / 9b / 12b — Climate/dust/air-quality track | §12 full-run recipe incl. climate connectors (OpenAQ, TROPOMI, MODIS/VIIRS AOD) and climate Gold marts/BI dashboards; `preflight_infra_env.py` + `run_full_batch_ingest.py` operator scripts | ✅ Available (TROPOMI/AOD data-availability gaps — see §12) |
+| Regional tier — INDIA (2026-11-14) | §12 Step 4b `regional_ingest.py` backfill / FIRMS gap fill; `region` on every AOI product and rollup; `FIRMS_SOURCE` (NOAA-20). Evidence: [docs/validation/2026-11-14-india-regional-e2e.md](docs/validation/2026-11-14-india-regional-e2e.md) | ✅ Available (flood permanent-water baseline + freshness objective open) |
 | Manual verification | §13 per-stage validation cheat-sheet (Bronze/Kafka/Silver/Gold/streaming/serving/BI), UI + CLI/API methods for each | ✅ Available |
 | Orchestration (`pipelines/`) | §14 Airflow-triggered `platform_batch_pipeline` / `platform_streaming_pipeline` / `platform_master_pipeline` DAGs (no schedule, manual only) + `metadata.*` run/row-level logging tables in PostgreSQL | ✅ Available |
 | Feature Store (13 / 13b) | §15 Feast/PostgreSQL service, 11b climate-product sync, readiness-gated online retrieval, demo/catalog materialization, PIT integration tests, and hourly Airflow trigger | ✅ Available; operational domains remain blocked per the readiness plan |

@@ -7,10 +7,11 @@ cache_timeout: 3600
 schema: null
 sql: |
   select
-      aoi_key, aoi_name, cast(date_key as date) as event_date,
+      aoi_key, aoi_name, region, cast(date_key as date) as event_date,
       lst_c, lst_anomaly_c, sst_c, sst_anomaly_c, ndwi_mean,
       tree_cover_loss_ha, desertification_proxy,
-      lst_anomaly_band, lst_anomaly_label, warming_flag, desertification_flag, area_km2
+      lst_anomaly_band, lst_anomaly_label, warming_flag, desertification_flag,
+      warming_status, desertification_status, area_km2
   from serving.serving_climate_indicator_daily
 params: null
 template_params: null
@@ -46,6 +47,9 @@ columns:
   - column_name: aoi_name
     type: VARCHAR
     groupby: true
+  - column_name: region
+    type: VARCHAR
+    groupby: true
   - column_name: event_date
     type: DATE
     is_dttm: true
@@ -73,6 +77,12 @@ columns:
     groupby: true
   - column_name: desertification_flag
     type: BOOLEAN
+    groupby: true
+  - column_name: warming_status
+    type: VARCHAR
+    groupby: true
+  - column_name: desertification_status
+    type: VARCHAR
     groupby: true
   - column_name: area_km2
     type: DOUBLE

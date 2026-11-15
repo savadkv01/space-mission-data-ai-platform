@@ -31,6 +31,10 @@ class GeeAodConnector(EarthEngineStatsConnector):
     #: Default AOD collection + band (configurable per sensor / account).
     COLLECTION = "MODIS/061/MCD19A2_GRANULES"
     BAND = "Optical_Depth_055"
+    #: MAIAC per-pixel QA: keep only AOD_QA bits 0-2 == 1 (clear) and bits
+    #: 8-11 == 0 (best-quality AOD). Records are stamped with this mask id.
+    QA_BAND = "AOD_QA"
+    QA_MASK = "maiac_clear_bestqa_v1"
     #: Sensors this connector can source AOD from (stamped onto the record).
     SENSORS = ("MODIS", "VIIRS")
 
@@ -61,5 +65,37 @@ class GeeAodConnector(EarthEngineStatsConnector):
             enriched["collection"] = coll
             enriched["sensor"] = sensor_code
             enriched["unit"] = "unitless"
+            if coll == self.COLLECTION:
+                enriched["qa_mask"] = self.QA_MASK
             records.append(enriched)
         return records, "json"
+
+    @staticmethod
+    def maiac_qa_ok(ee: Any, qa: Any) -> Any:
+        """Per-pixel boolean: MAIAC cloud mask clear AND best-quality AOD."""
+        cloud = qa.bitwiseAnd(0b111)
+        aod_qa = qa.rightShift(8).bitwiseAnd(0b1111)
+        return cloud.eq(1).And(aod_qa.eq(0))
+
+    def _ee_reduce_region(self, *, band: str, collection: str,
+                          bbox: list[float], time_from: str,
+                          time_to: str) -> dict[str, Any] | None:  # pragma: no cover
+        if collection != self.COLLECTION:
+            return super()._ee_reduce_region(band=band, collection=collection, bbox=bbox,
+                                             time_from=time_from, time_to=time_to)
+        ee = self._ee_client()
+        self._ensure_init()
+        geom = ee.Geometry.Rectangle(bbox)
+        coll = (ee.ImageCollection(collection)
+                .filterDate(time_from, time_to)
+                .filterBounds(geom))
+        if not coll.size().getInfo():
+            return None
+        qa_band = self.QA_BAND
+
+        def masked(image: Any) -> Any:
+            image = ee.Image(image)
+            return image.select(band).updateMask(self.maiac_qa_ok(ee, image.select(qa_band)))
+
+        img = coll.map(masked).mean().rename("index")
+        return self._summarize_image(img, geom, ee)

@@ -7,11 +7,10 @@ products. Reuse its PostgreSQL offline store, online store, SQL registry, Feast
 project, and materialization service. The existing serving DuckDB file is
 mounted read-only; no new service or source-of-truth is introduced.
 
-Feature registration is not certification. On the 2026-10-31 readiness
-baseline, air quality and dust are blocked pending source evidence, while
-climate-indicator and vegetation-health products have no validated rows. The
-readiness API rejects online requests for all four until their entries are
-promoted after upstream validation and owner approval. Do not enable blocked
+Feature registration is not certification. The bounded 2026-11-14 refresh
+repopulated the climate products, but all four remain blocked by measured
+freshness or completeness failures. The readiness API rejects online requests
+until source validation and owner approval are complete. Do not enable blocked
 features by setting a materialization environment flag.
 
 ## Data flow
@@ -43,6 +42,28 @@ it is not a per-table source watermark.
 `source_reference` identifies the read-only DuckDB product table. Grain
 duplicates, null keys, invalid value ranges, and configured null-rate
 violations fail the sync explicitly.
+
+## Refresh evidence — 2026-11-14
+
+The settled ingestion batch was transformed through climate Silver and Gold,
+then all 15 serving dbt models were rebuilt in the persistent DuckDB. All 83
+serving dbt tests passed. The refreshed Silver outputs contained 10,033 air
+quality, 173 aerosol, 520 atmospheric-column, and 468 wind rows.
+
+| Serving product | Rows / latest date | Measured gap | Sync outcome |
+|---|---|---|---|
+| Air quality | 181; 2026-11-13 | PM2.5 null 65.2%, PM10 null 77.4%; only 25 rows have both | `quality_failed` |
+| Dust | 173; 2026-11-11 | Wind speed and direction null 20.2%, above the 10% limit | `quality_failed` |
+| Climate indicators | 55; 2026-11-08 | LST and SST are null for all rows; NDVI and NDWI are present | `quality_failed` |
+| Vegetation health | 55; 2026-11-08 | NDVI and valid-pixel coverage are present; EVI is unavailable | `blocked` |
+
+Every product's latest date is older than its 24-hour observation-age limit at
+the time of this validation. The feature-store sync withheld air-quality,
+dust, and climate-indicator rows after quality checks. It synchronized the
+vegetation rows with blocked readiness metadata; the materialization gate
+skipped all four climate views. The Feast/PostgreSQL integration test verified
+PIT and online retrieval using isolated test fixtures, not production
+measurements. These results do not authorize feature promotion.
 
 ## Feature catalog
 
@@ -128,11 +149,11 @@ numeric bounds, and serving enum checks before inserting any product rows.
 | Climate indicators | LST and LST anomaly each ≤20% null | NDVI/EVI/NDWI −1 to 1; desertification proxy 0–1 |
 | Vegetation health | NDVI mean ≤20% null | NDVI/EVI −1 to 1; pixel validity 0–1 |
 
-The existing dust snapshot (all 35 wind records null) predates the new POWER
-wind-to-Silver integration and must be refreshed before promotion; empty
-climate/vegetation products and the stale air-quality product also remain
-blocked. A schema registration is not evidence that these products are ready.
-Existing quality utilities report per-field null rates and numeric violations.
+The refreshed dust product now has wind on most rows, but its 20.2% null rate
+still exceeds the 10% limit. Climate and vegetation rows are no longer empty,
+but remain stale and incomplete as shown above. A schema registration is not
+evidence that these products are ready. Existing quality utilities report
+per-field null rates and numeric violations.
 `climate_distribution_report` evaluates
 population stability index (warning at PSI ≥0.2) and change in standardized
 skewness (warning at absolute delta ≥1.0); expected baselines must be versioned

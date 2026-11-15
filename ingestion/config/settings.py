@@ -91,7 +91,8 @@ class ClimateSettings:
     Processing-Unit quota; all atmospheric requests are AOI-bounded.
     """
 
-    #: Named AOI bounding boxes (primary UAE + secondary dust corridors).
+    #: Named AOI bounding boxes: UAE-GULF primary + dust corridors, and the
+    #: INDIA regional tier (docs/source-data-analysis/climate/02-aoi-strategy.md).
     aois: dict[str, tuple[float, float, float, float]] = field(default_factory=lambda: {
         "AOI-UAE-NAT": (51.0, 22.5, 56.5, 26.2),
         "AOI-AUH": (53.3, 23.5, 55.3, 24.7),
@@ -102,7 +103,51 @@ class ClimateSettings:
         "AOI-IRAQ": (42.0, 29.0, 48.5, 36.0),
         "AOI-IRAN": (47.0, 28.0, 55.0, 34.0),
         "AOI-GULF": (48.0, 24.0, 57.0, 30.5),
+        "IN-DEL-NCR": (76.8, 28.3, 77.6, 28.9),
+        "IN-MUM": (72.75, 18.85, 73.2, 19.35),
+        "IN-PB-HR": (73.8, 29.0, 77.4, 32.5),
+        "IN-THAR": (69.5, 24.5, 74.5, 29.0),
+        "IN-GUJ-COAST": (68.5, 20.0, 73.0, 24.0),
+        "IN-ASSAM": (89.7, 25.8, 96.0, 27.9),
     })
+    #: Analysis region per AOI. Rollups, dust corridors, AQI standards and fire
+    #: freshness never combine AOIs from different regions.
+    aoi_regions: dict[str, str] = field(default_factory=lambda: {
+        **{aoi: "UAE-GULF" for aoi in (
+            "AOI-UAE-NAT", "AOI-AUH", "AOI-DXB", "AOI-COAST", "AOI-DESERT",
+            "AOI-ARABIA", "AOI-IRAQ", "AOI-IRAN", "AOI-GULF")},
+        **{aoi: "INDIA" for aoi in (
+            "IN-DEL-NCR", "IN-MUM", "IN-PB-HR", "IN-THAR", "IN-GUJ-COAST", "IN-ASSAM")},
+    })
+    #: Per-region, per-source AOI plans (keeps request volume within the laptop
+    #: and provider budgets; OpenAQ in INDIA is PM-only).
+    region_sources: dict[str, dict[str, tuple[str, ...]]] = field(default_factory=lambda: {
+        "UAE-GULF": {
+            # Maritime activity only; other UAE-GULF sources keep their own loops
+            # in run_full_batch_ingest.
+            "gfw": ("AOI-GULF", "AOI-COAST"),
+        },
+        "INDIA": {
+            "firms": ("IN-PB-HR", "IN-DEL-NCR", "IN-THAR", "IN-GUJ-COAST", "IN-ASSAM"),
+            "openaq": ("IN-DEL-NCR", "IN-MUM"),
+            "tropomi": ("IN-DEL-NCR", "IN-PB-HR"),
+            "aod": ("IN-THAR", "IN-GUJ-COAST", "IN-DEL-NCR", "IN-PB-HR"),
+            "ndvi": ("IN-PB-HR",),
+            "ndwi": ("IN-ASSAM",),
+            "gfw": ("IN-GUJ-COAST", "IN-MUM"),
+        },
+    })
+    #: GFW 4Wings look-back (days ending yesterday); rows are AOI x day x flag.
+    gfw_lookback_days: int = 30
+    #: OpenAQ PM-only parameter list for high-density station regions.
+    openaq_pm_pollutants: tuple[str, ...] = ("pm25", "pm10")
+    #: Fixed per-request FIRMS detection cap; truncation is reported as capped coverage.
+    firms_max_records_per_request: int = 10000
+    #: FIRMS product for all regions. VIIRS S-NPP NRT ends 2026-11-02 at FIRMS
+    #: (data_availability API), so the live feed is VIIRS NOAA-20 (same 375 m
+    #: VIIRS I-band fields). One sensor per day avoids double counting, as the
+    #: satellite is part of the Silver fire key.
+    firms_source: str = field(default_factory=lambda: _get("FIRMS_SOURCE", "VIIRS_NOAA20_NRT"))
     #: OpenAQ ground-station pollutants (canonical lowercase parameter codes).
     openaq_pollutants: tuple[str, ...] = ("pm25", "pm10", "o3", "no2", "co", "so2")
     #: TROPOMI (Sentinel-5P) products via the Sentinel Hub Statistical API.
@@ -113,6 +158,10 @@ class ClimateSettings:
         if aoi_id not in self.aois:
             raise KeyError(f"unknown AOI {aoi_id!r}; choose from {sorted(self.aois)}")
         return list(self.aois[aoi_id])
+
+    def firms_area(self, aoi_id: str) -> str:
+        """FIRMS ``west,south,east,north`` area string for ``aoi_id``."""
+        return ",".join(str(v) for v in self.bbox(aoi_id))
 
 
 @dataclass(frozen=True)
