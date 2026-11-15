@@ -75,10 +75,10 @@ features:
   - view: dust_aoi_daily
     status: blocked
     source: Phase 11b serving_dust_event_daily
-    blocker: "2026-11-14 refresh: wind speed/direction are null in 20.2% of 173 AOI-days, above the 10% limit; latest date is 2026-11-11 and exceeds the 24-hour limit."
+    blocker: "2026-11-15 refresh: wind speed/direction null 0% across 282 AOI-days (WP4 completeness met). Freshness objective set to 96 hours by domain decision on 2026-11-15 because MODIS MAIAC AOD on Google Earth Engine publishes ~3 days late (24 hours is unattainable); latest date 2026-11-12. Remains blocked until the Phase 13b gate review."
     work_package: WP4
     use: not_available
-    max_age_hours: 24
+    max_age_hours: 96
   - view: climate_indicator_aoi_daily
     status: blocked
     source: Phase 11b serving_climate_indicator_daily

@@ -106,8 +106,9 @@ def test_online_endpoint_reports_freshness_per_feature_view(monkeypatch):
                     (now - timedelta(minutes=30)).isoformat()
                 ],
                 "dust_aoi_daily__aod_mean": [0.8],
+                # Beyond the 96-hour dust objective (MAIAC publication lag).
                 "dust_aoi_daily__feature_date": [
-                    (now - timedelta(hours=48)).isoformat()
+                    (now - timedelta(hours=120)).isoformat()
                 ],
             }
 
