@@ -56,5 +56,7 @@ def test_desertification_proxy_range_and_drivers():
     # Healthy: rising NDVI, no heat -> low proxy.
     low = desertification_proxy(0.02, 0.0)
     assert low == 0.0
-    # No drivers -> None.
+    # One driver is not evidence (D-05): an NDVI decline alone is also a harvest.
+    assert desertification_proxy(-0.01, None) is None
+    assert desertification_proxy(None, 5.0) is None
     assert desertification_proxy(None, None) is None

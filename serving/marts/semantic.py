@@ -67,12 +67,14 @@ AQI_BREAKPOINTS: dict[str, list[dict[str, Any]]] = {
     ],
 }
 
+#: AOD load bands for any aerosol type (D-07): dust wording is reserved for rows
+#: whose dust rule is positive (serving ``dust_severity_label``).
 AOD_SEVERITY_BANDS: list[dict[str, Any]] = [
     {"band": 0, "label": "Clear", "value_low": 0.0, "value_high": 0.2},
     {"band": 1, "label": "Hazy", "value_low": 0.2, "value_high": 0.5},
-    {"band": 2, "label": "Dusty", "value_low": 0.5, "value_high": 1.0},
-    {"band": 3, "label": "Heavy dust", "value_low": 1.0, "value_high": 2.0},
-    {"band": 4, "label": "Severe", "value_low": 2.0, "value_high": 5.0},
+    {"band": 2, "label": "Elevated", "value_low": 0.5, "value_high": 1.0},
+    {"band": 3, "label": "High", "value_low": 1.0, "value_high": 2.0},
+    {"band": 4, "label": "Very high", "value_low": 2.0, "value_high": 5.0},
 ]
 
 LST_ANOMALY_BANDS: list[dict[str, Any]] = [

@@ -17,5 +17,5 @@ select * from (
         ('CH4', 'Methane', 'column_density', 'ppb', 'n/a', CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST('[]' AS JSON), CAST('[]' AS JSON)),
         ('AOD', 'Aerosol Optical Depth', 'optical', 'unitless', 'n/a', CAST(NULL AS DOUBLE), 0.5,
          CAST('[]' AS JSON),
-         CAST('[{"band":0,"label":"Clear","value_low":0.0,"value_high":0.2},{"band":1,"label":"Hazy","value_low":0.2,"value_high":0.5},{"band":2,"label":"Dusty","value_low":0.5,"value_high":1.0},{"band":3,"label":"Heavy dust","value_low":1.0,"value_high":2.0},{"band":4,"label":"Severe","value_low":2.0,"value_high":5.0}]' AS JSON))
+         CAST('[{"band":0,"label":"Clear","value_low":0.0,"value_high":0.2},{"band":1,"label":"Hazy","value_low":0.2,"value_high":0.5},{"band":2,"label":"Elevated","value_low":0.5,"value_high":1.0},{"band":3,"label":"High","value_low":1.0,"value_high":2.0},{"band":4,"label":"Very high","value_low":2.0,"value_high":5.0}]' AS JSON))
 ) as t(pollutant_code, pollutant_name, measure_type, canonical_unit, aqi_scheme, who_guideline, exceedance_threshold, aqi_breakpoints, severity_bands)

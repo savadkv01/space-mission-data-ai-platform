@@ -31,8 +31,8 @@ def _aq(param, value, unit, ts, lat=25.1, lon=55.2, loc=123):
     }
 
 
-def _bucket(mean, product, source, aoi="AOI-UAE-NAT",
-            bbox=(51.0, 22.5, 56.5, 26.2), sample=90, nodata=10, **extra):
+def _bucket(mean, product, source, aoi="AOI-AUH",
+            bbox=(53.3, 23.5, 55.3, 24.7), sample=90, nodata=10, **extra):
     rec = {
         "interval": {"from": "2024-06-01T00:00:00Z", "to": "2024-06-02T00:00:00Z"},
         "outputs": {"index": {"bands": {"B0": {"stats": {
@@ -115,6 +115,59 @@ def test_silver_air_quality_outside_aoi_keeps_bronze_fallback():
     rec = _aq("pm25", 12.0, "µg/m³", "2024-06-01T00:00:00Z", lat=0.0, lon=0.0)
     rows = silver_air_quality([rec], [_DXB_AOI]).rows
     assert rows[0]["aoi_id"] == "AOI-DXB"  # fallback to Bronze-stamped request AOI
+
+
+def test_silver_air_quality_tags_reporting_aoi_not_overlay_or_retired_request():
+    overlay = {**_DXB_AOI, "aoi_key": "EMSR-AE-FLOOD-2024", "rollup_eligible": False}
+    inside = _aq("pm25", 30.0, "µg/m³", "2024-06-01T00:00:00Z")
+    outside = {**_aq("pm25", 30.0, "µg/m³", "2024-06-01T01:00:00Z", lat=0.0, lon=0.0),
+               "aoi_id": "AOI-UAE-NAT"}
+    rows = {r["event_ts"][:13]: r for r in silver_air_quality(
+        [inside, outside], [overlay, _DXB_AOI]).rows}
+    assert rows["2024-06-01T00"]["aoi_id"] == "AOI-DXB"   # not the EMS overlay
+    assert rows["2024-06-01T01"]["aoi_id"] is None          # retired request AOI
+
+
+def test_silver_air_quality_flags_stuck_spiking_and_implausible_sensors():
+    def series(values, loc):
+        return [_aq("pm25", v, "µg/m³", f"2026-11-07T{h:02d}:00:00Z", loc=loc)
+                for h, v in enumerate(values)]
+
+    stuck = series([210, 593, 593, 593, 593, 593, 593, 593, 593, 240], loc=50)
+    spike = series([120, 125, 980, 130, 128], loc=17)
+    implausible = series([1200], loc=9)
+    normal = series([150, 150, 150, 160, 170], loc=3)
+    # Live Delhi artefacts (2026-11): full-scale plateau and an impossible jump,
+    # next to a smooth real severe-smog rise that must be kept.
+    plateau = series([25, 992, 992, 992, 992, 82], loc=5598)
+    jump = series([0.1, 0.06, 1000, 555.6, 347.8], loc=5586)
+    smog = series([733, 877, 994, 1000, 977, 922], loc=5613)
+    rows = silver_air_quality(stuck + spike + implausible + normal + plateau + jump + smog).rows
+    reason = {(r["location_id"], r["value_std"]): (r["quality_flag"], r["qa_reason"])
+              for r in rows}
+    assert reason[("50", 593.0)] == ("suspect", "flat_line")
+    assert reason[("50", 210.0)] == ("valid", None)
+    assert reason[("17", 980.0)] == ("suspect", "spike")
+    assert reason[("17", 125.0)] == ("valid", None)
+    assert reason[("9", 1200.0)] == ("suspect", "out_of_range")
+    assert reason[("5598", 992.0)] == ("suspect", "saturation")
+    assert reason[("5586", 1000.0)] == ("suspect", "jump")
+    assert reason[("5586", 555.6)] == ("valid", None)
+    assert all(r["quality_flag"] == "valid" for r in rows if r["location_id"] in {"3", "5613"})
+
+
+def test_request_based_silver_quarantines_retired_and_redrawn_aoi_geometry():
+    seed = [{"aoi_key": "AOI-AUH", "bbox": [53.3, 23.5, 55.3, 24.7]},
+            {"aoi_key": "AOI-ARABIA", "bbox": [42.0, 18.0, 48.0, 29.0]}]
+    current = _bucket(0.3, "AOD", "MODIS_AOD", sensor="MODIS")
+    redrawn = _bucket(0.4, "AOD", "MODIS_AOD", aoi="AOI-ARABIA",
+                      bbox=(42.0, 18.0, 55.0, 30.0), sensor="MODIS")
+    retired = _bucket(0.5, "AOD", "MODIS_AOD", aoi="AOI-UAE-NAT",
+                      bbox=(51.0, 22.5, 56.5, 26.2), sensor="MODIS")
+    result = silver_aerosol([current, redrawn, retired], seed)
+    assert [r["aoi_id"] for r in result.rows] == ["AOI-AUH"]
+    assert sorted(q["_reasons"][0] for q in result.quarantine) == [
+        "retired:aoi", "superseded:aoi_geometry"]
 
 
 # --- obs_aerosol -----------------------------------------------------------

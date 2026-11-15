@@ -1,7 +1,7 @@
 -- Certified dataset: scene_catalog  (Superset virtual dataset)
 -- Owner: Data Steward  |  Layer: serving  |  Grain: 1 row / scene
 -- Source of truth: serving.serving_scene_catalog (dbt data product, UC-25).
--- quality_band is pre-computed in the serving product (completeness thresholds).
+-- quality_band is pre-computed in the serving product (cloud-cover thresholds once metadata is complete).
 --
 -- Superset database connection: `serving_duckdb`
 select

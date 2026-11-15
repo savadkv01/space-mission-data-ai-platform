@@ -121,6 +121,18 @@ class GeeSentinel2IndexConnector(EarthEngineStatsConnector):
     #: reverse, publishing the negated index. Silver quarantines unversioned
     #: records from this collection as superseded.
     FORMULA_VERSION = 2
+    #: NDWI flood statistics exclude permanent water (UN-SPIDER recommended
+    #: practice): JRC Global Surface Water v1.4 ``seasonality`` >= 10 months,
+    #: unioned with ESA WorldCover v200 class 80 (permanent water bodies) because
+    #: GSW does not classify the open sea. Records carry ``water_mask`` so
+    #: Silver/Gold can tell masked from legacy statistics.
+    PERMANENT_WATER_COLLECTION = "JRC/GSW1_4/GlobalSurfaceWater"
+    PERMANENT_WATER_MONTHS = 10
+    LAND_COVER_COLLECTION = "ESA/WorldCover/v200"
+    LAND_COVER_WATER_CLASS = 80
+    WATER_MASK = "jrc_gsw_v1_4_seasonality_ge10+esa_worldcover_v200_80"
+    #: NDWI (McFeeters) above this marks open water on a non-permanent pixel.
+    NEW_WATER_NDWI = 0.0
 
     def fetch_raw(self, *, index: str = "NDVI",
                   bbox: list[float] | None = None,
@@ -147,6 +159,8 @@ class GeeSentinel2IndexConnector(EarthEngineStatsConnector):
                 "collection": self.COLLECTION,
                 "formula_version": self.FORMULA_VERSION,
             })
+            if index_name == "NDWI":
+                enriched["water_mask"] = self.WATER_MASK
             records.append(enriched)
         return records, "json"
 
@@ -173,4 +187,27 @@ class GeeSentinel2IndexConnector(EarthEngineStatsConnector):
         if not indexed.size().getInfo():
             return None
         image = indexed.mean().rename("index")
-        return self._summarize_image(image, geometry, ee)
+        if band.upper() != "NDWI":
+            return self._summarize_image(image, geometry, ee)
+
+        # Flood statistics are computed on non-permanent-water pixels only, so a
+        # box that is mostly sea (Dubai) no longer reads as flooded every day.
+        gsw_permanent = (ee.Image(self.PERMANENT_WATER_COLLECTION).select("seasonality")
+                         .unmask(0).gte(self.PERMANENT_WATER_MONTHS))
+        sea_and_lakes = (ee.ImageCollection(self.LAND_COVER_COLLECTION).first()
+                         .select("Map").eq(self.LAND_COVER_WATER_CLASS))
+        permanent = gsw_permanent.Or(sea_and_lakes)
+        land = image.updateMask(permanent.Not())
+        stats = self._summarize_image(land, geometry, ee)
+        if stats is None:
+            return None
+
+        def _region_mean(img: Any, name: str) -> Any:
+            out = img.rename(name).reduceRegion(
+                reducer=ee.Reducer.mean(), geometry=geometry, scale=self.SCALE_M,
+                bestEffort=True, maxPixels=self.MAX_PIXELS).getInfo() or {}
+            return out.get(name)
+
+        stats["waterFraction"] = _region_mean(land.gt(self.NEW_WATER_NDWI), "water")
+        stats["permanentWaterFraction"] = _region_mean(permanent, "permanent")
+        return stats

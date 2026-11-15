@@ -1,12 +1,12 @@
 table_name: aoi_validation
 main_dttm_col: event_date
-description: "Certified: Detection Validation (UC-27), EMS corroboration per AOI."
+description: "Certified: Detection Validation (UC-27). Only EMS activation footprints are corroborated/unconfirmed; other AOIs show signal_only/no_signal (not independent evidence)."
 cache_timeout: 3600
 schema: null
 sql: |
   select
       aoi_key, event_type, cast(event_date as date) as event_date,
-      area_km2, evidence_days, corroborated, trust
+      area_km2, evidence_days, is_ems_activation, signal_present, corroborated, trust
   from serving.serving_aoi_validation
 filter_select_enabled: true
 extra:

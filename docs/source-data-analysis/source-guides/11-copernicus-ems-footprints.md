@@ -63,7 +63,7 @@ GeoJSON `FeatureCollection` of `Polygon` / `MultiPolygon` features, coordinates 
 | Group | Count | Examples (`properties.id`) | `category` / role |
 | --- | --- | --- | --- |
 | EMS-style event footprints | 2 | `EMSR-CA-FIRE-2025` (California fire, US-LEGACY region), `EMSR-AE-FLOOD-2024` (Dubai coastal flood, event date 2024-04-16) | `Wildfire` / `Flood` |
-| Platform climate AOIs (UAE-GULF) | 9 | `AOI-UAE-NAT`, `AOI-AUH`, `AOI-DXB`, `AOI-COAST`, `AOI-DESERT`, `AOI-ARABIA`, `AOI-IRAQ`, `AOI-IRAN`, `AOI-GULF` | `monitored` / `dust_corridor` |
+| Platform climate AOIs (UAE-GULF) | 10 | `AOI-AUH`, `AOI-DXB`, `AOI-COAST`, `AOI-NEM`, `AOI-DESERT`, `AOI-ARABIA`, `AOI-ARABIA-E`, `AOI-IRAQ`, `AOI-IRAN`, `AOI-GULF` (non-overlapping reporting partition, ADR-12) | `monitored` / `dust_corridor` |
 | Platform climate AOIs (INDIA) | 6 | `IN-DEL-NCR`, `IN-MUM`, `IN-PB-HR`, `IN-THAR`, `IN-GUJ-COAST`, `IN-ASSAM` | `monitored` / `dust_corridor` |
 
 > The two event ids follow the EMS naming *style* but are **curated placeholders**. Official EMS

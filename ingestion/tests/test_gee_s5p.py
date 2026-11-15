@@ -20,7 +20,7 @@ def _empty_stats(**kwargs):
 def test_s5p_one_record_per_day():
     conn = GeeS5pConnector(stats_fn=_canned_stats)
     envelopes = conn.ingest(
-        product="NO2", aoi_id="AOI-UAE-NAT",
+        product="NO2", aoi_id="AOI-AUH",
         datetime_range="2024-06-01T00:00:00Z/2024-06-03T23:59:59Z",
     )
     assert len(envelopes) == 3  # 3 inclusive days
@@ -31,13 +31,13 @@ def test_s5p_one_record_per_day():
 def test_s5p_stamps_product_unit_collection_aoi():
     conn = GeeS5pConnector(stats_fn=_canned_stats)
     rec = conn.ingest(
-        product="no2", aoi_id="AOI-UAE-NAT",
+        product="no2", aoi_id="AOI-AUH",
         datetime_range="2024-06-01T00:00:00Z/2024-06-01T23:59:59Z",
     )[0].payload
     assert rec["product"] == "NO2"
     assert rec["unit"] == "mol/m2"
-    assert rec["aoi_id"] == "AOI-UAE-NAT"
-    assert rec["bbox"] == [51.0, 22.5, 56.5, 26.2]  # UAE national AOI
+    assert rec["aoi_id"] == "AOI-AUH"
+    assert rec["bbox"] == [53.3, 23.5, 55.3, 24.7]  # Abu Dhabi AOI
     assert rec["collection"] == "COPERNICUS/S5P/NRTI/L3_NO2"
 
 

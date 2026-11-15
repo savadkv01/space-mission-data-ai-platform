@@ -106,24 +106,43 @@ def test_vessel_review_priority_from_suspicious():
         ("identity_completeness_heuristic", "pending")}
 
 
-def test_scene_catalog_quality_bands():
+def test_scene_catalog_quality_bands_follow_cloud_cover():
     scenes = [
-        {"scene_key": "S1", "completeness_score": 0.95, "is_searchable": True},
-        {"scene_key": "S2", "completeness_score": 0.75, "is_searchable": True},
-        {"scene_key": "S3", "completeness_score": 0.5, "is_searchable": True},
-        {"scene_key": "S4", "completeness_score": 0.99, "is_searchable": False},
+        {"scene_key": "S1", "completeness_score": 1.0, "cloud_cover": 4.0, "is_searchable": True},
+        {"scene_key": "S2", "completeness_score": 1.0, "cloud_cover": 25.0, "is_searchable": True},
+        {"scene_key": "S3", "completeness_score": 1.0, "cloud_cover": 60.0, "is_searchable": True},
+        {"scene_key": "S4", "completeness_score": 0.5, "cloud_cover": 2.0, "is_searchable": True},
+        {"scene_key": "S5", "completeness_score": 1.0, "cloud_cover": None, "is_searchable": True},
+        {"scene_key": "S6", "completeness_score": 0.99, "cloud_cover": 1.0, "is_searchable": False},
     ]
     bands = {r["scene_key"]: r["quality_band"] for r in sm.serve_scene_catalog(scenes)}
-    assert bands == {"S1": "gold", "S2": "silver", "S3": "bronze", "S4": "unlisted"}
+    assert bands == {"S1": "gold", "S2": "silver", "S3": "bronze", "S4": "bronze",
+                     "S5": "listed", "S6": "unlisted"}
 
 
 def test_aoi_validation_trust_label():
     rows = sm.serve_aoi_validation([
         {"aoi_key": "A", "event_type": "fire", "corroborated": True, "evidence_days": 3},
         {"aoi_key": "B", "event_type": "flood", "corroborated": False, "evidence_days": 0},
+        {"aoi_key": "C", "event_type": "fire", "is_ems_activation": False,
+         "signal_present": True, "corroborated": False},
+        {"aoi_key": "D", "event_type": "flood", "is_ems_activation": False,
+         "signal_present": False, "corroborated": False},
     ])
     trust = {r["aoi_key"]: r["trust"] for r in rows}
-    assert trust == {"A": "corroborated", "B": "unconfirmed"}
+    assert trust == {"A": "corroborated", "B": "unconfirmed",
+                     "C": "signal_only", "D": "no_signal"}
+
+
+def test_flood_flag_is_tri_state():
+    rows = sm.serve_flood_daily([
+        {"aoi_key": "A", "date_key": "d", "flood_flag": True, "water_fraction": 0.08},
+        {"aoi_key": "B", "date_key": "d", "flood_flag": False, "water_fraction": 0.0},
+        {"aoi_key": "C", "date_key": "d", "flood_flag": None, "ndwi_mean": 0.15},
+    ])
+    status = {r["aoi_key"]: (r["flood_flag"], r["flood_status"]) for r in rows}
+    assert status == {"A": (True, "positive"), "B": (False, "negative"),
+                      "C": (None, "not_evaluated")}
 
 
 # --- Simulation-Track products --------------------------------------------- #

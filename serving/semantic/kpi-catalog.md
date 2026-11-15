@@ -50,7 +50,8 @@ metrics to aggregate), documented here so BI and API agree on thresholds:
 | `trust` | validation | corroborated ⇒ corroborated, else unconfirmed |
 | `status` | sat health (sim) | ≥0.8 nominal · ≥0.5 degraded · else critical |
 | `storm_day` | weather (sim) | `max_kp_index` ≥ 5 |
-| `dust_severity_label` | dust event | 0 Clear · 1 Hazy · 2 Dusty · 3 Heavy dust · 4 Severe |
+| `aerosol_load_label` | AOD load (any aerosol type) | 0 Clear · 1 Hazy · 2 Elevated · 3 High · 4 Very high |
+| `dust_severity_label` | dust event (positive dust rows only) | 2 Dusty · 3 Heavy dust · 4 Severe · `No dust event` (negative) · `unknown` |
 | `lst_anomaly_label` | climate indicator | −1 Cooler · 0 Normal · 1 Warm · 2 Hot · 3 Extreme |
 | `ndvi_health_label` | vegetation health | 0 Bare/water · 1 Sparse · 2 Moderate · 3 Healthy · 4 Dense |
 | `ndvi_trend_dir` | vegetation health | slope >0 improving · <0 declining · else flat |

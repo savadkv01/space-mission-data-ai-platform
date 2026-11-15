@@ -22,7 +22,7 @@ data facts from governance state.
 | `scene_catalog_metadata` | `scene_key` / scene | cloud cover, completeness, searchable | 90d | `restricted`; catalog discovery only |
 | `vessel_activity_daily` | `vessel_key` / vessel-day | transmissions, active span, screening flag | 14d | Blocked: event grain and heuristic semantics |
 | `air_quality_aoi_daily` | `aoi_key` / AOI-day | PM2.5/PM10/O3, station count | 14d | Blocked: mixed units and measure missingness |
-| `dust_aoi_daily` | `aoi_key` / AOI-day | AOD, valid fraction, wind speed/direction | 14d | Blocked: wind fields unavailable |
+| `dust_aoi_daily` | `aoi_key` / AOI-day | AOD, valid fraction, wind speed/direction | 14d | Blocked pending the 13b gate review; wind completeness met 2026-11-15; freshness objective 96 h |
 
 Only the synthetic satellite-health fixture and populated scene catalog source
 are populated by the default demonstration startup. The former is deliberately

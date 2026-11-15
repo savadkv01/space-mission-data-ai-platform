@@ -19,9 +19,10 @@ except ImportError:
 from ingestion.api.openaq import OpenAqConnector
 from ingestion.batch.dags._defaults import DEFAULT_ARGS
 from ingestion.batch.ingest_task import run_connector_to_bronze
+from ingestion.config.settings import settings
 
-# Urban AOIs where ground stations exist (sparse over the Gulf).
-AOIS = ["AOI-DXB", "AOI-AUH", "AOI-UAE-NAT"]
+# UAE-GULF AOIs where ground stations exist (region source plan, ADR-12).
+AOIS = list(settings.climate.region_sources["UAE-GULF"]["openaq"])
 
 
 def _ingest(aoi_id: str, **context) -> dict:

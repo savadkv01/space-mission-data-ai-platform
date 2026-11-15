@@ -1,4 +1,4 @@
-"""Regional AOI ingestion (INDIA tier) for the daily driver and backfills.
+"""Regional AOI ingestion (UAE-GULF and INDIA) for the daily driver and backfills.
 
 One plan per region (``settings.climate.region_sources``) keeps request volume
 bounded: FIRMS per AOI box (not a national rectangle) with a fixed detection cap,
@@ -27,9 +27,11 @@ from ingestion.batch.ingest_task import run_connector_to_bronze
 from ingestion.config.settings import settings
 
 #: OpenAQ per-AOI quota for dense station networks (laptop + rate-limit budget).
+#: ``OPENAQ_MAX_PAGES`` is the newest-first request budget per sensor: 6 requests
+#: of up to 1000 rows cover a 14-day window of 15-minute data (3-day windows).
 OPENAQ_MAX_LOCATIONS = 25
-OPENAQ_LIMIT = 200
-OPENAQ_MAX_PAGES = 3
+OPENAQ_LIMIT = 1000
+OPENAQ_MAX_PAGES = 6
 
 
 def _run(results: dict[str, Any], key: str, fn: Callable[[], dict[str, Any]]) -> None:
@@ -55,9 +57,9 @@ def ingest_region(region: str, start: date, end: date, *,
                   sources: tuple[str, ...] | None = None) -> dict[str, Any]:
     """Land one region's sources for ``[start, end]`` (UTC dates) in Bronze.
 
-    ``firms_backfill=False`` requests the latest day only (daily run);
-    ``True`` walks ``[start, end]`` in 5-day historical windows. ``sources``
-    restricts the run to a subset of the plan's source names.
+    ``firms_backfill=False`` requests the latest ``firms_daily_day_range`` days
+    (daily run); ``True`` walks ``[start, end]`` in 5-day historical windows.
+    ``sources`` restricts the run to a subset of the plan's source names.
     """
     plan = settings.climate.region_sources.get(region)
     if plan is None:
@@ -71,7 +73,8 @@ def ingest_region(region: str, start: date, end: date, *,
     from ingestion.api.nasa_firms import FirmsConnector
     for aoi in plan.get("firms", ()):
         area = climate.firms_area(aoi)
-        windows = firms_windows(start, end) if firms_backfill else [(None, 1)]
+        windows = (firms_windows(start, end) if firms_backfill
+                   else [(None, climate.firms_daily_day_range)])
         for window_date, days in windows:
             suffix = f":{window_date}" if window_date else ""
             _run(results, f"FIRMS:{aoi}{suffix}", lambda a=area, d=window_date, n=days:
@@ -138,6 +141,8 @@ def main(argv: list[str] | None = None) -> dict[str, Any]:
     parser.add_argument("--start", help="explicit start date (YYYY-MM-DD); overrides --days")
     parser.add_argument("--end", help="explicit end date (YYYY-MM-DD); default yesterday")
     parser.add_argument("--only", choices=("all", "firms", "gfw"), default="all")
+    parser.add_argument("--sources", help="comma-separated plan sources to backfill "
+                        "(e.g. aod,ndwi); default: every source in the region plan")
     parser.add_argument("--extra-firms-area", action="append", default=[], metavar="NAME=W,S,E,N",
                         help="additional FIRMS request box (FIRMS-only mode)")
     args = parser.parse_args(argv)
@@ -153,7 +158,8 @@ def main(argv: list[str] | None = None) -> dict[str, Any]:
         plan = settings.climate.region_sources.get(args.region, {})
         return ingest_region(args.region, start, end, firms_backfill=False,
                              sources=("gfw",)) if plan.get("gfw") else {}
-    return ingest_region(args.region, start, end, firms_backfill=True)
+    sources = tuple(s.strip() for s in args.sources.split(",")) if args.sources else None
+    return ingest_region(args.region, start, end, firms_backfill=True, sources=sources)
 
 
 if __name__ == "__main__":

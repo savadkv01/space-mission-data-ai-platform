@@ -12,7 +12,7 @@ The atmospheric column is **near-real-time to daily** — no true streaming sour
 | --- | --- | --- | --- | --- |
 | OpenAQ | Near-real-time | Hourly (station-dependent) | ~1 hour lag | Freshest; but sparse spatially |
 | TROPOMI (SH Stats) | Daily batch | 1 overpass/day | Same-day to +1 day | Cloud can drop a day |
-| MODIS/VIIRS AOD | Daily batch | Daily (Terra/Aqua/VIIRS) | +1 day (async extract) | AppEEARS/task latency |
+| MODIS/VIIRS AOD | Daily batch | Daily (Terra/Aqua/VIIRS) | ~+3 days measured on GEE `MODIS/061/MCD19A2_GRANULES` (2026-11-15) | Feature freshness objective 96 h (domain decision 2026-11-15) |
 | Derived indicators | Daily → periodic | Inherits source | Source cadence | Anomalies need baseline history |
 
 > No real-time / streaming atmospheric source in scope. Ingestion cadence should be **scheduled batch** (daily) for satellite sources and **frequent polling** (hourly) for OpenAQ.

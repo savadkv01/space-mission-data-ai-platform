@@ -46,6 +46,7 @@ from transformation.batch.silver_to_gold import (
     gold_space_weather_impact, gold_vessel_activity, gold_wildfire_aoi,
     gold_maritime_activity,
 )
+from transformation.geospatial.spatial_transform import overlapping_reporting_pairs
 
 #: Default seed location inside the spark-master code mount.
 _DEFAULT_SEED = os.path.join(
@@ -88,7 +89,23 @@ def _ref_aoi_row(aoi: dict[str, Any]) -> dict[str, Any]:
         "area_km2": aoi.get("area_km2"),
         "geo_key": aoi.get("geo_key"),
         "bbox": bbox_str,
+        "aoi_role": aoi.get("aoi_role"),
+        "rollup_eligible": aoi.get("rollup_eligible") is not False,
+        "sub_region": aoi.get("sub_region"),
+        "is_ems_activation": bool(aoi.get("is_ems_activation")),
+        "cropland": aoi.get("cropland") is True,
     }
+
+
+def _aoi_centroids(aois: list[dict[str, Any]]) -> dict[str, tuple[float, float]]:
+    """``aoi_key -> (lat, lon)`` bbox centroid, for directional dust transport."""
+    out: dict[str, tuple[float, float]] = {}
+    for a in aois:
+        bbox = a.get("bbox")
+        if a.get("aoi_key") and isinstance(bbox, (list, tuple)) and len(bbox) == 4:
+            out[a["aoi_key"]] = ((float(bbox[1]) + float(bbox[3])) / 2.0,
+                                 (float(bbox[0]) + float(bbox[2])) / 2.0)
+    return out
 
 
 def build_marts(silver: dict[str, list[dict[str, Any]]],
@@ -126,7 +143,8 @@ def build_marts(silver: dict[str, list[dict[str, Any]]],
         # --- Climate / dust / air-quality marts (Phase 9b) ---
         "fact_air_quality_daily": gold_air_quality_daily(air_quality, atmos, aoi_regions),
         "fact_dust_event_daily": gold_dust_event_daily(
-            aerosol, atmos, wind_by_aoi_day=wind_by_aoi_day, aoi_regions=aoi_regions),
+            aerosol, atmos, wind_by_aoi_day=wind_by_aoi_day, aoi_regions=aoi_regions,
+            aoi_centroids=_aoi_centroids(aois)),
         "fact_climate_indicator_daily": gold_climate_indicator_daily(index, aois),
         "fact_vegetation_health_daily": gold_vegetation_health_daily(index, aois),
         # --- Simulation-track marts (post-MVP demonstrator, ADR-09) ---
@@ -159,25 +177,28 @@ def _gold_spark_schemas():  # pragma: no cover - needs Spark
         "fire_aoi_attribution": StructType([
             _s("fire_key"), _s("event_ts"), _s("date_key"),
             StructField("aoi_keys", ArrayType(StringType()), True),
+            _s("reporting_aoi_key"),
             _l("match_count"), _s("match_status"), _s("match_method"), _s("region"),
+            _s("heat_source_class"),
             _d("latitude"), _d("longitude"), _d("frp"), _d("brightness"),
             _s("brightness_source_field"), _s("brightness_status"), _s("source"),
             _s("_ingest_id"), _s("_batch_id"),
         ]),
         "kpi_wildfire_aoi_daily": StructType([
-            _s("aoi_key"), _s("date_key"), _l("detections"), _d("mean_frp"),
-            _d("max_frp"),
+            _s("aoi_key"), _s("date_key"), _l("detections"), _l("persistent_detections"),
+            _d("mean_frp"), _d("max_frp"),
         ]),
         "kpi_flood_aoi_daily": StructType([
             _s("aoi_key"), _s("date_key"), _d("ndwi_mean"), _d("ndwi_max"),
-            _d("valid_pixel_fraction"), _b("flood_flag"),
+            _d("valid_pixel_fraction"), _d("water_fraction"),
+            _d("permanent_water_fraction"), _s("water_mask"), _b("flood_flag"),
         ]),
         "fact_vessel_activity": StructType([
             _s("vessel_key"), _s("date_key"), _l("transmissions"), _s("flag"),
             _s("vessel_type"), _b("suspicious_flag"), _l("active_span_days"),
         ]),
         "fact_maritime_activity_daily": StructType([
-            _s("aoi_key"), _s("date_key"),
+            _s("aoi_key"), _s("date_key"), _b("is_provisional"),
             _d("fishing_hours"), _d("fishing_vessels"), _s("fishing_status"),
             _d("presence_hours"), _d("presence_vessels"), _s("presence_status"),
             _d("sar_detections"), _d("sar_unmatched_detections"), _d("sar_dark_fraction"),
@@ -194,11 +215,13 @@ def _gold_spark_schemas():  # pragma: no cover - needs Spark
         ]),
         "kpi_aoi_validation": StructType([
             _s("aoi_key"), _s("event_type"), _s("event_date"), _d("area_km2"),
-            _l("evidence_days"), _b("corroborated"),
+            _l("evidence_days"), _b("is_ems_activation"), _b("signal_present"),
+            _b("corroborated"),
         ]),
         "ref_aoi": StructType([
             _s("aoi_key"), _s("aoi_name"), _s("event_type"), _s("region"), _s("event_date"),
-            _d("area_km2"), _s("geo_key"), _s("bbox"),
+            _d("area_km2"), _s("geo_key"), _s("bbox"), _s("aoi_role"),
+            _b("rollup_eligible"), _s("sub_region"), _b("is_ems_activation"), _b("cropland"),
         ]),
         "fact_sat_health": StructType([
             _s("sat_key"), _s("date_key"), _l("samples"), _d("health_score"),
@@ -226,6 +249,7 @@ def _gold_spark_schemas():  # pragma: no cover - needs Spark
             _s("aoi_key"), _s("date_key"), _d("aod_mean"), _d("aod_max"),
             _d("uv_aerosol_index_mean"), _d("wind_speed_mean"),
             _d("wind_dir_dominant"), _d("corridor_aod_max"), _d("valid_fraction"),
+            _d("smoke_fraction"), _d("dust_fraction"), _s("aerosol_type"),
             _l("dust_severity_band"), _b("dust_flag"), _b("transport_flag"),
         ]),
         "fact_climate_indicator_daily": StructType([
@@ -237,7 +261,7 @@ def _gold_spark_schemas():  # pragma: no cover - needs Spark
         "fact_vegetation_health_daily": StructType([
             _s("aoi_key"), _s("date_key"), _d("ndvi_mean"), _d("ndvi_max"),
             _d("evi_mean"), _d("ndvi_trend_30d"), _d("valid_pixel_fraction"),
-            _l("ndvi_health_band"), _b("crop_stress_flag"),
+            _l("ndvi_health_band"), _b("crop_stress_applicable"), _b("crop_stress_flag"),
         ]),
     }
 
@@ -269,15 +293,22 @@ def run_gold_spark(seed_path: str | None = None) -> None:  # pragma: no cover - 
                        "maritime")
     }
     aois = load_aoi_reference(seed_path)
+    overlaps = overlapping_reporting_pairs(aois)
+    if overlaps:
+        # ADR-12: rollups assume a non-overlapping reporting partition.
+        print(f"[run_gold] WARNING overlapping rollup-eligible AOIs: {overlaps}")
     marts = build_marts(silver, aois)
     attribution = marts["fire_aoi_attribution"]
     match_status = Counter(row["match_status"] for row in attribution)
+    heat = Counter(row["heat_source_class"] for row in attribution)
     print(
         "[run_gold] fire AOI reconciliation: "
         f"silver_detections={len(attribution)}, "
         f"matched={match_status['matched']}, "
         f"unmatched={match_status['unmatched']}, "
         f"invalid_date={match_status['invalid_date']}, "
+        f"reporting_matched={sum(1 for r in attribution if r['reporting_aoi_key'])}, "
+        f"persistent_industrial={heat['persistent_industrial']}, "
         f"aoi_attributions={sum(row['match_count'] for row in attribution)}, "
         f"gold_aoi_detections={sum(row['detections'] for row in marts['kpi_wildfire_aoi_daily'])}"
     )

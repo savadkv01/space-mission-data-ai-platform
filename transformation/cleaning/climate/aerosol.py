@@ -82,8 +82,19 @@ def clean_aerosol(record: dict[str, Any]) -> CleanResult:
         "valid_fraction": vfrac,
         "quality_flag": quality_flag,
         "qa_mask": qa_mask,
+        # MAIAC aerosol-model shares (AOD_QA bits 13-14) of QA-passing pixels;
+        # null for legacy pulls and non-MAIAC sources.
+        "smoke_fraction": _fraction(stats.get("smokeFraction")),
+        "dust_fraction": _fraction(stats.get("dustFraction")),
+        "aerosol_model": record.get("aerosol_model") or None,
         "source": record.get("_source") or "MODIS_AOD",
         "_ingest_id": record.get("_ingest_id"),
         "_batch_id": record.get("_batch_id"),
     }
     return CleanResult.keep(out)
+
+
+def _fraction(value: Any) -> float | None:
+    """A ``[0, 1]`` share rounded to 4 dp, or ``None`` if absent/non-physical."""
+    v = to_float(value)
+    return round(v, 4) if v is not None and 0.0 <= v <= 1.0 else None

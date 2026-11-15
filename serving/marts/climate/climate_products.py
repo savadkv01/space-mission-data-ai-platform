@@ -50,6 +50,8 @@ EVIDENCE_STATUSES = ("positive", "negative", "inconclusive", "not_evaluated")
 #: (``transformation.batch.climate_silver_to_gold``; parity pinned by tests).
 DUST_AOD_THRESHOLD = 0.5
 DUST_UV_AI_THRESHOLD = 1.0
+#: MAIAC dust-model share that is dust evidence (Gold ``AEROSOL_TYPE_DOMINANT_SHARE``).
+AEROSOL_TYPE_DOMINANT_SHARE = 0.5
 #: Gold ``crop_stress_flag`` NDVI ceiling (low NDVI AND declining trend).
 CROP_STRESS_NDVI_THRESHOLD = 0.3
 
@@ -150,14 +152,16 @@ def serve_dust_event_daily(dust_rows: list[dict[str, Any]],
     """Dust-Event data product.
 
     Source: ``fact_dust_event_daily`` (Gold). Surfaces AOD mean/max, UV aerosol
-    index, dust-severity band, corroborated ``dust_flag`` and the wind /
-    corridor transport context, enriched with AOI display metadata for the dust
-    dashboard and API.
+    index, the MAIAC aerosol type, the AOD load band, corroborated ``dust_flag``
+    and the upwind corridor / wind transport context, enriched with AOI display
+    metadata for the dust dashboard and API.
 
     Both rules are AND rules, so one observed sub-threshold component is a
     negative; missing components otherwise yield ``inconclusive`` /
-    ``not_evaluated`` (flag ``None``). ``transport_flag`` remains a heuristic
-    (other-AOI AOD + positive wind), not an established dust pathway.
+    ``not_evaluated`` (flag ``None``). Dust evidence is the MAIAC dust-model
+    share when present (smoke is not dust), else the UV aerosol index.
+    ``aerosol_load_label`` describes AOD of any type; ``dust_severity_label``
+    uses dust wording only for positive dust rows (D-07).
     """
     aoi_idx = _index_dim(aoi_dim, "aoi_key")
     out = []
@@ -165,17 +169,22 @@ def serve_dust_event_daily(dust_rows: list[dict[str, Any]],
         aoi_key = r.get("aoi_key")
         dim = aoi_idx.get(aoi_key, {})
         aod, uv = r.get("aod_mean"), r.get("uv_aerosol_index_mean")
+        dust_frac = r.get("dust_fraction")
         corridor, wind = r.get("corridor_aod_max"), r.get("wind_speed_mean")
+        dust_evidence_below = (_below(dust_frac, AEROSOL_TYPE_DOMINANT_SHARE)
+                               if dust_frac is not None
+                               else _below(uv, DUST_UV_AI_THRESHOLD))
         dust_status = _evidence_status(
             r.get("dust_flag"),
-            negative=_below(aod, DUST_AOD_THRESHOLD) or _below(uv, DUST_UV_AI_THRESHOLD),
-            observed=aod is not None or uv is not None,
+            negative=_below(aod, DUST_AOD_THRESHOLD) or dust_evidence_below,
+            observed=aod is not None or uv is not None or dust_frac is not None,
         )
         transport_status = _evidence_status(
             r.get("transport_flag"),
             negative=_below(corridor, DUST_AOD_THRESHOLD) or (wind is not None and wind <= 0),
             observed=corridor is not None or wind is not None,
         )
+        band = r.get("dust_severity_band")
         out.append({
             "aoi_key": aoi_key,
             "aoi_name": dim.get("aoi_name"),
@@ -184,12 +193,16 @@ def serve_dust_event_daily(dust_rows: list[dict[str, Any]],
             "aod_mean": aod,
             "aod_max": r.get("aod_max"),
             "uv_aerosol_index_mean": uv,
+            "smoke_fraction": r.get("smoke_fraction"),
+            "dust_fraction": dust_frac,
+            "aerosol_type": r.get("aerosol_type") or "unknown",
             "wind_speed_mean": wind,
             "wind_dir_dominant": r.get("wind_dir_dominant"),
             "corridor_aod_max": corridor,
             "valid_fraction": r.get("valid_fraction"),
-            "dust_severity_band": r.get("dust_severity_band"),
-            "dust_severity_label": _dust_label(r.get("dust_severity_band")),
+            "dust_severity_band": band,
+            "aerosol_load_label": _aerosol_load_label(band),
+            "dust_severity_label": _dust_label(band, dust_status),
             "dust_flag": _decided_flag(dust_status),
             "dust_status": dust_status,
             "transport_flag": _decided_flag(transport_status),
@@ -199,13 +212,24 @@ def serve_dust_event_daily(dust_rows: list[dict[str, Any]],
     return sorted(out, key=lambda x: (x["aoi_key"] or "", x["date_key"] or ""))
 
 
-#: Display labels for the AOD dust-severity band (docs/data-modeling/climate/05).
-_DUST_LABELS = {0: "Clear", 1: "Hazy", 2: "Dusty", 3: "Heavy dust", 4: "Severe"}
+#: AOD load labels for any aerosol type (docs/data-modeling/climate/05).
+_AEROSOL_LOAD_LABELS = {0: "Clear", 1: "Hazy", 2: "Elevated", 3: "High", 4: "Very high"}
+#: Dust wording, used only when the dust rule is positive (AOD >= 0.5 => band >= 2).
+_DUST_LABELS = {2: "Dusty", 3: "Heavy dust", 4: "Severe"}
 
 
-def _dust_label(band: Any) -> str:
-    """Business-friendly dust-severity label from the numeric AOD band."""
+def _aerosol_load_label(band: Any) -> str:
+    """Business-friendly AOD load label (any aerosol type) from the numeric band."""
     if band is None:
+        return "unknown"
+    return _AEROSOL_LOAD_LABELS.get(int(band), "unknown")
+
+
+def _dust_label(band: Any, dust_status: str = "positive") -> str:
+    """Dust-severity label; only a positive dust row gets dust wording (D-07)."""
+    if dust_status == "negative":
+        return "No dust event"
+    if dust_status != "positive" or band is None:
         return "unknown"
     return _DUST_LABELS.get(int(band), "unknown")
 
@@ -304,8 +328,10 @@ def serve_vegetation_health_daily(vegetation_rows: list[dict[str, Any]],
     A missing trend (fewer than two NDVI observations) is ``unknown``, never
     ``flat``. ``crop_stress_flag`` is an AND rule, so one observed component at
     or above its threshold is a negative; otherwise missing inputs yield
-    ``inconclusive`` / ``not_evaluated`` (flag ``None``). A positive is a
-    low/declining NDVI signal, not a verified crop-stress event.
+    ``inconclusive`` / ``not_evaluated`` (flag ``None``). Crop stress is
+    evaluated only on cropland AOIs (``crop_stress_applicable``, D-08); elsewhere
+    it is ``not_evaluated``. A positive is a low/declining NDVI signal, not a
+    verified crop-stress event.
     """
     aoi_idx = _index_dim(aoi_dim, "aoi_key")
     out = []
@@ -314,12 +340,13 @@ def serve_vegetation_health_daily(vegetation_rows: list[dict[str, Any]],
         dim = aoi_idx.get(aoi_key, {})
         ndvi = r.get("ndvi_mean")
         trend = r.get("ndvi_trend_30d")
+        applicable = r.get("crop_stress_applicable") is not False
         crop_status = _evidence_status(
             r.get("crop_stress_flag"),
             negative=(ndvi is not None and ndvi >= CROP_STRESS_NDVI_THRESHOLD)
             or (trend is not None and trend >= 0),
             observed=ndvi is not None or trend is not None,
-        )
+        ) if applicable else "not_evaluated"
         out.append({
             "aoi_key": aoi_key,
             "aoi_name": dim.get("aoi_name"),
@@ -335,6 +362,7 @@ def serve_vegetation_health_daily(vegetation_rows: list[dict[str, Any]],
             "ndvi_health_label": _ndvi_label(r.get("ndvi_health_band")),
             "crop_stress_flag": _decided_flag(crop_status),
             "crop_stress_status": crop_status,
+            "crop_stress_applicable": applicable,
             "area_km2": dim.get("area_km2"),
         })
     return sorted(out, key=lambda x: (x["aoi_key"] or "", x["date_key"] or ""))

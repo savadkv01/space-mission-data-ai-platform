@@ -1,12 +1,13 @@
 table_name: flood_daily
 main_dttm_col: event_date
-description: "Certified: Flood Extent (UC-16), 1 row per AOI per day."
+description: "Certified: Flood Extent (UC-16), 1 row per AOI per day. flood_flag is decided only on permanent-water-masked NDWI (JRC GSW + ESA WorldCover; flood_status); not_evaluated rows have a null flag. Sum rollup_eligible rows only."
 cache_timeout: 3600
 schema: null
 sql: |
   select
       aoi_key, aoi_name, region, cast(date_key as date) as event_date,
-      ndwi_mean, ndwi_max, valid_pixel_fraction, flood_flag, area_km2, ems_corroborated
+      rollup_eligible, ndwi_mean, ndwi_max, valid_pixel_fraction, water_fraction,
+      permanent_water_fraction, flood_flag, flood_status, area_km2, ems_corroborated
   from serving.serving_flood_daily
 filter_select_enabled: true
 extra:
@@ -16,7 +17,7 @@ uuid: d1000000-0000-4000-8000-000000000002
 metrics:
   - metric_name: flood_day_rate
     verbose_name: Flood Day Rate
-    expression: AVG(CASE WHEN flood_flag THEN 1.0 ELSE 0.0 END)
+    expression: AVG(CASE WHEN flood_flag THEN 1.0 WHEN NOT flood_flag THEN 0.0 END)
   - metric_name: mean_ndwi
     verbose_name: Mean NDWI
     expression: AVG(ndwi_mean)

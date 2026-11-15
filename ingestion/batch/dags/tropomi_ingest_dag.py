@@ -22,8 +22,8 @@ from ingestion.batch.dags._defaults import DEFAULT_ARGS
 from ingestion.batch.ingest_task import run_connector_to_bronze
 from ingestion.config.settings import settings
 
-# National + urban AOIs for air-quality monitoring.
-AOIS = ["AOI-UAE-NAT", "AOI-AUH", "AOI-DXB"]
+# Urban UAE-GULF AOIs for air-quality monitoring (region source plan, ADR-12).
+AOIS = list(settings.climate.region_sources["UAE-GULF"]["tropomi"])
 
 
 def _ingest(aoi_id: str, product: str, **context) -> dict:

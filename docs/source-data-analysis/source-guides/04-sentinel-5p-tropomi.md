@@ -10,7 +10,7 @@
 | Satellite / instrument | **Sentinel-5 Precursor** (launched Oct 2017) · **TROPOMI** (TROPOspheric Monitoring Instrument) |
 | Connector | [`GeeS5pConnector`](../../../ingestion/api/gee_s5p.py) (base [`gee.py`](../../../ingestion/api/gee.py)) |
 | Schedule | `@daily` ([`tropomi_ingest_dag.py`](../../../ingestion/batch/dags/tropomi_ingest_dag.py)); full run uses a 14-day window |
-| AOIs × products | UAE: `AOI-UAE-NAT`, `AOI-AUH`, `AOI-DXB` × 6 products · INDIA: `IN-DEL-NCR`, `IN-PB-HR` |
+| AOIs × products | UAE: `AOI-AUH`, `AOI-DXB` × 6 products (`AOI-UAE-NAT` retired 2026-11-15, ADR-12) · INDIA: `IN-DEL-NCR`, `IN-PB-HR` |
 | Auth / licence | GEE service account · Copernicus free and open |
 | Use cases | UC-C3 air-quality monitoring · UC-C2 dust (aerosol index) · UC-C1 climate (CH₄) |
 

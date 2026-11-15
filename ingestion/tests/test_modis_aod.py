@@ -52,7 +52,7 @@ def test_modis_aod_stamps_sensor_product_and_aoi():
     assert rec["sensor"] == "VIIRS"
     assert rec["unit"] == "unitless"
     assert rec["aoi_id"] == "AOI-ARABIA"
-    assert rec["bbox"] == [42.0, 18.0, 55.0, 30.0]  # Arabian Peninsula AOI
+    assert rec["bbox"] == [42.0, 18.0, 48.0, 29.0]  # Arabian Peninsula interior AOI (ADR-12)
 
 
 def test_modis_aod_rejects_unknown_sensor():

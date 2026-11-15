@@ -21,9 +21,10 @@ except ImportError:
 from ingestion.api.gee_aod import GeeAodConnector
 from ingestion.batch.dags._defaults import DEFAULT_ARGS
 from ingestion.batch.ingest_task import run_connector_to_bronze
+from ingestion.config.settings import settings
 
-# Primary UAE AOIs plus upwind dust-source corridors.
-AOIS = ["AOI-UAE-NAT", "AOI-DESERT", "AOI-ARABIA", "AOI-IRAQ", "AOI-IRAN"]
+# UAE-GULF primary + dust-corridor AOIs from the region source plan (ADR-12).
+AOIS = list(settings.climate.region_sources["UAE-GULF"]["aod"])
 
 
 def _ingest(aoi_id: str, **context) -> dict:

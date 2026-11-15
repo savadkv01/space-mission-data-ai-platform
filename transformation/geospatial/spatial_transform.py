@@ -189,3 +189,61 @@ def assign_aoi(lat: float | None, lon: float | None,
                 matched.append(aoi["aoi_key"])
                 break
     return matched
+
+
+# --- Reporting partition vs event overlays (ADR-12) -------------------------
+#
+# Rollup-eligible AOIs ("reporting units") never overlap within a region, so a
+# point belongs to at most one of them and per-AOI counts add up. Event overlays
+# (``rollup_eligible: false``, e.g. Copernicus EMS footprints) may overlap
+# reporting units; they are kept for validation but never summed.
+
+def is_rollup_eligible(aoi: dict[str, Any]) -> bool:
+    """Reporting unit unless the seed explicitly marks it ``rollup_eligible: false``."""
+    return aoi.get("rollup_eligible") is not False
+
+
+def reporting_aois(aois: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The rollup-eligible AOIs (non-overlapping reporting partition)."""
+    return [a for a in aois if is_rollup_eligible(a)]
+
+
+def attribute_point(lat: float | None, lon: float | None,
+                    aois: list[dict[str, Any]]) -> tuple[str | None, list[str]]:
+    """``(reporting_aoi_key, overlay_aoi_keys)`` for a point.
+
+    A point on an edge shared by two reporting units matches both; the
+    lexicographically first ``aoi_key`` wins so the point still counts once.
+    """
+    eligible = {a.get("aoi_key") for a in aois if is_rollup_eligible(a)}
+    matched = assign_aoi(lat, lon, aois)
+    reporting = sorted(k for k in matched if k in eligible)
+    overlays = sorted(k for k in matched if k not in eligible)
+    return (reporting[0] if reporting else None), overlays
+
+
+def attributed_aoi_keys(lat: float | None, lon: float | None,
+                        aois: list[dict[str, Any]]) -> list[str]:
+    """At most one reporting AOI plus every overlay containing the point."""
+    reporting, overlays = attribute_point(lat, lon, aois)
+    return ([reporting] if reporting else []) + overlays
+
+
+def bbox_overlap_area_deg2(a: Any, b: Any) -> float:
+    """Positive overlap area (deg²) of two ``[w, s, e, n]`` boxes; shared edges are 0."""
+    width = min(float(a[2]), float(b[2])) - max(float(a[0]), float(b[0]))
+    height = min(float(a[3]), float(b[3])) - max(float(a[1]), float(b[1]))
+    return width * height if width > 0 and height > 0 else 0.0
+
+
+def overlapping_reporting_pairs(aois: list[dict[str, Any]]) -> list[tuple[str, str]]:
+    """Pairs of same-region reporting AOIs whose boxes overlap by a positive area."""
+    units = [a for a in reporting_aois(aois)
+             if isinstance(a.get("bbox"), (list, tuple)) and len(a["bbox"]) == 4]
+    pairs = []
+    for i, a in enumerate(units):
+        for b in units[i + 1:]:
+            if a.get("region") == b.get("region") and bbox_overlap_area_deg2(
+                    a["bbox"], b["bbox"]) > 0:
+                pairs.append((a["aoi_key"], b["aoi_key"]))
+    return pairs

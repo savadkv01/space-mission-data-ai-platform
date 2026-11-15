@@ -3,12 +3,20 @@
 -- the executive dashboard reads this single small table instead of scanning the
 -- wide products. Vessel identity records carry no position, so maritime KPIs are
 -- reported under region 'GLOBAL' and never added to a geographic region.
-with fire as (
+-- Only rollup-eligible AOIs are summed: they form a non-overlapping reporting
+-- partition (ADR-12), so a detection is counted once. fire_detections excludes
+-- persistent industrial heat sources (D-03), reported in persistent_heat_detections.
+with eligible as (
+    select aoi_key from {{ ref('dim_aoi') }} where rollup_eligible
+),
+fire as (
     select date_key, region,
            sum(detections)                         as fire_detections,
+           sum(persistent_detections)              as persistent_heat_detections,
            max(max_frp)                            as peak_frp,
-           count(distinct aoi_key)                 as fire_aois
+           count(distinct case when detections > 0 then aoi_key end) as fire_aois
     from {{ ref('serving_wildfire_daily') }}
+    where aoi_key in (select aoi_key from eligible)
     group by date_key, region
 ),
 flood as (
@@ -16,6 +24,7 @@ flood as (
            sum(case when flood_flag then 1 else 0 end) as flood_aoi_days,
            count(distinct aoi_key)                      as flood_aois
     from {{ ref('serving_flood_daily') }}
+    where aoi_key in (select aoi_key from eligible)
     group by date_key, region
 ),
 vessel as (
@@ -34,6 +43,7 @@ select
     s.date_key,
     coalesce(s.region, 'UNASSIGNED')       as region,
     coalesce(fire.fire_detections, 0)      as fire_detections,
+    coalesce(fire.persistent_heat_detections, 0) as persistent_heat_detections,
     fire.peak_frp,
     coalesce(fire.fire_aois, 0)            as fire_aois,
     coalesce(flood.flood_aoi_days, 0)      as flood_aoi_days,

@@ -53,8 +53,9 @@ Data-trust and coverage work driven by the [end-to-end validation](docs/validati
 | Freshness and availability | Wildfire rows carry a per-region FIRMS event-time freshness gate (`publication_status`); zero-row sources and empty marts (e.g. launch) are reported as unavailable, not zero. | same |
 | Source fixes | FIRMS moved to VIIRS NOAA-20 (S-NPP NRT ended 2026-11-02); Sentinel-2 NDVI/NDWI sign inversion fixed; MODIS MAIAC per-pixel QA mask; NASA POWER requested in UTC days; streaming anomaly labels now reach Silver (with an end-to-end assertion). | [Source guides](docs/source-data-analysis/source-guides/README.md) |
 | Pipeline reliability | Ingestion caps are logged as `coverage = capped`; dbt steps run with `--no-partial-parse` after a stale cache silently skipped tests. | [OPERATIONS.md](OPERATIONS.md) |
+| Domain remediation (Nov 15) | UAE-GULF AOIs redrawn as a non-overlapping reporting partition with EMS footprints as never-summed overlays (rollups no longer double count); gas flares classified as persistent heat sources and excluded from wildfire KPIs; flood flags use a JRC GSW + ESA WorldCover permanent-water mask; MAIAC aerosol type separates smoke from dust; OpenAQ pages newest-first with sensor plausibility QA; FIRMS daily window covers 2 days; fire freshness objective set to 24 h. | [ADR-12](docs/data-modeling/17-adr.md), [Domain analysis + remediation](docs/validation/2026-11-15-full-e2e-domain-analysis.md) |
 
-**Known open items:** flood flags need a permanent-water baseline; the 6 h fire freshness objective is unreachable with one polar-orbiting sensor; EMS uploads do not reach Silver (the in-repo AOI seed is the reference); CelesTrak GP data is consumed from Phase 26.
+**Known open items:** EMS uploads do not reach Silver (the in-repo AOI seed is the reference); CelesTrak GP data is consumed from Phase 26; warming and desertification stay `not_evaluated` until an LST source is ingested.
 
 ---
 

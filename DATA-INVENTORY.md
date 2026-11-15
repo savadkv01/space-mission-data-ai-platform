@@ -28,7 +28,7 @@ AOI-grained serving product, and both rollups. Regions are never summed together
 
 | Region | AOIs | AQI standard | Notes |
 | --- | --- | --- | --- |
-| `UAE-GULF` | `AOI-UAE-NAT`, `AOI-AUH`, `AOI-DXB`, `AOI-COAST`, `AOI-DESERT`, `AOI-ARABIA`, `AOI-IRAQ`, `AOI-IRAN`, `AOI-GULF`, `EMSR-AE-FLOOD-2024` | `US_EPA_PRE2024` | Primary programme region + upwind dust corridors |
+| `UAE-GULF` | Reporting partition (ADR-12): `AOI-AUH`, `AOI-DXB`, `AOI-COAST`, `AOI-NEM`, `AOI-DESERT` (sub-region UAE), `AOI-ARABIA`, `AOI-ARABIA-E`, `AOI-IRAQ`, `AOI-IRAN`, `AOI-GULF`; overlay `EMSR-AE-FLOOD-2024` (never summed) | `US_EPA_PRE2024` | Primary programme region + upwind dust corridors |
 | `INDIA` | `IN-DEL-NCR`, `IN-MUM`, `IN-PB-HR`, `IN-THAR`, `IN-GUJ-COAST`, `IN-ASSAM` | `IN_CPCB_NAQI_2014` | Regional tier (2026-11-14); 30-day backfill from 2026-10-15 |
 | `US-LEGACY` | `EMSR-CA-FIRE-2025` | — | Legacy reference; FIRMS no longer requested |
 
@@ -281,7 +281,7 @@ idempotent upserts (`INSERT ... ON CONFLICT DO UPDATE`). Source:
 | --- | --- | --- | --- |
 | `master_run` | 1 / `platform_master_pipeline` run | Rollup: status, timing, the `batch_run_id`/`streaming_run_id` it triggered | ✅ Built |
 | `batch_run` | 1 / `platform_batch_pipeline` run | Rollup: status, timing, `total_rows` summed across its 4 stage headers | ✅ Built |
-| `ingestion_run` / `ingestion_run_detail` | 1 / run; 1 / API source per run | Batch-ingestion stage header + per-source status/rows/error (`SWPC`, `FIRMS`, `OPENAQ:AOI-DXB`, `TROPOMI:AOI-UAE-NAT:NO2`, …) | ✅ Built |
+| `ingestion_run` / `ingestion_run_detail` | 1 / run; 1 / API source per run | Batch-ingestion stage header + per-source status/rows/error (`SWPC`, `FIRMS`, `OPENAQ:AOI-DXB`, `TROPOMI:AOI-AUH:NO2`, …) | ✅ Built |
 | `transformation_run` / `transformation_run_detail` | 1 / run; 1 / Silver entity or Gold mart per run | Bronze→Silver→Gold stage header + per-unit row counts (`silver_fire`, `gold_kpi_wildfire_aoi_daily`, `gold_dbt_demonstrator`, …) | ✅ Built |
 | `serving_run` / `serving_run_detail` | 1 / run; 1 / serving dbt model per run | Gold→serving stage header + per-model row counts (`serving_wildfire_daily`, `mv_kpi_platform_daily`, …) | ✅ Built |
 | `bi_run` / `bi_run_detail` | 1 / run; 1 / Superset dataset per run | BI-refresh stage header + per-dataset refresh status | ✅ Built |

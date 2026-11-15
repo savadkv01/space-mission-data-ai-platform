@@ -4,7 +4,9 @@
 -- per AOI and day, pre-joined to dim_aoi (name + analysis region). Null measures
 -- with *_status = 'not_published' mean GFW has not released that day yet; they
 -- are not zero. Unmatched SAR detections are review candidates, not confirmed
--- illegal activity. Overlapping AOIs (e.g. AOI-COAST inside AOI-GULF) are non-additive.
+-- illegal activity. AOIs are a non-overlapping reporting partition (ADR-12), so
+-- AOI rows within a region are additive. is_provisional marks the trailing days
+-- GFW is still classifying / SAR-matching; exclude them from trends (D-10).
 with activity as (
     select * from {{ source('gold', 'fact_maritime_activity_daily') }}
 ),
@@ -16,6 +18,7 @@ select
     a.aoi_name,
     a.region,
     m.date_key,
+    coalesce(m.is_provisional, false) as is_provisional,
     m.fishing_hours,
     m.fishing_vessels,
     m.fishing_status,

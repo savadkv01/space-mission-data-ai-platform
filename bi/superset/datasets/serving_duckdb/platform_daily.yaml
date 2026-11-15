@@ -1,12 +1,12 @@
 table_name: platform_daily
 main_dttm_col: kpi_date
-description: "Certified materialized aggregate: daily KPIs per analysis region (executive). Filter or group by region; regions must not be summed together (vessels = GLOBAL)."
+description: "Certified materialized aggregate: daily KPIs per analysis region (executive). Filter or group by region; regions must not be summed together (vessels = GLOBAL). Sums the non-overlapping reporting AOIs only; fire_detections excludes persistent industrial heat sources."
 cache_timeout: 900
 schema: null
 sql: |
   select
       cast(date_key as date) as kpi_date, region,
-      fire_detections, peak_frp, fire_aois,
+      fire_detections, persistent_heat_detections, peak_frp, fire_aois,
       flood_aoi_days, flood_aois, vessel_days, suspicious_vessels
   from serving_agg.mv_kpi_platform_daily
 filter_select_enabled: true

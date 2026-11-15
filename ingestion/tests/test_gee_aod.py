@@ -40,7 +40,7 @@ def test_aod_stamps_product_sensor_collection():
 def test_aod_bucket_shape_matches_silver_cleaner_contract():
     conn = GeeAodConnector(stats_fn=_canned_stats)
     rec = conn.ingest(
-        aoi_id="AOI-UAE-NAT",
+        aoi_id="AOI-AUH",
         datetime_range="2024-06-01T00:00:00Z/2024-06-01T23:59:59Z",
     )[0].payload
     stats = rec["outputs"]["index"]["bands"]["B0"]["stats"]
@@ -81,11 +81,23 @@ def test_maiac_qa_mask_keeps_only_clear_best_quality_pixels():
     assert ok(0b001 | (5 << 8)) == 0            # clear flag but "no retrieval"
     assert ok(0b001 | (2 << 13)) == 1           # dust aerosol model is still kept
 
+    def model(qa):
+        return GeeAodConnector.maiac_aerosol_model(Px(qa)).v
 
-def test_aod_records_are_stamped_with_qa_mask():
+    assert model(0b001) == 0                    # background
+    assert model(0b001 | (1 << 13)) == 1        # smoke
+    assert model(0b011 | (2 << 13) | (5 << 8)) == 2   # dust, other bits ignored
+
+
+def test_aod_records_carry_maiac_qa_and_aerosol_model_through_silver():
     from ingestion.api.gee_aod import GeeAodConnector
+    from transformation.batch.climate_bronze_to_silver import silver_aerosol
 
-    stats = {"mean": 0.5, "min": 0.1, "max": 0.9, "stDev": 0.1, "sampleCount": 9, "noDataCount": 1}
+    stats = {"mean": 0.5, "min": 0.1, "max": 0.9, "stDev": 0.1, "sampleCount": 9,
+             "noDataCount": 1, "smokeFraction": 0.8, "dustFraction": 0.05}
     conn = GeeAodConnector(stats_fn=lambda **_: stats)
     records, _ = conn.fetch_raw(aoi_id="IN-THAR", datetime_range="2026-11-01/2026-11-01")
     assert records[0]["qa_mask"] == GeeAodConnector.QA_MASK
+    assert records[0]["aerosol_model"] == GeeAodConnector.AEROSOL_MODEL
+    row = silver_aerosol(records).rows[0]
+    assert (row["smoke_fraction"], row["dust_fraction"]) == (0.8, 0.05)

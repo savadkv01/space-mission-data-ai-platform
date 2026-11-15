@@ -74,7 +74,7 @@ joins across different dates and preserves Feast PIT semantics.
 | Feature view | Serving source | Representative features | TTL | Target freshness |
 |---|---|---|---:|---:|
 | `air_quality_aoi_daily` | `serving_air_quality_daily` | PM2.5/PM10 mean/max, NO₂/SO₂/CO/O₃ column means, AQI per pollutant, AQI band, exceedance flag, 7/30-day PM means and daily change | 2 days | 24-hour observation age; 60 minutes after serving database build |
-| `dust_aoi_daily` | `serving_dust_event_daily` | AOD mean/max, aerosol index, dust band/flag, NASA POWER wind speed/direction, transport flag, 7-day AOD mean and change | 7 days | 24 hours |
+| `dust_aoi_daily` | `serving_dust_event_daily` | AOD mean/max, aerosol index, dust band/flag, NASA POWER wind speed/direction, transport flag, 7-day AOD mean and change | 7 days | 96 hours (decision 2026-11-15: MODIS MAIAC AOD on Earth Engine publishes ~3 days late, so 24 hours is unattainable) |
 | `climate_indicator_aoi_daily` | `serving_climate_indicator_daily` | LST/SST and anomalies, NDVI/EVI/NDWI, desertification indicators, 7-day LST-anomaly mean, 30-day NDVI mean, daily changes | 45 days | 24 hours |
 | `vegetation_health_aoi_daily` | `serving_vegetation_health_daily` | NDVI/EVI, 30-day NDVI trend, pixel validity, health band, crop-stress flag, 30-day NDVI mean and daily change | 45 days | 24 hours |
 
@@ -184,7 +184,7 @@ manifests retain feature references and content hashes.
 | AOI/date uniqueness | 100% | Sync rejects duplicate source grain |
 | Air-quality observation age | ≤24 hours | API `status` and `max_observed_age_hours` |
 | Air-quality publication age | ≤60 minutes after serving DB build | API `publication_status` and `max_source_publication_age_minutes` |
-| Other climate observation age | ≤24 hours | API freshness response |
+| Other climate observation age | ≤24 hours; dust ≤96 hours (decision 2026-11-15, MAIAC AOD publication lag) | API freshness response |
 | Point-in-time leakage | 0 future-dated values | Feast retrieval test with multiple feature dates |
 | Source completeness | Per-field thresholds above | Sync quality report before source-table upsert |
 | Drift | PSI <0.2 and absolute skew delta <1.0 | Versioned approved baseline vs. current batch |

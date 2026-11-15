@@ -1,6 +1,9 @@
 -- Serving data product: Wildfire Activity (UC-15). Mirrors
 -- serving.marts.serving_marts.serve_wildfire_daily. Wide, business-named, and
 -- pre-joined to dim_aoi + EMS corroboration so BI/API read with no runtime joins.
+-- detections / FRP exclude persistent industrial heat sources (gas flares,
+-- D-03), which are counted separately in persistent_detections. Only
+-- rollup_eligible rows may be summed (event overlays duplicate their area).
 with fire as (
     select * from {{ source('gold', 'kpi_wildfire_aoi_daily') }}
 ),
@@ -19,8 +22,10 @@ select
     f.aoi_key,
     a.aoi_name,
     a.region,
+    coalesce(a.rollup_eligible, true)                     as rollup_eligible,
     f.date_key,
     f.detections,
+    coalesce(f.persistent_detections, 0)                  as persistent_detections,
     f.mean_frp,
     f.max_frp,
     a.area_km2,

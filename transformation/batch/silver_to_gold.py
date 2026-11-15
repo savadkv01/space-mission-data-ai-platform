@@ -19,13 +19,14 @@ Gold marts produced here:
 
 from __future__ import annotations
 
+from bisect import bisect_left, bisect_right
 from collections import defaultdict
 from datetime import date, timedelta
 from math import fsum
 from typing import Any
 
 from transformation.cleaning.cleaning_rules import median
-from transformation.geospatial.spatial_transform import assign_aoi
+from transformation.geospatial.spatial_transform import attribute_point, attributed_aoi_keys
 from transformation.timeseries.time_series import parse_ts
 
 _HEALTH_WEIGHT = {"NOMINAL": 1.0, "UNKNOWN": 0.5, "ANOMALY": 0.0}
@@ -229,6 +230,9 @@ def gold_vessel_activity(silver_vessel: list[dict[str, Any]]) -> list[dict[str, 
 # --- 5b. Maritime Activity (GFW 4Wings, AOI-level) ---------------------------
 
 _MARITIME_MEASURE = {"fishing_effort": "hours", "presence": "hours", "sar": "detections"}
+#: Trailing days GFW is still classifying / SAR-matching (D-10): rows on or after
+#: ``last published day - (N - 1)`` are provisional and excluded from trend KPIs.
+MARITIME_PROVISIONAL_DAYS = 5
 
 
 def gold_maritime_activity(silver_maritime: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -239,7 +243,9 @@ def gold_maritime_activity(silver_maritime: list[dict[str, Any]]) -> list[dict[s
     and the day is on/before the dataset's latest published date across the
     pull; later days are ``None`` with status ``not_published`` (fishing effort
     lags ~96 h, SAR ~5 days). ``*_vessels`` sums per-flag distinct vessels, so a
-    vessel is counted once per day (one flag per vessel).
+    vessel is counted once per day (one flag per vessel). ``is_provisional``
+    marks the last ``MARITIME_PROVISIONAL_DAYS`` published days, which GFW
+    still revises upward.
     """
     sums: dict[tuple[str, str, str], dict[str, float]] = defaultdict(
         lambda: {"measure": 0.0, "vessels": 0.0, "unmatched": 0.0})
@@ -261,12 +267,16 @@ def gold_maritime_activity(silver_maritime: list[dict[str, Any]]) -> list[dict[s
         aoi_first[aoi] = min(aoi_first.get(aoi, day), day)
 
     last_day = max(published.values(), default=None)
+    provisional_from = ((date.fromisoformat(last_day)
+                         - timedelta(days=MARITIME_PROVISIONAL_DAYS - 1)).isoformat()
+                        if last_day else None)
     out = []
     for aoi, first in sorted(aoi_first.items()):
         day = date.fromisoformat(first)
         while last_day and day.isoformat() <= last_day:
             key = day.isoformat()
-            row: dict[str, Any] = {"aoi_key": aoi, "date_key": key}
+            row: dict[str, Any] = {"aoi_key": aoi, "date_key": key,
+                                   "is_provisional": key >= provisional_from}
             for ds, prefix in (("fishing_effort", "fishing"), ("presence", "presence"),
                                ("sar", "sar")):
                 acc = sums.get((aoi, key, ds))
@@ -355,28 +365,83 @@ def region_for_point(lat: Any, lon: Any,
     return None
 
 
+#: Persistent heat-source rule (D-03): a 0.01° (~1.1 km) cell with detections on
+#: at least ``PERSISTENT_MIN_DAYS`` distinct UTC days within ±``PERSISTENT_WINDOW_DAYS``
+#: of a detection marks it a fixed industrial source (gas flare, refinery,
+#: platform). Vegetation fires move between cells from day to day; flares do not.
+PERSISTENT_CELL_DEG = 0.01
+PERSISTENT_MIN_DAYS = 5
+PERSISTENT_WINDOW_DAYS = 15
+HEAT_SOURCE_VEGETATION = "vegetation_fire"
+HEAT_SOURCE_PERSISTENT = "persistent_industrial"
+
+
+def _heat_cell(lat: Any, lon: Any) -> tuple[int, int] | None:
+    try:
+        return (round(float(lat) / PERSISTENT_CELL_DEG), round(float(lon) / PERSISTENT_CELL_DEG))
+    except (TypeError, ValueError):
+        return None
+
+
+def classify_heat_sources(silver_fire: list[dict[str, Any]]) -> list[str | None]:
+    """Heat-source class per Silver fire row (same order); ``None`` without date/position.
+
+    A static-source mask, not a fire-type product: FIRMS NRT carries no ``type``
+    field, so persistence is the evidence. ``vegetation_fire`` therefore means
+    "not persistent", which includes short-lived industrial events.
+    """
+    days = [parse_ts(r.get("event_ts")) for r in silver_fire]
+    cells = [_heat_cell(r.get("latitude"), r.get("longitude")) for r in silver_fire]
+    cell_days: dict[tuple[int, int], set[date]] = defaultdict(set)
+    for ts, cell in zip(days, cells):
+        if ts is not None and cell is not None:
+            cell_days[cell].add(ts.date())
+    sorted_days = {cell: sorted(ds) for cell, ds in cell_days.items()}
+    window = timedelta(days=PERSISTENT_WINDOW_DAYS)
+
+    out: list[str | None] = []
+    for ts, cell in zip(days, cells):
+        if ts is None or cell is None:
+            out.append(None)
+            continue
+        ds = sorted_days[cell]
+        d = ts.date()
+        active = bisect_right(ds, d + window) - bisect_left(ds, d - window)
+        out.append(HEAT_SOURCE_PERSISTENT if active >= PERSISTENT_MIN_DAYS
+                   else HEAT_SOURCE_VEGETATION)
+    return out
+
+
 def fire_aoi_attribution(silver_fire: list[dict[str, Any]],
                          aois: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Account for every detection once, retaining all overlapping AOI matches.
+    """Account for every detection once: one reporting AOI plus any overlays.
 
-    ``region`` places every detection (matched or not) in an analysis region by
-    its regional envelope, so FIRMS freshness can be judged per region.
+    ``reporting_aoi_key`` is the single rollup-eligible AOI containing the
+    detection (ADR-12); ``aoi_keys`` adds event overlays (EMS footprints) used
+    for validation. ``region`` places every detection (matched or not) in an
+    analysis region by its regional envelope, so FIRMS freshness can be judged
+    per region. ``heat_source_class`` separates persistent industrial heat
+    sources from vegetation fires (D-03).
     """
     envelopes = region_envelopes(aois)
+    classes = classify_heat_sources(silver_fire)
     out = []
-    for r in silver_fire:
+    for r, heat_class in zip(silver_fire, classes):
         day = _day(r.get("event_ts"))
-        keys = sorted(set(assign_aoi(r.get("latitude"), r.get("longitude"), aois)))
+        reporting, overlays = attribute_point(r.get("latitude"), r.get("longitude"), aois)
+        keys = ([reporting] if reporting else []) + overlays
         status = "invalid_date" if day is None else "matched" if keys else "unmatched"
         out.append({
             "fire_key": r.get("fire_key"),
             "event_ts": r.get("event_ts"),
             "date_key": day,
             "aoi_keys": keys,
+            "reporting_aoi_key": reporting if day else None,
             "match_count": len(keys) if day else 0,
             "match_status": status,
             "match_method": "wgs84_point_in_polygon",
             "region": region_for_point(r.get("latitude"), r.get("longitude"), envelopes),
+            "heat_source_class": heat_class,
             "latitude": r.get("latitude"),
             "longitude": r.get("longitude"),
             "frp": r.get("frp"),
@@ -394,25 +459,35 @@ def gold_wildfire_aoi(silver_fire: list[dict[str, Any]],
                       aois: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Daily wildfire KPIs per AOI (``kpi_wildfire_aoi_daily``).
 
-    Point-in-polygon attributes each FIRMS/VIIRS detection to every AOI whose
-    footprint contains it, then rolls up detections and fire radiative power by
-    AOI and day. A detection may count toward multiple overlapping AOIs.
+    Point-in-polygon attributes each FIRMS/VIIRS detection to its single
+    reporting AOI plus any event overlay containing it, then rolls up
+    detections and fire radiative power by AOI and day. Persistent industrial
+    heat sources are excluded from ``detections`` / FRP and reported separately
+    as ``persistent_detections``; an AOI-day with only persistent sources keeps
+    a row with ``detections = 0``.
     """
-    groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    fires: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    persistent: dict[tuple[str, str], int] = defaultdict(int)
     for r, attribution in zip(silver_fire, fire_aoi_attribution(silver_fire, aois)):
         day = attribution["date_key"]
         if attribution["match_status"] != "matched":
             continue
+        is_persistent = attribution["heat_source_class"] == HEAT_SOURCE_PERSISTENT
         for aoi_key in attribution["aoi_keys"]:
-            groups[(aoi_key, day)].append(r)
+            if is_persistent:
+                persistent[(aoi_key, day)] += 1
+            else:
+                fires[(aoi_key, day)].append(r)
 
     out = []
-    for (aoi_key, day), rows in sorted(groups.items()):
+    for aoi_key, day in sorted(set(fires) | set(persistent)):
+        rows = fires.get((aoi_key, day), [])
         frps = [float(r["frp"]) for r in rows if r.get("frp") is not None]
         out.append({
             "aoi_key": aoi_key,
             "date_key": day,
             "detections": len(rows),
+            "persistent_detections": persistent.get((aoi_key, day), 0),
             "mean_frp": round(fsum(frps) / len(frps), 3) if frps else None,
             "max_frp": round(max(frps), 3) if frps else None,
         })
@@ -435,14 +510,33 @@ def _bbox_centroid(bbox: Any) -> tuple[float | None, float | None]:
     return (miny + maxy) / 2.0, (minx + maxx) / 2.0
 
 
+#: Flood rule on permanent-water-masked NDWI statistics (decision 2026-11-15 /
+#: L1): new open water on at least this share of the AOI's valid
+#: non-permanent-water pixels. Dry-season baselines measured 2026-11-15 were
+#: 0.1-0.3 % (Dubai) and 0.4-0.9 % (Assam), so 2 % is 2-20x the baseline.
+FLOOD_NEW_WATER_FRACTION = 0.02
+#: Below this valid-pixel share of the AOI box (cloud, partial tile) the new-
+#: water fraction rests on too few pixels and the flag is not evaluated.
+FLOOD_MIN_VALID_FRACTION = 0.1
+
+
 def gold_flood_aoi(silver_index: list[dict[str, Any]],
                    aois: list[dict[str, Any]],
-                   water_threshold: float = 0.0) -> list[dict[str, Any]]:
+                   water_threshold: float = 0.0,
+                   new_water_fraction: float = FLOOD_NEW_WATER_FRACTION,
+                   ) -> list[dict[str, Any]]:
     """Daily flood KPIs per AOI from NDWI statistics (``kpi_flood_aoi_daily``).
 
-    NDWI (``> water_threshold`` indicates open water) index rows are attributed
-    to AOIs via their bbox centroid, then averaged per AOI and day. ``flood_flag``
-    fires when the mean NDWI clears the threshold.
+    NDWI index rows are attributed to AOIs via their bbox centroid (one
+    reporting AOI plus overlays), then averaged per AOI and day.
+
+    ``flood_flag`` is decided only from statistics with the permanent-water
+    mask (``water_mask``: JRC GSW seasonality >= 10 months plus ESA WorldCover
+    permanent water): it fires when ``water_fraction`` (share of valid
+    non-permanent pixels with NDWI > ``water_threshold``) reaches
+    ``new_water_fraction``. Legacy unmasked statistics cannot separate sea or
+    lakes from flood water, and days with less than ``FLOOD_MIN_VALID_FRACTION``
+    valid pixels rest on too few pixels; both leave the flag ``None``.
     """
     groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for r in silver_index:
@@ -452,22 +546,35 @@ def gold_flood_aoi(silver_index: list[dict[str, Any]],
         lat, lon = _bbox_centroid(r.get("bbox"))
         if not day or lat is None:
             continue
-        for aoi_key in assign_aoi(lat, lon, aois):
+        for aoi_key in attributed_aoi_keys(lat, lon, aois):
             groups[(aoi_key, day)].append(r)
 
     out = []
-    for (aoi_key, day), rows in sorted(groups.items()):
+    for (aoi_key, day), all_rows in sorted(groups.items()):
+        masked = [r for r in all_rows if r.get("water_mask")]
+        rows = masked or all_rows
         means = [float(r["mean"]) for r in rows if r.get("mean") is not None]
         valid = [float(r["valid_pixel_fraction"]) for r in rows
                  if r.get("valid_pixel_fraction") is not None]
-        ndwi_mean = round(sum(means) / len(means), 4) if means else None
+        water = [float(r["water_fraction"]) for r in masked
+                 if r.get("water_fraction") is not None]
+        permanent = [float(r["permanent_water_fraction"]) for r in masked
+                     if r.get("permanent_water_fraction") is not None]
+        water_fraction = round(sum(water) / len(water), 4) if water else None
+        valid_fraction = round(sum(valid) / len(valid), 4) if valid else None
+        decidable = (water_fraction is not None and valid_fraction is not None
+                     and valid_fraction >= FLOOD_MIN_VALID_FRACTION)
         out.append({
             "aoi_key": aoi_key,
             "date_key": day,
-            "ndwi_mean": ndwi_mean,
+            "ndwi_mean": round(sum(means) / len(means), 4) if means else None,
             "ndwi_max": round(max(means), 4) if means else None,
-            "valid_pixel_fraction": round(sum(valid) / len(valid), 4) if valid else None,
-            "flood_flag": bool(ndwi_mean is not None and ndwi_mean > water_threshold),
+            "valid_pixel_fraction": valid_fraction,
+            "water_fraction": water_fraction,
+            "permanent_water_fraction": (round(sum(permanent) / len(permanent), 4)
+                                         if permanent else None),
+            "water_mask": masked[0]["water_mask"] if masked else None,
+            "flood_flag": water_fraction >= new_water_fraction if decidable else None,
         })
     return out
 
@@ -479,10 +586,11 @@ def gold_aoi_validation(ems_aois: list[dict[str, Any]],
                         flood_aoi_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Cross-source corroboration of EMS footprints (``kpi_aoi_validation``).
 
-    Each EMS activation AOI is ground truth mapped by imagery analysts. This mart
-    checks whether *independent* detection sources agree: FIRMS thermal fires for
-    fire AOIs, Sentinel-2 NDWI water for flood AOIs. ``corroborated`` is a recall
-    signal for the mapped event.
+    Only an EMS activation footprint is ground truth mapped by imagery analysts,
+    so only those rows can be ``corroborated`` (D-12): the check asks whether
+    *independent* detection sources agree (FIRMS vegetation fires for fire AOIs,
+    masked NDWI flood flags for flood AOIs). For other AOIs ``signal_present``
+    reports the platform's own signal, which is not corroboration.
     """
     fire_by_aoi: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for r in wildfire_aoi_rows:
@@ -497,19 +605,22 @@ def gold_aoi_validation(ems_aois: list[dict[str, Any]],
         event_type = aoi.get("event_type", "other")
         if event_type == "fire":
             evidence = fire_by_aoi.get(key, [])
-            corroborated = any(r.get("detections", 0) > 0 for r in evidence)
+            signal = any((r.get("detections") or 0) > 0 for r in evidence)
         elif event_type == "flood":
             evidence = flood_by_aoi.get(key, [])
-            corroborated = any(r.get("flood_flag") for r in evidence)
+            signal = any(r.get("flood_flag") for r in evidence)
         else:
             evidence = []
-            corroborated = False
+            signal = False
+        is_ems = aoi.get("is_ems_activation", True) is not False
         out.append({
             "aoi_key": key,
             "event_type": event_type,
             "event_date": _day(aoi.get("event_date")),
             "area_km2": aoi.get("area_km2"),
             "evidence_days": len(evidence),
-            "corroborated": corroborated,
+            "is_ems_activation": is_ems,
+            "signal_present": signal,
+            "corroborated": is_ems and signal,
         })
     return out

@@ -6,8 +6,11 @@ models:
   - name: serving_wildfire_daily
     description: >-
       Wildfire Activity (UC-15), 1 row per configured AOI per UTC day.
-      Exploratory only: domain approval is pending, overlapping AOIs are
-      non-additive, and curated AOI corroboration is not independent EMS evidence.
+      Exploratory only: domain approval is pending. detections / FRP exclude
+      persistent industrial heat sources (gas flares; persistent_detections).
+      Only rollup_eligible rows (the non-overlapping reporting partition) may be
+      summed; event overlays duplicate their area. Curated AOI signal is not
+      independent EMS evidence.
       Consult docs/source-data-analysis/16-live-readiness-and-fire-contract.md
       and live-readiness-snapshot.json for completeness, freshness, and reconciliation.
     columns:
@@ -15,6 +18,16 @@ models:
         tests: [not_null]
       - name: date_key
         tests: [not_null]
+      - name: rollup_eligible
+        tests: [not_null]
+      - name: detections
+        tests:
+          - not_null
+          - dbt_utils.accepted_range: { min_value: 0 }
+      - name: persistent_detections
+        tests:
+          - not_null
+          - dbt_utils.accepted_range: { min_value: 0 }
       - name: severity
         tests:
           - accepted_values:
@@ -38,7 +51,8 @@ models:
       FIRMS event-time freshness gate for serving_wildfire_daily, one row per
       analysis region (UAE-GULF / INDIA / US-LEGACY). publication_status is
       'blocked' unless the latest acquired detection inside that region's
-      envelope is within max_observation_age_hours (default 6). A zero-record or
+      envelope is within max_observation_age_hours (default 24, approved
+      2026-11-15 for single-sensor VIIRS). A zero-record or
       stale feed is never a current "no fire" negative; absent AOI/day rows are
       only interpretable while the region's freshness_status = 'current'.
     columns:
@@ -56,7 +70,12 @@ models:
               values: ['exploratory', 'blocked']
 
   - name: serving_flood_daily
-    description: "Flood Extent data product (UC-16), 1 row per AOI per day."
+    description: >-
+      Flood Extent data product (UC-16), 1 row per AOI per day. flood_flag is
+      decided only from NDWI statistics with the permanent-water mask (JRC GSW
+      seasonality >= 10 months + ESA WorldCover permanent water): new open water
+      on >= 2% of valid non-permanent pixels. Legacy unmasked rows and days with
+      < 10% valid pixels are 'not_evaluated' with a null flag.
     columns:
       - name: aoi_key
         tests: [not_null]
@@ -65,6 +84,13 @@ models:
       - name: valid_pixel_fraction
         tests:
           - dbt_utils.accepted_range: { min_value: 0, max_value: 1 }
+      - name: water_fraction
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 1 }
+      - name: flood_status
+        tests:
+          - not_null
+          - accepted_values: { values: ['positive', 'negative', 'not_evaluated'] }
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [aoi_key, date_key]
@@ -97,12 +123,16 @@ models:
       4Wings (apparent fishing hours, AIS presence, Sentinel-1 SAR detections).
       Null measures with status 'not_published' are unreleased days, not zero.
       sar_dark_fraction = SAR detections without an AIS match / all detections;
-      a review signal, not confirmed illegal activity. Overlapping AOIs are
-      non-additive. GFW data is free for non-commercial use only.
+      a review signal, not confirmed illegal activity. AOIs are a
+      non-overlapping reporting partition, so rows are additive within a region.
+      is_provisional marks trailing days GFW is still revising; exclude them from
+      trends. GFW data is free for non-commercial use only.
     columns:
       - name: aoi_key
         tests: [not_null]
       - name: date_key
+        tests: [not_null]
+      - name: is_provisional
         tests: [not_null]
       - name: region
         tests:
@@ -131,7 +161,9 @@ models:
           combination_of_columns: [aoi_key, date_key]
 
   - name: serving_scene_catalog
-    description: "Imagery Catalog data product (UC-25), 1 row per scene."
+    description: >-
+      Imagery Catalog data product (UC-25), 1 row per scene. quality_band:
+      gold <= 10 % cloud, silver <= 30 %, bronze otherwise or incomplete metadata.
     columns:
       - name: scene_key
         tests: [not_null, unique]
@@ -141,17 +173,24 @@ models:
               values: ['gold', 'silver', 'bronze', 'listed', 'unlisted']
 
   - name: serving_aoi_validation
-    description: "Detection Validation data product (UC-27)."
+    description: >-
+      Detection Validation data product (UC-27). Only EMS activation footprints
+      are ground truth ('corroborated' / 'unconfirmed'); other AOIs report the
+      platform's own signal ('signal_only' / 'no_signal'), not corroboration.
     columns:
       - name: aoi_key
         tests: [not_null, unique]
       - name: trust
         tests:
-          - accepted_values: { values: ['corroborated', 'unconfirmed'] }
+          - not_null
+          - accepted_values:
+              values: ['corroborated', 'unconfirmed', 'signal_only', 'no_signal']
 
   - name: mv_kpi_platform_daily
     description: >-
-      Materialized daily KPI rollup per analysis region (executive view).
+      Materialized daily KPI rollup per analysis region (executive view). Sums
+      rollup-eligible AOIs only (non-overlapping reporting partition, ADR-12);
+      fire_detections excludes persistent industrial heat sources.
       Vessel identity records have no position and are reported under 'GLOBAL'.
     columns:
       - name: date_key
