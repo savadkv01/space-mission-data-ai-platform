@@ -834,26 +834,38 @@ docker exec space-ingest-runner python -m ingestion.scripts.run_full_batch_inges
 ```
 
 Lands SWPC, CelesTrak, NASA POWER, FIRMS (MENA box + INDIA AOI boxes), GFW,
-Sentinel-2 scene metadata and indices, OpenAQ, TROPOMI, and MODIS/VIIRS AOD to
-Bronze for both analysis regions (UAE-GULF and INDIA; see
+Sentinel-2 scene metadata, and — through one per-region source plan
+(`settings.climate.region_sources`, UAE-GULF and INDIA) — OpenAQ, TROPOMI,
+MODIS/VIIRS AOD, Sentinel-2 NDVI/NDWI, and GFW 4Wings to Bronze (see
 [02-aoi-strategy.md](docs/source-data-analysis/climate/02-aoi-strategy.md#analysis-regions)).
-The full-run driver uses recent rolling UTC windows (including today for OpenAQ)
-instead of a fixed historical sample. Sentinel-2 metadata and indices use the
+The full-run driver uses recent rolling UTC windows instead of a fixed
+historical sample. Sentinel-2 metadata and indices use the
 configured Google Earth Engine service account because the current Sentinel Hub
 account returns `403 Invalid or expired account`. FIRMS uses `FIRMS_SOURCE`
-(default `VIIRS_NOAA20_NRT`; the S-NPP NRT feed ended 2026-11-02). Any request
-truncated by a cap is returned (and logged by the batch DAG) as
-`coverage = capped` with `coverage_notes`.
+(default `VIIRS_NOAA20_NRT`; the S-NPP NRT feed ended 2026-11-02) and requests
+`firms_daily_day_range = 2` days (today + yesterday) so an early-UTC run never
+misses the previous day's late passes. OpenAQ pages each sensor newest-first in
+3-day windows under a per-sensor request budget, so a cap drops the oldest days,
+never the newest. Any request truncated by a cap is returned (and logged by the
+batch DAG) as `coverage = capped` with `coverage_notes`.
 
-#### Step 4b — One-off regional backfill (INDIA)
+#### Step 4b — One-off regional backfill (UAE-GULF / INDIA)
 
-Run once when a region is added (or to fill a gap), from a container that has
-the source credentials (the Airflow container, or `space-ingest-runner`):
+Run once when a region or AOI geometry changes (or to fill a gap), from a
+container that has the source credentials (the Airflow container, or
+`space-ingest-runner`). Request-based Silver entities (MODIS AOD, TROPOMI, NASA
+POWER, GFW 4Wings) quarantine records stamped with a retired or redrawn AOI box
+(`retired:aoi` / `superseded:aoi_geometry`, ADR-12), so redrawn AOIs must be
+backfilled:
 
 ```powershell
 # 30 days of all INDIA sources (FIRMS walked in 5-day DATE windows)
 docker exec -w /opt/airflow/repo -e PYTHONPATH=/opt/airflow/repo space-platform-airflow-1 `
   python -m ingestion.scripts.regional_ingest --region INDIA --days 30
+
+# Only selected plan sources (e.g. after the 2026-11-15 AOI redraw / mask changes)
+docker exec -w /opt/airflow/repo -e PYTHONPATH=/opt/airflow/repo space-platform-airflow-1 `
+  python -m ingestion.scripts.regional_ingest --region UAE-GULF --days 30 --sources aod,ndwi,gfw,openaq
 
 # FIRMS-only gap fill (e.g. after the S-NPP -> NOAA-20 switch), incl. the UAE-GULF envelope
 docker exec -w /opt/airflow/repo -e PYTHONPATH=/opt/airflow/repo space-platform-airflow-1 `
@@ -1439,7 +1451,8 @@ What is operationally available today, and what each future phase will add to th
 | 09 — Transformation | §11 one-command Bronze→Silver→Gold pipeline (hardened `spark-master` image with dbt baked in); sim + MVP Earth-observation Silver entities; Spark Gold-lakehouse writer materialising all ten marts to `s3://gold` (the serving source, with the Copernicus-EMS AOI seed); Kafka→Silver structured streaming | ✅ Available |
 | 11 — Serving | Serving dbt data products (wildfire/flood/vessel/scene/AOI-validation + platform KPI MV) built from `s3://gold` Parquet via DuckDB+httpfs; `dbt run` + 18 contract tests | ✅ Data products available (FastAPI 🔜) |
 | 8b / 9b / 12b — Climate/dust/air-quality track | §12 full-run recipe incl. climate connectors (OpenAQ, TROPOMI, MODIS/VIIRS AOD) and climate Gold marts/BI dashboards; `preflight_infra_env.py` + `run_full_batch_ingest.py` operator scripts | ✅ Available (TROPOMI/AOD data-availability gaps — see §12) |
-| Regional tier — INDIA (2026-11-14) | §12 Step 4b `regional_ingest.py` backfill / FIRMS gap fill; `region` on every AOI product and rollup; `FIRMS_SOURCE` (NOAA-20). Evidence: [docs/validation/2026-11-14-india-regional-e2e.md](docs/validation/2026-11-14-india-regional-e2e.md) | ✅ Available (flood permanent-water baseline + freshness objective open) |
+| Regional tier — INDIA (2026-11-14) | §12 Step 4b `regional_ingest.py` backfill / FIRMS gap fill; `region` on every AOI product and rollup; `FIRMS_SOURCE` (NOAA-20). Evidence: [docs/validation/2026-11-14-india-regional-e2e.md](docs/validation/2026-11-14-india-regional-e2e.md) | ✅ Available |
+| Domain remediation (2026-11-15) | Non-overlapping reporting AOIs + event overlays (ADR-12); `regional_ingest.py --sources` partial backfill and a UAE-GULF region plan; FIRMS 2-day daily window; 24 h fire freshness objective; permanent-water-masked flood flags; MAIAC aerosol type; AQ plausibility QA; flare exclusion. Evidence: [docs/validation/2026-11-15-full-e2e-domain-analysis.md](docs/validation/2026-11-15-full-e2e-domain-analysis.md) §16 | ✅ Available |
 | Manual verification | §13 per-stage validation cheat-sheet (Bronze/Kafka/Silver/Gold/streaming/serving/BI), UI + CLI/API methods for each | ✅ Available |
 | Orchestration (`pipelines/`) | §14 Airflow-triggered `platform_batch_pipeline` / `platform_streaming_pipeline` / `platform_master_pipeline` DAGs (no schedule, manual only) + `metadata.*` run/row-level logging tables in PostgreSQL | ✅ Available |
 | Feature Store (13 / 13b) | §15 Feast/PostgreSQL service, 11b climate-product sync, readiness-gated online retrieval, demo/catalog materialization, PIT integration tests, and hourly Airflow trigger | ✅ Available; operational domains remain blocked per the readiness plan |

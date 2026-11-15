@@ -9,7 +9,7 @@
 | Access | REST API v3, `https://api.openaq.org/v3` |
 | Connector | [`OpenAqConnector`](../../../ingestion/api/openaq.py) |
 | Schedule | `@daily`, 1-day window ([`openaq_ingest_dag.py`](../../../ingestion/batch/dags/openaq_ingest_dag.py)); full run 14 days |
-| AOIs × pollutants | UAE: `AOI-DXB`, `AOI-AUH`, `AOI-UAE-NAT` × {pm25, pm10, o3, no2, co, so2} · INDIA: `IN-DEL-NCR`, `IN-MUM` × {pm25, pm10} only (dense networks) |
+| AOIs × pollutants | UAE: `AOI-DXB`, `AOI-AUH`, `AOI-NEM` × {pm25, pm10} (region plan; `AOI-UAE-NAT` retired 2026-11-15, ADR-12) · INDIA: `IN-DEL-NCR`, `IN-MUM` × {pm25, pm10} only (dense networks) |
 | Auth | Free API key, sent as `X-API-Key` header (`OPENAQ_API_KEY`) |
 | Licence | Per originating provider (mostly open government data); OpenAQ requires attribution to the original source |
 | Use cases | UC-C3 air quality (**ground truth**); calibration target for satellite AOD/NO₂ |

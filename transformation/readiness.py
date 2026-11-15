@@ -17,6 +17,12 @@ from transformation.batch.silver_to_gold import (
 from transformation.common.io import unwrap_bronze
 from transformation.timeseries.time_series import parse_ts
 
+#: FIRMS event-time freshness objective (hours), approved 2026-11-15: one
+#: polar-orbiting VIIRS sensor gives about two passes a day, so 6 h was not
+#: attainable. Matches serving ``FIRMS_MAX_OBSERVATION_AGE_HOURS`` and the dbt
+#: var ``wildfire_max_observation_age_hours``.
+FIRMS_FRESHNESS_OBJECTIVE_HOURS = 24.0
+
 # Explicit product mappings, not claims that a designed catalog entry is live.
 CATALOG_PATHS = {
     6: ("ingestion/api/gee_sentinel2.py", ["SENTINELHUB"], ["silver_scene"]),
@@ -185,7 +191,8 @@ def fire_readiness(bronze: list[dict[str, Any]], silver: list[dict[str, Any]],
         "gold_grid_reconciliation": canonical(gold.get("kpi_eo_daily", []))
         == canonical(gold_earth_observation(silver)),
         "serving_reconciliation": serving_matches,
-        "freshness_within_6h": freshness is not None and 0 <= freshness <= 6,
+        "freshness_within_objective": freshness is not None
+        and 0 <= freshness <= FIRMS_FRESHNESS_OBJECTIVE_HOURS,
     }
     completeness = {
         field: {"missing_count": sum(r.get(field) is None for r in silver),

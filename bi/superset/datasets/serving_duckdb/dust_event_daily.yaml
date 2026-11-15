@@ -1,6 +1,6 @@
 table_name: dust_event_daily
 main_dttm_col: event_date
-description: "Certified (12b): Dust events, AOD & wind transport (per AOI per day), from serving_dust_event_daily."
+description: "Certified (12b): Dust events, AOD & upwind transport (per AOI per day), from serving_dust_event_daily. aerosol_load_label covers any aerosol type; dust wording only on positive dust rows; aerosol_type separates smoke from dust (MAIAC)."
 default_endpoint: null
 offset: 0
 cache_timeout: 3600
@@ -8,9 +8,9 @@ schema: null
 sql: |
   select
       aoi_key, aoi_name, region, cast(date_key as date) as event_date,
-      aod_mean, aod_max, uv_aerosol_index_mean,
+      aod_mean, aod_max, uv_aerosol_index_mean, smoke_fraction, dust_fraction, aerosol_type,
       wind_speed_mean, wind_dir_dominant, corridor_aod_max, valid_fraction,
-      dust_severity_band, dust_severity_label, dust_flag, transport_flag,
+      dust_severity_band, aerosol_load_label, dust_severity_label, dust_flag, transport_flag,
       dust_status, transport_status, area_km2
   from serving.serving_dust_event_daily
 params: null

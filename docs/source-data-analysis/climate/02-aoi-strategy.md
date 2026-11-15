@@ -27,25 +27,28 @@ AOI clipping is **mandatory, not optional**, for the atmospheric expansion. TROP
 ## Bounding-Box Reference Table
 
 > Coordinates are approximate WGS84 (EPSG:4326) envelopes for AOI-clipping. `[min_lon, min_lat, max_lon, max_lat]`. Treat as a reusable seed; refine polygons for production.
+>
+> **Reporting partition (ADR-12, 2026-11-15).** Within a region the AOIs below never overlap (shared edges only), so per-AOI counts add up to region totals without double counting. They are rectangles because every connector requests a bounding box. The former national box `AOI-UAE-NAT` (51.0–56.5°E, 22.5–26.2°N) is retired; the national view is the `sub_region = UAE` group. Event footprints such as `EMSR-AE-FLOOD-2024` are overlays (`rollup_eligible: false`) and are never summed.
 
-### Primary AOIs (UAE)
+### Primary AOIs (UAE, `sub_region = UAE`)
 
 | AOI ID | Name | min_lon | min_lat | max_lon | max_lat | Purpose |
 | --- | --- | --- | --- | --- | --- | --- |
-| AOI-UAE-NAT | UAE (national) | 51.0 | 22.5 | 56.5 | 26.2 | National air-quality & climate rollup |
 | AOI-AUH | Abu Dhabi (emirate/urban) | 53.3 | 23.5 | 55.3 | 24.7 | Urban air quality, urban heat |
-| AOI-DXB | Dubai (urban) | 54.9 | 24.8 | 55.6 | 25.4 | Urban air quality, NO₂ traffic proxy |
-| AOI-COAST | UAE coastal zone (Arabian Gulf) | 51.5 | 24.0 | 56.4 | 26.1 | SST, coastal aerosol, humidity haze |
-| AOI-DESERT | Desert interior (Empty Quarter margin) | 52.0 | 22.5 | 55.5 | 23.8 | Dust source/deposition, desertification |
+| AOI-DXB | Dubai (urban) | 54.9 | 24.8 | 55.6 | 25.4 | Urban air quality, NO₂ traffic proxy, NDVI/NDWI |
+| AOI-COAST | UAE western coast & Abu Dhabi offshore (Al Dhafra) | 51.5 | 24.7 | 54.9 | 26.2 | Coastal aerosol, offshore maritime activity |
+| AOI-NEM | Northern Emirates (RAK–Fujairah) | 55.6 | 24.8 | 56.5 | 26.2 | Northern Emirates air quality, coverage of the former national box |
+| AOI-DESERT | Desert interior (Empty Quarter margin) | 52.0 | 22.5 | 55.5 | 23.5 | Dust source/deposition, desertification |
 
 ### Secondary AOIs (Regional Dust Corridors)
 
 | AOI ID | Name | min_lon | min_lat | max_lon | max_lat | Purpose |
 | --- | --- | --- | --- | --- | --- | --- |
-| AOI-ARABIA | Arabian Peninsula interior | 42.0 | 18.0 | 55.0 | 30.0 | Upwind dust source region |
-| AOI-IRAQ | Iraq / Mesopotamia basin | 42.0 | 29.0 | 48.5 | 36.0 | Shamal dust source (Tigris–Euphrates) |
-| AOI-IRAN | Iran SW basins | 47.0 | 28.0 | 55.0 | 34.0 | Cross-Gulf dust transport source |
-| AOI-GULF | Arabian (Persian) Gulf water body | 48.0 | 24.0 | 57.0 | 30.5 | Marine aerosol, transport pathway |
+| AOI-ARABIA | Arabian Peninsula interior (Najd–Dahna) | 42.0 | 18.0 | 48.0 | 29.0 | Upwind dust source region |
+| AOI-ARABIA-E | Eastern Arabia (Al-Ahsa, Qatar, NE Rub al Khali) | 48.0 | 18.0 | 51.5 | 26.2 | Westerly dust source upwind of the UAE |
+| AOI-IRAQ | Iraq / Mesopotamia basin | 42.0 | 29.0 | 48.0 | 36.0 | Shamal dust source (Tigris–Euphrates) |
+| AOI-IRAN | Iran SW basins (Khuzestan–Zagros) | 48.0 | 30.5 | 55.0 | 34.0 | Cross-Gulf dust transport source |
+| AOI-GULF | Arabian Gulf basin (north of the UAE coast) | 48.0 | 26.2 | 57.0 | 30.5 | Marine aerosol, maritime activity, transport pathway |
 
 ## Analysis Regions
 
@@ -57,7 +60,7 @@ freshness is judged per region.
 
 | Region | AOIs | AQI standard | FIRMS request | Status |
 | --- | --- | --- | --- | --- |
-| `UAE-GULF` | 9 UAE/corridor AOIs + `EMSR-AE-FLOOD-2024` | `US_EPA_PRE2024` (legacy EPA bands, V03) | One box `30,10,60,40` | Primary programme region |
+| `UAE-GULF` | 10 UAE/corridor reporting AOIs + overlay `EMSR-AE-FLOOD-2024` | `US_EPA_PRE2024` (legacy EPA bands, V03) | One box `30,10,60,40` | Primary programme region |
 | `INDIA` | 6 AOIs below | `IN_CPCB_NAQI_2014` | One request per fire-relevant AOI box, 10,000-detection cap per request | Regional tier added 2026-11-14 |
 | `US-LEGACY` | `EMSR-CA-FIRE-2025` | n/a | Not requested | Legacy reference; freshness reports `stale` / `no_observations` |
 

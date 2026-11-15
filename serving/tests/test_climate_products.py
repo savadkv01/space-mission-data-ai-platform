@@ -67,9 +67,22 @@ def test_dust_event_labels_and_flags():
              "dust_severity_band": 2, "dust_flag": True, "transport_flag": True}]
     r = cp.serve_dust_event_daily(dust, AOI_DIM)[0]
     assert r["dust_severity_label"] == "Dusty"
+    assert r["aerosol_load_label"] == "Elevated"
+    assert r["aerosol_type"] == "unknown"
     assert r["dust_flag"] is True
     assert r["transport_flag"] is True
     assert r["aoi_name"] == "Attica"
+
+
+def test_smoke_with_high_aod_is_not_labelled_dust():
+    # D-07: crop-burning smoke (MAIAC smoke model) with a high UV index.
+    r = cp.serve_dust_event_daily([{
+        "aoi_key": "IN-DEL-NCR", "date_key": "d", "aod_mean": 1.6,
+        "uv_aerosol_index_mean": 1.9, "smoke_fraction": 0.9, "dust_fraction": 0.0,
+        "aerosol_type": "smoke", "dust_severity_band": 3, "dust_flag": False}])[0]
+    assert (r["dust_status"], r["dust_flag"]) == ("negative", False)
+    assert r["dust_severity_label"] == "No dust event"
+    assert (r["aerosol_load_label"], r["aerosol_type"]) == ("High", "smoke")
 
 
 def test_dust_severity_label_unknown_when_band_missing():
@@ -99,6 +112,14 @@ def test_dust_thresholds_match_gold_rule():
 
     assert cp.DUST_AOD_THRESHOLD == gold.DUST_AOD_THRESHOLD
     assert cp.DUST_UV_AI_THRESHOLD == gold.DUST_UV_AI_THRESHOLD
+    assert cp.AEROSOL_TYPE_DOMINANT_SHARE == gold.AEROSOL_TYPE_DOMINANT_SHARE
+
+
+def test_crop_stress_not_evaluated_outside_cropland():
+    r = cp.serve_vegetation_health_daily([{
+        "aoi_key": "AOI-DXB", "date_key": "d", "ndvi_mean": -0.07, "ndvi_trend_30d": -0.01,
+        "crop_stress_applicable": False, "crop_stress_flag": None}])[0]
+    assert (r["crop_stress_status"], r["crop_stress_flag"]) == ("not_evaluated", None)
 
 
 # --- Climate Indicator ----------------------------------------------------- #
@@ -238,7 +259,7 @@ def test_reference_dimensions_have_expected_species():
     pm25 = next(p for p in semantic.POLLUTANTS if p["pollutant_code"] == "PM25")
     assert pm25["aqi_breakpoints"][2]["value_low"] == 35.5
     aod = next(p for p in semantic.POLLUTANTS if p["pollutant_code"] == "AOD")
-    assert aod["severity_bands"][2]["label"] == "Dusty"
+    assert aod["severity_bands"][2]["label"] == "Elevated"   # aerosol load, not dust (D-07)
     lst_anomaly = next(
         i for i in semantic.CLIMATE_INDICATORS
         if i["indicator_code"] == "LST_ANOM"

@@ -67,6 +67,26 @@ def test_index_connector_rejects_unknown_index():
         GeeSentinel2IndexConnector(stats_fn=_canned_stats).ingest(index="AOD")
 
 
+def test_ndwi_records_carry_permanent_water_mask_through_silver():
+    def masked_stats(**kwargs):
+        return {**_canned_stats(**kwargs), "waterFraction": 0.04,
+                "permanentWaterFraction": 0.55}
+
+    envelope = GeeSentinel2IndexConnector(stats_fn=masked_stats).ingest(
+        index="NDWI", bbox=[54.9, 24.8, 55.6, 25.4],
+        datetime_range="2026-10-29T00:00:00Z/2026-10-29T23:59:59Z",
+    )[0]
+    assert envelope.payload["water_mask"] == GeeSentinel2IndexConnector.WATER_MASK
+    row = silver_index([envelope.payload]).rows[0]
+    assert (row["water_fraction"], row["permanent_water_fraction"]) == (0.04, 0.55)
+
+    ndvi = GeeSentinel2IndexConnector(stats_fn=masked_stats).ingest(
+        index="NDVI", bbox=[54.9, 24.8, 55.6, 25.4],
+        datetime_range="2026-10-29T00:00:00Z/2026-10-29T23:59:59Z",
+    )[0]
+    assert "water_mask" not in ndvi.payload
+
+
 def test_scene_connector_rejects_nonpositive_limit():
     with pytest.raises(ValueError, match="limit must be positive"):
         GeeSentinel2SceneConnector(scene_fn=lambda **kwargs: []).ingest(limit=0)

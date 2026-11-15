@@ -10,13 +10,18 @@
 CREATE SCHEMA IF NOT EXISTS serving_agg;
 
 CREATE OR REPLACE TABLE serving_agg.mv_kpi_climate_daily AS
-with aq as (
+-- Only rollup-eligible AOIs (non-overlapping reporting partition, ADR-12) are counted.
+with eligible as (
+    select aoi_key from semantic.dim_aoi where rollup_eligible
+),
+aq as (
     select date_key, region,
            avg(aqi_pm25)                                     as mean_aqi_pm25,
            sum(case when exceedance_flag then 1 else 0 end)  as aqi_exceedance_days,
            sum(case when exceedance_status in ('positive', 'negative') then 1 else 0 end) as aqi_exceedance_evaluated_aois,
            count(distinct aoi_key)                           as air_quality_aois
     from serving.serving_air_quality_daily
+    where aoi_key in (select aoi_key from eligible)
     group by date_key, region
 ),
 dust as (
@@ -26,6 +31,7 @@ dust as (
            max(aod_mean)                                     as peak_aod,
            count(distinct aoi_key)                           as dust_aois
     from serving.serving_dust_event_daily
+    where aoi_key in (select aoi_key from eligible)
     group by date_key, region
 ),
 clim as (
@@ -36,6 +42,7 @@ clim as (
            sum(case when desertification_flag then 1 else 0 end) as desertification_days,
            sum(case when desertification_status in ('positive', 'negative') then 1 else 0 end) as desertification_evaluated_aois
     from serving.serving_climate_indicator_daily
+    where aoi_key in (select aoi_key from eligible)
     group by date_key, region
 ),
 veg as (
@@ -44,6 +51,7 @@ veg as (
            sum(case when crop_stress_flag then 1 else 0 end) as crop_stress_days,
            sum(case when crop_stress_status in ('positive', 'negative') then 1 else 0 end) as crop_stress_evaluated_aois
     from serving.serving_vegetation_health_daily
+    where aoi_key in (select aoi_key from eligible)
     group by date_key, region
 ),
 spine as (

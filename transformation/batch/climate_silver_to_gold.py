@@ -24,10 +24,11 @@ bbox, not an ``aoi_id``) via the shared point-in-polygon engine — exactly like
 from __future__ import annotations
 
 from collections import defaultdict
+from math import atan2, cos, degrees, radians, sin
 from typing import Any
 
 from transformation.batch.silver_to_gold import _bbox_centroid, _day
-from transformation.geospatial.spatial_transform import assign_aoi
+from transformation.geospatial.spatial_transform import attributed_aoi_keys
 from transformation.timeseries.climate_indicators import (
     anomaly,
     desertification_proxy,
@@ -156,7 +157,7 @@ DUST_UV_AI_THRESHOLD = 1.0
 
 
 def dust_severity_band(aod: float | None) -> int | None:
-    """Dust-severity band 0..4 from an AOD value."""
+    """AOD load band 0..4 (aerosol load of any type; dust only if ``dust_flag``)."""
     if aod is None:
         return None
     v = float(aod)
@@ -166,12 +167,68 @@ def dust_severity_band(aod: float | None) -> int | None:
     return 4 if v >= 5.0 else 0
 
 
-def dust_flag(aod_mean: float | None, uv_ai_mean: float | None) -> bool:
-    """Dust event when AOD is elevated **and** the UV aerosol index corroborates."""
-    return bool(
-        aod_mean is not None and aod_mean >= DUST_AOD_THRESHOLD
-        and uv_ai_mean is not None and uv_ai_mean >= DUST_UV_AI_THRESHOLD
-    )
+#: MAIAC aerosol-model share (of QA-passing pixels) that makes a type dominant.
+AEROSOL_TYPE_DOMINANT_SHARE = 0.5
+
+
+def aerosol_type(smoke_fraction: float | None, dust_fraction: float | None) -> str | None:
+    """Dominant MAIAC aerosol model: ``dust`` / ``smoke`` / ``mixed`` / ``background``.
+
+    ``None`` when no aerosol-model information exists (legacy or non-MAIAC AOD).
+    ``mixed`` = smoke and dust together dominate but neither alone does.
+    """
+    if smoke_fraction is None and dust_fraction is None:
+        return None
+    smoke, dust = smoke_fraction or 0.0, dust_fraction or 0.0
+    if dust >= AEROSOL_TYPE_DOMINANT_SHARE:
+        return "dust"
+    if smoke >= AEROSOL_TYPE_DOMINANT_SHARE:
+        return "smoke"
+    if smoke + dust >= AEROSOL_TYPE_DOMINANT_SHARE:
+        return "mixed"
+    return "background"
+
+
+def dust_flag(aod_mean: float | None, uv_ai_mean: float | None,
+              dust_fraction: float | None = None) -> bool:
+    """Dust event: elevated AOD **and** dust evidence.
+
+    With MAIAC aerosol-model information the evidence is a dust-model share of
+    at least ``AEROSOL_TYPE_DOMINANT_SHARE``; this keeps crop-burning smoke (which
+    also raises the UV aerosol index) from reading as dust (L5 / D-07). Without
+    it, the UV aerosol index must corroborate (legacy rule).
+    """
+    if aod_mean is None or aod_mean < DUST_AOD_THRESHOLD:
+        return False
+    if dust_fraction is not None:
+        return dust_fraction >= AEROSOL_TYPE_DOMINANT_SHARE
+    return uv_ai_mean is not None and uv_ai_mean >= DUST_UV_AI_THRESHOLD
+
+
+#: Transport: a same-region source AOI counts as upwind when its bearing from
+#: the receiving AOI is within this many degrees of the wind's from-direction.
+UPWIND_HALF_ANGLE_DEG = 45.0
+
+
+def initial_bearing_deg(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Great-circle initial bearing (0 = north, clockwise) from point 1 to point 2."""
+    p1, p2 = radians(lat1), radians(lat2)
+    dl = radians(lon2 - lon1)
+    x = sin(dl) * cos(p2)
+    y = cos(p1) * sin(p2) - sin(p1) * cos(p2) * cos(dl)
+    return (degrees(atan2(x, y)) + 360.0) % 360.0
+
+
+def is_upwind(target: tuple[float, float], source: tuple[float, float],
+              wind_from_deg: float) -> bool:
+    """``True`` when ``source`` lies within the upwind sector of ``target``.
+
+    ``target`` / ``source`` are ``(lat, lon)``; ``wind_from_deg`` is the
+    meteorological direction the wind blows *from* (NASA POWER WD2M).
+    """
+    bearing = initial_bearing_deg(target[0], target[1], source[0], source[1])
+    diff = abs((bearing - wind_from_deg + 180.0) % 360.0 - 180.0)
+    return diff <= UPWIND_HALF_ANGLE_DEG
 
 
 #: LST anomaly bands (°C above same-DOY baseline): (band, label, low, high).
@@ -228,8 +285,15 @@ def ndvi_health_band(ndvi: float | None) -> int | None:
     return 4
 
 
-def crop_stress_flag(ndvi_mean: float | None, ndvi_trend_30d: float | None) -> bool:
-    """``True`` when NDVI is low **and** declining (crop / vegetation stress)."""
+def crop_stress_flag(ndvi_mean: float | None, ndvi_trend_30d: float | None,
+                     cropland: bool = True) -> bool | None:
+    """``True`` when NDVI is low **and** declining (crop / vegetation stress).
+
+    ``None`` (not evaluated) for an AOI that is not cropland: low, declining
+    NDVI over sea, desert or a city is not crop stress (D-08).
+    """
+    if not cropland:
+        return None
     return bool(
         ndvi_mean is not None and ndvi_mean < 0.3
         and ndvi_trend_30d is not None and ndvi_trend_30d < 0
@@ -261,7 +325,7 @@ def _attribute_index(index_rows: list[dict[str, Any]], aois: list[dict[str, Any]
         lat, lon = _bbox_centroid(r.get("bbox"))
         if not day or lat is None:
             continue
-        for aoi_key in assign_aoi(lat, lon, aois):
+        for aoi_key in attributed_aoi_keys(lat, lon, aois):
             groups[(aoi_key, day)].append(r)
     return groups
 
@@ -361,18 +425,24 @@ def gold_dust_event_daily(silver_aerosol: list[dict[str, Any]],
                           silver_atmos_column: list[dict[str, Any]] | None = None,
                           wind_by_aoi_day: dict[tuple[str, str], dict[str, float]] | None = None,
                           aoi_regions: dict[str, str | None] | None = None,
+                          aoi_centroids: dict[str, tuple[float, float]] | None = None,
                           ) -> list[dict[str, Any]]:
     """Daily dust KPIs per AOI (``fact_dust_event_daily``).
 
     AOD comes from ``obs_aerosol``; the UV aerosol index is taken from the aerosol
     row when present, otherwise denormalized from the TROPOMI ``AER_AI`` column.
-    ``corridor_aod_max`` is the strongest AOD over the *other* AOIs of the same
-    analysis region on the same day — an upwind source signal that never crosses
-    regions — and ``wind_*`` context is joined from NASA POWER when supplied
-    (nullable otherwise).
+    MAIAC aerosol-model shares give ``smoke_fraction`` / ``dust_fraction`` and the
+    dominant ``aerosol_type``.
+
+    ``corridor_aod_max`` is the strongest AOD over the *upwind* AOIs of the same
+    analysis region on the same day (D-06): a source AOI counts only if its
+    bearing from this AOI's centroid is within ``UPWIND_HALF_ANGLE_DEG`` of the
+    NASA POWER wind direction. Without a wind direction or centroids nothing is
+    upwind, so the corridor is ``None`` and transport is not asserted.
     """
     wind_by_aoi_day = wind_by_aoi_day or {}
     aoi_regions = aoi_regions or {}
+    aoi_centroids = aoi_centroids or {}
 
     aer: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for r in silver_aerosol:
@@ -389,15 +459,12 @@ def gold_dust_event_daily(silver_aerosol: list[dict[str, Any]],
             if aoi and day:
                 aer_ai[(aoi, day)].append(float(r["mean"]))
 
-    # Per-day max AOD across AOIs (corridor / source signal).
-    day_aod_max: dict[str, float] = {}
+    # Per-day max AOD per AOI (candidate upwind sources).
     day_aod_by_aoi: dict[str, dict[str, float]] = defaultdict(dict)
     for (aoi, day), rows in aer.items():
         aods = [r["aod_550nm"] for r in rows if r.get("aod_550nm") is not None]
         if aods:
-            m = max(aods)
-            day_aod_by_aoi[day][aoi] = m
-            day_aod_max[day] = max(day_aod_max.get(day, m), m)
+            day_aod_by_aoi[day][aoi] = max(aods)
 
     out = []
     for (aoi, day), rows in sorted(aer.items()):
@@ -407,14 +474,23 @@ def gold_dust_event_daily(silver_aerosol: list[dict[str, Any]],
                        if r.get("uv_aerosol_index") is not None]
         uv_mean = _mean(uv_from_aer) if uv_from_aer else _mean(aer_ai.get((aoi, day), []))
         valid = [r["valid_fraction"] for r in rows if r.get("valid_fraction") is not None]
+        smoke = _mean([r.get("smoke_fraction") for r in rows])
+        dust = _mean([r.get("dust_fraction") for r in rows])
 
-        # corridor = strongest AOD over OTHER AOIs of the same region the same day.
-        region = aoi_regions.get(aoi)
-        others = [v for a, v in day_aod_by_aoi.get(day, {}).items()
-                  if a != aoi and aoi_regions.get(a) == region]
-        corridor = round(max(others), 6) if others else None
         wind = wind_by_aoi_day.get((aoi, day), {})
         wind_speed = wind.get("wind_speed_mean")
+        wind_dir = wind.get("wind_dir_dominant")
+        region = aoi_regions.get(aoi)
+        target = aoi_centroids.get(aoi)
+        upwind = []
+        if wind_dir is not None and target is not None:
+            for source, value in day_aod_by_aoi.get(day, {}).items():
+                centre = aoi_centroids.get(source)
+                if (source != aoi and centre is not None
+                        and aoi_regions.get(source) == region
+                        and is_upwind(target, centre, float(wind_dir))):
+                    upwind.append(value)
+        corridor = round(max(upwind), 6) if upwind else None
         transport = bool(corridor is not None and corridor >= DUST_AOD_THRESHOLD
                          and wind_speed is not None and wind_speed > 0)
 
@@ -425,11 +501,14 @@ def gold_dust_event_daily(silver_aerosol: list[dict[str, Any]],
             "aod_max": round(max(aods), 6) if aods else None,
             "uv_aerosol_index_mean": uv_mean,
             "wind_speed_mean": wind_speed,
-            "wind_dir_dominant": wind.get("wind_dir_dominant"),
+            "wind_dir_dominant": wind_dir,
             "corridor_aod_max": corridor,
             "valid_fraction": _mean(valid),
+            "smoke_fraction": smoke,
+            "dust_fraction": dust,
+            "aerosol_type": aerosol_type(smoke, dust),
             "dust_severity_band": dust_severity_band(aod_mean),
-            "dust_flag": dust_flag(aod_mean, uv_mean),
+            "dust_flag": dust_flag(aod_mean, uv_mean, dust),
             "transport_flag": transport,
         })
     return out
@@ -531,10 +610,12 @@ def gold_vegetation_health_daily(silver_index: list[dict[str, Any]],
 
     Reuses the ``obs_index`` NDVI/EVI Silver mart (Sentinel-2 / MODIS). The
     30-day NDVI slope is the OLS trend over the trailing daily NDVI means for the
-    AOI; ``crop_stress_flag`` fires when NDVI is both low and declining.
+    AOI; ``crop_stress_flag`` fires when NDVI is both low and declining, and is
+    evaluated only on cropland AOIs (``crop_stress_applicable``; seed ``cropland``).
     """
     groups = _attribute_index(silver_index, aois, {"NDVI", "EVI"})
     ndvi_series = _daily_series(groups, "NDVI")
+    cropland = {a.get("aoi_key"): a.get("cropland") is True for a in aois}
 
     out = []
     for (aoi, day), rows in sorted(groups.items()):
@@ -557,6 +638,7 @@ def gold_vegetation_health_daily(silver_index: list[dict[str, Any]],
             "ndvi_trend_30d": trend,
             "valid_pixel_fraction": _mean(valid),
             "ndvi_health_band": ndvi_health_band(ndvi_mean),
-            "crop_stress_flag": crop_stress_flag(ndvi_mean, trend),
+            "crop_stress_applicable": cropland.get(aoi, False),
+            "crop_stress_flag": crop_stress_flag(ndvi_mean, trend, cropland.get(aoi, False)),
         })
     return out

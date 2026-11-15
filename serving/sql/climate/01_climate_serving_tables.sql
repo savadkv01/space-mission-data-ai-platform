@@ -30,7 +30,7 @@ SELECT * FROM (VALUES
     ('CH4', 'Methane', 'column_density', 'ppb', 'n/a', CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST('[]' AS JSON), CAST('[]' AS JSON)),
     ('AOD', 'Aerosol Optical Depth', 'optical', 'unitless', 'n/a', CAST(NULL AS DOUBLE), 0.5,
      CAST('[]' AS JSON),
-     CAST('[{"band":0,"label":"Clear","value_low":0.0,"value_high":0.2},{"band":1,"label":"Hazy","value_low":0.2,"value_high":0.5},{"band":2,"label":"Dusty","value_low":0.5,"value_high":1.0},{"band":3,"label":"Heavy dust","value_low":1.0,"value_high":2.0},{"band":4,"label":"Severe","value_low":2.0,"value_high":5.0}]' AS JSON))
+     CAST('[{"band":0,"label":"Clear","value_low":0.0,"value_high":0.2},{"band":1,"label":"Hazy","value_low":0.2,"value_high":0.5},{"band":2,"label":"Elevated","value_low":0.5,"value_high":1.0},{"band":3,"label":"High","value_low":1.0,"value_high":2.0},{"band":4,"label":"Very high","value_low":2.0,"value_high":5.0}]' AS JSON))
 ) AS t(pollutant_code, pollutant_name, measure_type, canonical_unit, aqi_scheme, who_guideline, exceedance_threshold, aqi_breakpoints, severity_bands);
 
 CREATE OR REPLACE VIEW semantic.dim_climate_indicator AS
@@ -79,14 +79,18 @@ SELECT
 FROM aq q
 LEFT JOIN semantic.dim_aoi a ON q.aoi_key = a.aoi_key;
 
--- Dust Event (dust/transport flags null unless evidence decides them)
+-- Dust Event (dust/transport flags null unless evidence decides them). Dust
+-- evidence = MAIAC dust-model share >= 0.5, else UV aerosol index >= 1.0 (D-07).
 CREATE OR REPLACE TABLE serving.serving_dust_event_daily AS
 WITH dust AS (
     SELECT *,
         CASE
             WHEN COALESCE(dust_flag, false) THEN 'positive'
-            WHEN aod_mean < 0.5 OR uv_aerosol_index_mean < 1.0 THEN 'negative'
-            WHEN aod_mean IS NOT NULL OR uv_aerosol_index_mean IS NOT NULL THEN 'inconclusive'
+            WHEN aod_mean < 0.5
+              OR (dust_fraction IS NOT NULL AND dust_fraction < 0.5)
+              OR (dust_fraction IS NULL AND uv_aerosol_index_mean < 1.0) THEN 'negative'
+            WHEN aod_mean IS NOT NULL OR uv_aerosol_index_mean IS NOT NULL
+              OR dust_fraction IS NOT NULL THEN 'inconclusive'
             ELSE 'not_evaluated'
         END AS dust_status,
         CASE
@@ -100,11 +104,19 @@ WITH dust AS (
 SELECT
     d.aoi_key, a.aoi_name, a.region, d.date_key,
     d.aod_mean, d.aod_max, d.uv_aerosol_index_mean,
+    d.smoke_fraction, d.dust_fraction, COALESCE(d.aerosol_type, 'unknown') AS aerosol_type,
     d.wind_speed_mean, d.wind_dir_dominant, d.corridor_aod_max, d.valid_fraction,
     d.dust_severity_band,
     CASE d.dust_severity_band
-        WHEN 0 THEN 'Clear' WHEN 1 THEN 'Hazy' WHEN 2 THEN 'Dusty'
-        WHEN 3 THEN 'Heavy dust' WHEN 4 THEN 'Severe' ELSE 'unknown'
+        WHEN 0 THEN 'Clear' WHEN 1 THEN 'Hazy' WHEN 2 THEN 'Elevated'
+        WHEN 3 THEN 'High' WHEN 4 THEN 'Very high' ELSE 'unknown'
+    END AS aerosol_load_label,
+    CASE
+        WHEN d.dust_status = 'positive' THEN
+            CASE d.dust_severity_band WHEN 2 THEN 'Dusty' WHEN 3 THEN 'Heavy dust'
+                 WHEN 4 THEN 'Severe' ELSE 'unknown' END
+        WHEN d.dust_status = 'negative' THEN 'No dust event'
+        ELSE 'unknown'
     END AS dust_severity_label,
     CASE d.dust_status WHEN 'positive' THEN true WHEN 'negative' THEN false END AS dust_flag,
     d.dust_status,
@@ -150,11 +162,13 @@ LEFT JOIN read_parquet('s3://gold/fact_vegetation_health_daily/*.parquet') v
     ON c.aoi_key = v.aoi_key AND c.date_key = v.date_key
 LEFT JOIN semantic.dim_aoi a ON c.aoi_key = a.aoi_key;
 
--- Vegetation Health (null trend = 'unknown'; crop_stress_flag null unless evidence decides it)
+-- Vegetation Health (null trend = 'unknown'; crop_stress_flag null unless evidence
+-- decides it; evaluated on cropland AOIs only, D-08)
 CREATE OR REPLACE TABLE serving.serving_vegetation_health_daily AS
 WITH veg AS (
     SELECT *,
         CASE
+            WHEN NOT COALESCE(crop_stress_applicable, true) THEN 'not_evaluated'
             WHEN COALESCE(crop_stress_flag, false) THEN 'positive'
             WHEN ndvi_mean >= 0.3 OR ndvi_trend_30d >= 0 THEN 'negative'
             WHEN ndvi_mean IS NOT NULL OR ndvi_trend_30d IS NOT NULL THEN 'inconclusive'
@@ -178,6 +192,7 @@ SELECT
     END AS ndvi_health_label,
     CASE v.crop_stress_status WHEN 'positive' THEN true WHEN 'negative' THEN false END AS crop_stress_flag,
     v.crop_stress_status,
+    COALESCE(v.crop_stress_applicable, true) AS crop_stress_applicable,
     a.area_km2
 FROM veg v
 LEFT JOIN semantic.dim_aoi a ON v.aoi_key = a.aoi_key;

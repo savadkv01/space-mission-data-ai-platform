@@ -141,7 +141,7 @@ run_connector_to_bronze(OpenAqConnector(), aoi_id="AOI-DXB",
 
 ```python
 from ingestion.api.gee_s5p import GeeS5pConnector
-run_connector_to_bronze(GeeS5pConnector(), aoi_id="AOI-UAE-NAT", product="NO2",
+run_connector_to_bronze(GeeS5pConnector(), aoi_id="AOI-AUH", product="NO2",
                         datetime_range="2024-06-01T00:00:00Z/2024-06-07T23:59:59Z")
 ```
 

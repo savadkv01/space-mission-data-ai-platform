@@ -11,7 +11,7 @@
 | Algorithm | **MAIAC** (Multi-Angle Implementation of Atmospheric Correction), Collection 6.1, 1 km |
 | Connector | [`GeeAodConnector`](../../../ingestion/api/gee_aod.py) |
 | Schedule | `@daily`, 7-day window ([`modis_aod_ingest_dag.py`](../../../ingestion/batch/dags/modis_aod_ingest_dag.py)); full run 14 days |
-| AOIs | UAE + dust corridors: `AOI-UAE-NAT`, `AOI-DESERT`, `AOI-ARABIA`, `AOI-IRAQ`, `AOI-IRAN` · INDIA: `IN-THAR`, `IN-GUJ-COAST`, `IN-DEL-NCR`, `IN-PB-HR` |
+| AOIs | UAE + dust corridors: `AOI-DXB`, `AOI-DESERT`, `AOI-ARABIA`, `AOI-ARABIA-E`, `AOI-IRAQ`, `AOI-IRAN` (redrawn partition, ADR-12) · INDIA: `IN-THAR`, `IN-GUJ-COAST`, `IN-DEL-NCR`, `IN-PB-HR` |
 | Auth / licence | GEE service account · NASA open data |
 | Use cases | UC-C2 dust-storm monitoring · UC-C3 PM estimation (AOD→PM regression, Phase 14b) |
 
@@ -54,7 +54,7 @@ Real record:
  "payload": {"interval": {"from": "2026-11-06T00:00:00Z", "to": "2026-11-07T00:00:00Z"},
    "outputs": {"index": {"bands": {"B0": {"stats": {"mean": 0.1564, "min": 0.0, "max": 2.233,
        "stDev": 0.1079, "sampleCount": 236785, "noDataCount": 15783}}}}},
-   "product": "AOD", "aoi_id": "AOI-UAE-NAT", "bbox": [51.0, 22.5, 56.5, 26.2],
+   "product": "AOD", "aoi_id": "AOI-DXB", "bbox": [54.9, 24.8, 55.6, 25.4],
    "collection": "MODIS/061/MCD19A2_GRANULES", "sensor": "MODIS", "unit": "unitless"}}
 ```
 

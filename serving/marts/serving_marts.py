@@ -19,9 +19,11 @@ from datetime import datetime, timezone
 from typing import Any, Iterable
 
 #: FIRMS event-time freshness objective (hours) gating the wildfire product.
-#: Matches ``transformation.readiness`` ``freshness_within_6h`` and the dbt var
+#: 24 h approved 2026-11-15 (a single polar-orbiting VIIRS sensor gives about
+#: two passes a day). Matches ``transformation.readiness``
+#: ``FIRMS_FRESHNESS_OBJECTIVE_HOURS`` and the dbt var
 #: ``wildfire_max_observation_age_hours``.
-FIRMS_MAX_OBSERVATION_AGE_HOURS = 6.0
+FIRMS_MAX_OBSERVATION_AGE_HOURS = 24.0
 
 
 def _parse_ts(value: Any) -> datetime | None:
@@ -128,8 +130,10 @@ def serve_wildfire_daily(wildfire_aoi_rows: list[dict[str, Any]],
             "aoi_key": aoi_key,
             "aoi_name": dim.get("aoi_name"),
             "region": region,
+            "rollup_eligible": dim.get("rollup_eligible") is not False,
             "date_key": r.get("date_key"),
             "detections": r.get("detections", 0),
+            "persistent_detections": r.get("persistent_detections") or 0,
             "mean_frp": r.get("mean_frp"),
             "max_frp": r.get("max_frp"),
             "area_km2": dim.get("area_km2"),
@@ -164,6 +168,8 @@ def serve_flood_daily(flood_aoi_rows: list[dict[str, Any]],
 
     Source: ``kpi_flood_aoi_daily`` (Gold NDWI water statistics). Adds AOI display
     metadata and EMS corroboration so flood-day rows are BI/API ready.
+    ``flood_flag`` is decided only from statistics with the JRC permanent-water
+    mask; legacy unmasked rows are ``not_evaluated`` with a ``None`` flag.
     """
     aoi_idx = _index_dim(aoi_dim, "aoi_key")
     corroborated = {
@@ -175,15 +181,22 @@ def serve_flood_daily(flood_aoi_rows: list[dict[str, Any]],
     for r in flood_aoi_rows:
         aoi_key = r.get("aoi_key")
         dim = aoi_idx.get(aoi_key, {})
+        flag = r.get("flood_flag")
+        flag = None if flag is None else bool(flag)
         out.append({
             "aoi_key": aoi_key,
             "aoi_name": dim.get("aoi_name"),
             "region": dim.get("region"),
+            "rollup_eligible": dim.get("rollup_eligible") is not False,
             "date_key": r.get("date_key"),
             "ndwi_mean": r.get("ndwi_mean"),
             "ndwi_max": r.get("ndwi_max"),
             "valid_pixel_fraction": r.get("valid_pixel_fraction"),
-            "flood_flag": bool(r.get("flood_flag")),
+            "water_fraction": r.get("water_fraction"),
+            "permanent_water_fraction": r.get("permanent_water_fraction"),
+            "water_mask": r.get("water_mask"),
+            "flood_flag": flag,
+            "flood_status": {True: "positive", False: "negative"}.get(flag, "not_evaluated"),
             "area_km2": dim.get("area_km2"),
             "ems_corroborated": (aoi_key, r.get("date_key")) in corroborated,
         })
@@ -227,7 +240,8 @@ def serve_maritime_activity_daily(maritime_rows: list[dict[str, Any]],
     ``serve_vessel_activity`` (identity-search demonstrator), this reflects real
     traffic inside the AOI. ``*_status = 'not_published'`` means GFW has not yet
     released that day (null, not zero). Unmatched SAR detections are candidates
-    for review, not confirmed illegal activity.
+    for review, not confirmed illegal activity. ``is_provisional`` marks trailing
+    days GFW still revises; exclude them from trends.
     """
     aoi_idx = _index_dim(aoi_dim, "aoi_key")
     out = []
@@ -238,6 +252,7 @@ def serve_maritime_activity_daily(maritime_rows: list[dict[str, Any]],
             "aoi_name": dim.get("aoi_name"),
             "region": dim.get("region"),
             "date_key": r.get("date_key"),
+            "is_provisional": bool(r.get("is_provisional")),
             **{k: r.get(k) for k in (
                 "fishing_hours", "fishing_vessels", "fishing_status",
                 "presence_hours", "presence_vessels", "presence_status",
@@ -266,20 +281,27 @@ def serve_scene_catalog(scene_rows: list[dict[str, Any]]) -> list[dict[str, Any]
             "cloud_cover": r.get("cloud_cover"),
             "completeness_score": completeness,
             "is_searchable": bool(r.get("is_searchable")),
-            "quality_band": _catalog_band(completeness, r.get("is_searchable")),
+            "quality_band": _catalog_band(completeness, r.get("is_searchable"),
+                                          r.get("cloud_cover")),
         })
     return sorted(out, key=lambda x: x["scene_key"] or "")
 
 
-def _catalog_band(completeness: Any, searchable: Any) -> str:
-    """Catalog-quality band combining metadata completeness and searchability."""
+def _catalog_band(completeness: Any, searchable: Any, cloud_cover: Any = None) -> str:
+    """Catalog-quality band: usability (cloud cover) once metadata is complete.
+
+    gold <= 10 % cloud, silver <= 30 %, bronze otherwise or with incomplete
+    metadata (D-11: completeness alone put every scene in ``gold``).
+    """
     if not searchable:
         return "unlisted"
-    if completeness is None:
+    if completeness is None or cloud_cover is None:
         return "listed"
-    if completeness >= 0.9:
+    if completeness < 0.7:
+        return "bronze"
+    if cloud_cover <= 10:
         return "gold"
-    if completeness >= 0.7:
+    if cloud_cover <= 30:
         return "silver"
     return "bronze"
 
@@ -287,19 +309,28 @@ def _catalog_band(completeness: Any, searchable: Any) -> str:
 def serve_aoi_validation(validation_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Detection Validation data product (UC-27 damage / QA).
 
-    Source: ``kpi_aoi_validation``. Exposes EMS ground-truth corroboration as a
-    trust signal for damage-assessment prioritization and detection QA.
+    Source: ``kpi_aoi_validation``. Only EMS activation footprints are ground
+    truth, so only they are ``corroborated`` / ``unconfirmed`` (D-12); other AOIs
+    report the platform's own signal as ``signal_only`` / ``no_signal``.
     """
     out = []
     for r in validation_rows:
+        is_ems = r.get("is_ems_activation", True) is not False
+        corroborated = bool(r.get("corroborated"))
+        if is_ems:
+            trust = "corroborated" if corroborated else "unconfirmed"
+        else:
+            trust = "signal_only" if r.get("signal_present") else "no_signal"
         out.append({
             "aoi_key": r.get("aoi_key"),
             "event_type": r.get("event_type"),
             "event_date": r.get("event_date"),
             "area_km2": r.get("area_km2"),
             "evidence_days": r.get("evidence_days", 0),
-            "corroborated": bool(r.get("corroborated")),
-            "trust": "corroborated" if r.get("corroborated") else "unconfirmed",
+            "is_ems_activation": is_ems,
+            "signal_present": bool(r.get("signal_present")),
+            "corroborated": corroborated,
+            "trust": trust,
         })
     return sorted(out, key=lambda x: x["aoi_key"] or "")
 

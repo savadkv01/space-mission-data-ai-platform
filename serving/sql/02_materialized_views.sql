@@ -10,19 +10,29 @@ CREATE SCHEMA IF NOT EXISTS serving_agg;
 
 -- Daily KPI rollup per analysis region (executive dashboard). Regions are never
 -- summed together; vessel identity records have no position -> region 'GLOBAL'.
+-- Only rollup-eligible AOIs (non-overlapping reporting partition, ADR-12) are
+-- summed; fire_detections excludes persistent industrial heat sources (D-03).
 CREATE OR REPLACE TABLE serving_agg.mv_kpi_platform_daily AS
-WITH fire AS (
+WITH eligible AS (
+    SELECT aoi_key FROM semantic.dim_aoi WHERE rollup_eligible
+),
+fire AS (
     SELECT date_key, region,
-           SUM(detections)          AS fire_detections,
-           MAX(max_frp)             AS peak_frp,
-           COUNT(DISTINCT aoi_key)  AS fire_aois
-    FROM serving.serving_wildfire_daily GROUP BY date_key, region
+           SUM(detections)             AS fire_detections,
+           SUM(persistent_detections)  AS persistent_heat_detections,
+           MAX(max_frp)                AS peak_frp,
+           COUNT(DISTINCT CASE WHEN detections > 0 THEN aoi_key END) AS fire_aois
+    FROM serving.serving_wildfire_daily
+    WHERE aoi_key IN (SELECT aoi_key FROM eligible)
+    GROUP BY date_key, region
 ),
 flood AS (
     SELECT date_key, region,
            SUM(CASE WHEN flood_flag THEN 1 ELSE 0 END) AS flood_aoi_days,
            COUNT(DISTINCT aoi_key)                     AS flood_aois
-    FROM serving.serving_flood_daily GROUP BY date_key, region
+    FROM serving.serving_flood_daily
+    WHERE aoi_key IN (SELECT aoi_key FROM eligible)
+    GROUP BY date_key, region
 ),
 vessel AS (
     SELECT date_key, 'GLOBAL' AS region,
@@ -39,6 +49,7 @@ SELECT
     s.date_key,
     COALESCE(s.region, 'UNASSIGNED')       AS region,
     COALESCE(fire.fire_detections, 0)      AS fire_detections,
+    COALESCE(fire.persistent_heat_detections, 0) AS persistent_heat_detections,
     fire.peak_frp,
     COALESCE(fire.fire_aois, 0)            AS fire_aois,
     COALESCE(flood.flood_aoi_days, 0)      AS flood_aoi_days,

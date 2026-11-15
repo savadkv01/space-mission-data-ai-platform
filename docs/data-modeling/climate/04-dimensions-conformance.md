@@ -25,21 +25,24 @@ All conform to the **same** `dim_date` (`date_key`) and `dim_aoi` (`aoi_key`) us
 
 Existing `dim_aoi` (Copernicus EMS footprints, key `aoi_key`) is **extended** with the Phase 5b climate AOIs. No structural change — new rows only.
 
-**Confirmed new AOI rows (from Phase 5b [`02-aoi-strategy.md`](../../source-data-analysis/climate/02-aoi-strategy.md)):**
+**Current AOI rows (reporting partition, ADR-12; boxes per [`02-aoi-strategy.md`](../../source-data-analysis/climate/02-aoi-strategy.md)):**
 
-| aoi_key | aoi_name | tier | bbox `[min_lon, min_lat, max_lon, max_lat]` |
-| --- | --- | --- | --- |
-| AOI-UAE-NAT | UAE (national) | primary | `[51.0, 22.5, 56.5, 26.2]` |
-| AOI-AUH | Abu Dhabi | primary | `[53.3, 23.5, 55.3, 24.7]` |
-| AOI-DXB | Dubai | primary | `[54.9, 24.8, 55.6, 25.4]` |
-| AOI-COAST | UAE coastal zone | primary | `[51.5, 24.0, 56.4, 26.1]` |
-| AOI-DESERT | Desert interior | primary | `[52.0, 22.5, 55.5, 23.8]` |
-| AOI-ARABIA | Arabian Peninsula interior | secondary | `[42.0, 18.0, 55.0, 30.0]` |
-| AOI-IRAQ | Iraq / Mesopotamia basin | secondary | `[42.0, 29.0, 48.5, 36.0]` |
-| AOI-IRAN | Iran SW basins | secondary | `[47.0, 28.0, 55.0, 34.0]` |
-| AOI-GULF | Arabian Gulf water body | secondary | `[48.0, 24.0, 57.0, 30.5]` |
+| aoi_key | aoi_name | tier | sub_region | bbox `[min_lon, min_lat, max_lon, max_lat]` |
+| --- | --- | --- | --- | --- |
+| AOI-AUH | Abu Dhabi | primary | UAE | `[53.3, 23.5, 55.3, 24.7]` |
+| AOI-DXB | Dubai | primary | UAE | `[54.9, 24.8, 55.6, 25.4]` |
+| AOI-COAST | UAE western coast & Abu Dhabi offshore | primary | UAE | `[51.5, 24.7, 54.9, 26.2]` |
+| AOI-NEM | Northern Emirates (RAK–Fujairah) | primary | UAE | `[55.6, 24.8, 56.5, 26.2]` |
+| AOI-DESERT | Desert interior | primary | UAE | `[52.0, 22.5, 55.5, 23.5]` |
+| AOI-ARABIA | Arabian Peninsula interior (Najd–Dahna) | secondary | ARABIA | `[42.0, 18.0, 48.0, 29.0]` |
+| AOI-ARABIA-E | Eastern Arabia | secondary | ARABIA | `[48.0, 18.0, 51.5, 26.2]` |
+| AOI-IRAQ | Iraq / Mesopotamia basin | secondary | IRAQ | `[42.0, 29.0, 48.0, 36.0]` |
+| AOI-IRAN | Iran SW basins (Khuzestan–Zagros) | secondary | IRAN | `[48.0, 30.5, 55.0, 34.0]` |
+| AOI-GULF | Arabian Gulf basin (north of the UAE coast) | secondary | GULF | `[48.0, 26.2, 57.0, 30.5]` |
 
-**New/confirmed columns on `dim_aoi`:** `tier` (`primary`/`secondary`), `aoi_role` (`monitored`/`dust_corridor`) — additive, nullable for existing EMS rows. Stored as a single versioned seed (extends `transformation/seeds/aoi_reference.geojson`).
+`AOI-UAE-NAT` (`[51.0, 22.5, 56.5, 26.2]`) was retired on 2026-11-15; its national view is `sub_region = UAE`.
+
+**New/confirmed columns on `dim_aoi`:** `tier` (`primary`/`secondary`), `aoi_role` (`monitored`/`dust_corridor`/`event_overlay`), `rollup_eligible` (reporting unit vs never-summed overlay), `sub_region` (grouping of reporting units), `is_ems_activation`, `cropland` (crop-stress applicability) — additive. Stored as a single versioned seed (`transformation/seeds/aoi_reference.geojson`).
 
 ---
 

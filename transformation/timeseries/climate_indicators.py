@@ -90,18 +90,14 @@ def desertification_proxy(
 
     Combines a *declining* vegetation trend with a *positive* land-surface
     temperature anomaly — the two hallmarks of desert-margin degradation. Each
-    term is normalised and clipped, then averaged. ``None`` when both drivers are
-    absent (a single available driver still yields a proxy).
+    term is normalised and clipped, then averaged. ``None`` unless **both**
+    drivers are present (D-05): an NDVI decline alone is also what a crop
+    harvest looks like, so it is not evidence of degradation.
     """
-    terms: list[float] = []
-    if ndvi_trend is not None:
-        # Negative NDVI slope -> degradation. Scale a -0.01/day slope to ~1.0.
-        veg = max(0.0, min(1.0, -float(ndvi_trend) / 0.01))
-        terms.append(veg)
-    if lst_anomaly_c is not None:
-        # +5 °C anomaly -> ~1.0.
-        heat = max(0.0, min(1.0, float(lst_anomaly_c) / 5.0))
-        terms.append(heat)
-    if not terms:
+    if ndvi_trend is None or lst_anomaly_c is None:
         return None
-    return round(sum(terms) / len(terms), 4)
+    # Negative NDVI slope -> degradation. Scale a -0.01/day slope to ~1.0.
+    veg = max(0.0, min(1.0, -float(ndvi_trend) / 0.01))
+    # +5 °C anomaly -> ~1.0.
+    heat = max(0.0, min(1.0, float(lst_anomaly_c) / 5.0))
+    return round((veg + heat) / 2.0, 4)

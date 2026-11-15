@@ -24,7 +24,7 @@ evaluated as (
         o.latest_observation_ts,
         coalesce(o.detections_total, 0)                             as detections_total,
         now()                                                       as freshness_evaluated_at,
-        {{ var('wildfire_max_observation_age_hours', 6) }}          as max_observation_age_hours,
+        {{ var('wildfire_max_observation_age_hours', 24) }}         as max_observation_age_hours,
         round(date_diff('second', o.latest_observation_ts, now()) / 3600.0, 3)
                                                                     as observation_age_hours
     from regions r

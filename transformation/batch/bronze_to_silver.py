@@ -396,11 +396,23 @@ def clean_maritime_activity(record: dict[str, Any]) -> CleanResult:
     })
 
 
-def silver_maritime_activity(records: list[dict[str, Any]]) -> SilverResult:
-    """GFW revises recent days, so the most recent pull wins per natural key."""
+def silver_maritime_activity(records: list[dict[str, Any]],
+                             aois: list[dict[str, Any]] | None = None) -> SilverResult:
+    """GFW revises recent days, so the most recent pull wins per natural key.
+
+    With the AOI seed, records requested over a retired or superseded AOI box
+    are quarantined (ADR-12) so old- and new-geometry sums never mix.
+    """
+    from transformation.geospatial.aoi_geometry import aoi_bbox_index, bbox_geometry_reason
+
+    index = aoi_bbox_index(aois)
     kept: list[dict[str, Any]] = []
     quarantine: list[dict[str, Any]] = []
     for rec in records:
+        reason = bbox_geometry_reason(rec.get("aoi_id"), rec.get("bbox"), index)
+        if reason:
+            quarantine.append(_quarantine(rec, [reason], "silver_maritime_activity"))
+            continue
         result = clean_maritime_activity(rec)
         if result.rejected or result.record is None:
             quarantine.append(_quarantine(rec, result.reasons, "silver_maritime_activity"))
@@ -540,6 +552,7 @@ def clean_index(record: dict[str, Any]) -> CleanResult:
     valid_fraction = round(sample / total, 4) if total > 0 else None
     stat_date = ts[:10]
     index_upper = index_name.upper()
+    water_mask = _clean_str(record.get("water_mask"))
     out = {
         "index_key": stable_key(geo_key_val, index_upper, stat_date),
         "index_name": index_upper,
@@ -553,6 +566,12 @@ def clean_index(record: dict[str, Any]) -> CleanResult:
         "stddev": to_float(stats.get("stDev")),
         "valid_pixel_fraction": valid_fraction,
         "collection": _clean_str(record.get("collection")),
+        # NDWI flood statistics over non-permanent-water pixels (JRC GSW mask);
+        # null for legacy unmasked pulls and other indices.
+        "water_mask": water_mask,
+        "water_fraction": to_float(stats.get("waterFraction")) if water_mask else None,
+        "permanent_water_fraction": (to_float(stats.get("permanentWaterFraction"))
+                                     if water_mask else None),
         "source": _clean_str(record.get("_source")) or "SENTINELHUB_STATS",
         "_ingest_id": record.get("_ingest_id"),
         "_batch_id": record.get("_batch_id"),
@@ -561,8 +580,10 @@ def clean_index(record: dict[str, Any]) -> CleanResult:
 
 
 def silver_index(records: list[dict[str, Any]]) -> SilverResult:
+    """On a key collision the permanent-water-masked NDWI record wins."""
     return _apply(records, clean_index, entity="silver_index",
-                  key_fields=["index_key"])
+                  key_fields=["index_key"],
+                  precedence=lambda r: int(r.get("water_mask") is not None))
 
 
 # --- AOI reference layer (Copernicus EMS footprints) ------------------------
@@ -642,6 +663,12 @@ def clean_ems_aoi(record: dict[str, Any]) -> CleanResult:
         "geo_key": geo_key(cy, cx),
         "polygons": polygons,
         "area_km2": round(sum(polygon_area_km2(p) for p in polygons), 4),
+        # Reporting partition vs event overlay (ADR-12); absent = reporting unit.
+        "aoi_role": _clean_str(props.get("aoi_role")),
+        "rollup_eligible": props.get("rollup_eligible") is not False,
+        "sub_region": _clean_str(props.get("sub_region")),
+        "is_ems_activation": bool(_clean_str(props.get("activation"))),
+        "cropland": props.get("cropland") is True,
         "source": _clean_str(record.get("_source")) or "EMS",
         "_ingest_id": record.get("_ingest_id"),
         "_batch_id": record.get("_batch_id"),
@@ -657,7 +684,8 @@ def silver_ems_aoi(records: list[dict[str, Any]]) -> SilverResult:
 # --- Shared driver ----------------------------------------------------------
 
 def _apply(records: list[dict[str, Any]], cleaner: Callable[[dict[str, Any]], CleanResult],
-           *, entity: str, key_fields: list[str]) -> SilverResult:
+           *, entity: str, key_fields: list[str],
+           precedence: Callable[[dict[str, Any]], Any] | None = None) -> SilverResult:
     kept: list[dict[str, Any]] = []
     quarantine: list[dict[str, Any]] = []
     for rec in records:
@@ -666,7 +694,10 @@ def _apply(records: list[dict[str, Any]], cleaner: Callable[[dict[str, Any]], Cl
             quarantine.append(_quarantine(rec, result.reasons, entity))
         else:
             kept.append(result.record)
-    # Dedup keeps latest by event time per natural key.
+    # Dedup keeps latest by event time per natural key; ``precedence`` breaks
+    # event-time ties (higher wins, as dedup keeps the last of equal times).
+    if precedence is not None:
+        kept.sort(key=precedence)
     deduped = deduplicate(kept, key_fields=key_fields, order_field="event_ts")
     return SilverResult(entity=entity, rows=deduped, quarantine=quarantine)
 
@@ -721,6 +752,7 @@ def _silver_spark_schema(entity: str):  # pragma: no cover - needs Spark
             _s("index_key"), _s("index_name"), _s("stat_date"), _s("event_ts"),
             _s("geo_key"), _s("bbox"), _d("mean"), _d("min"), _d("max"),
             _d("stddev"), _d("valid_pixel_fraction"), _s("collection"),
+            _s("water_mask"), _d("water_fraction"), _d("permanent_water_fraction"),
             _s("source"), _s("_ingest_id"), _s("_batch_id"),
         ]),
         "maritime": StructType([
@@ -784,7 +816,12 @@ def run_spark(entity: str) -> None:  # pragma: no cover - needs Spark/MinIO
             continue
         records.extend(r.asDict(recursive=True) for r in bronze.collect())
 
-    result = fn([unwrap_bronze(r) for r in records])
+    unwrapped = [unwrap_bronze(r) for r in records]
+    if entity == "maritime":
+        from transformation.batch.gold_lakehouse import load_aoi_reference
+        result = fn(unwrapped, load_aoi_reference())
+    else:
+        result = fn(unwrapped)
     if entity == "fire":
         deduplicated = len(records) - len(result.rows) - len(result.quarantine)
         print(

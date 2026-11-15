@@ -93,16 +93,19 @@ class ClimateSettings:
 
     #: Named AOI bounding boxes: UAE-GULF primary + dust corridors, and the
     #: INDIA regional tier (docs/source-data-analysis/climate/02-aoi-strategy.md).
+    #: Within a region the boxes form a non-overlapping reporting partition
+    #: (shared edges only, ADR-12) and must match transformation/seeds/aoi_reference.geojson.
     aois: dict[str, tuple[float, float, float, float]] = field(default_factory=lambda: {
-        "AOI-UAE-NAT": (51.0, 22.5, 56.5, 26.2),
         "AOI-AUH": (53.3, 23.5, 55.3, 24.7),
         "AOI-DXB": (54.9, 24.8, 55.6, 25.4),
-        "AOI-COAST": (51.5, 24.0, 56.4, 26.1),
-        "AOI-DESERT": (52.0, 22.5, 55.5, 23.8),
-        "AOI-ARABIA": (42.0, 18.0, 55.0, 30.0),
-        "AOI-IRAQ": (42.0, 29.0, 48.5, 36.0),
-        "AOI-IRAN": (47.0, 28.0, 55.0, 34.0),
-        "AOI-GULF": (48.0, 24.0, 57.0, 30.5),
+        "AOI-COAST": (51.5, 24.7, 54.9, 26.2),
+        "AOI-NEM": (55.6, 24.8, 56.5, 26.2),
+        "AOI-DESERT": (52.0, 22.5, 55.5, 23.5),
+        "AOI-ARABIA": (42.0, 18.0, 48.0, 29.0),
+        "AOI-ARABIA-E": (48.0, 18.0, 51.5, 26.2),
+        "AOI-IRAQ": (42.0, 29.0, 48.0, 36.0),
+        "AOI-IRAN": (48.0, 30.5, 55.0, 34.0),
+        "AOI-GULF": (48.0, 26.2, 57.0, 30.5),
         "IN-DEL-NCR": (76.8, 28.3, 77.6, 28.9),
         "IN-MUM": (72.75, 18.85, 73.2, 19.35),
         "IN-PB-HR": (73.8, 29.0, 77.4, 32.5),
@@ -114,17 +117,22 @@ class ClimateSettings:
     #: freshness never combine AOIs from different regions.
     aoi_regions: dict[str, str] = field(default_factory=lambda: {
         **{aoi: "UAE-GULF" for aoi in (
-            "AOI-UAE-NAT", "AOI-AUH", "AOI-DXB", "AOI-COAST", "AOI-DESERT",
-            "AOI-ARABIA", "AOI-IRAQ", "AOI-IRAN", "AOI-GULF")},
+            "AOI-AUH", "AOI-DXB", "AOI-COAST", "AOI-NEM", "AOI-DESERT",
+            "AOI-ARABIA", "AOI-ARABIA-E", "AOI-IRAQ", "AOI-IRAN", "AOI-GULF")},
         **{aoi: "INDIA" for aoi in (
             "IN-DEL-NCR", "IN-MUM", "IN-PB-HR", "IN-THAR", "IN-GUJ-COAST", "IN-ASSAM")},
     })
     #: Per-region, per-source AOI plans (keeps request volume within the laptop
-    #: and provider budgets; OpenAQ in INDIA is PM-only).
+    #: and provider budgets; OpenAQ is PM-only). UAE-GULF FIRMS stays a single
+    #: broad request in run_full_batch_ingest, not per AOI.
     region_sources: dict[str, dict[str, tuple[str, ...]]] = field(default_factory=lambda: {
         "UAE-GULF": {
-            # Maritime activity only; other UAE-GULF sources keep their own loops
-            # in run_full_batch_ingest.
+            "openaq": ("AOI-DXB", "AOI-AUH", "AOI-NEM"),
+            "tropomi": ("AOI-AUH", "AOI-DXB"),
+            "aod": ("AOI-DXB", "AOI-DESERT", "AOI-ARABIA", "AOI-ARABIA-E",
+                    "AOI-IRAQ", "AOI-IRAN"),
+            "ndvi": ("AOI-DXB",),
+            "ndwi": ("AOI-DXB",),
             "gfw": ("AOI-GULF", "AOI-COAST"),
         },
         "INDIA": {
@@ -143,6 +151,10 @@ class ClimateSettings:
     openaq_pm_pollutants: tuple[str, ...] = ("pm25", "pm10")
     #: Fixed per-request FIRMS detection cap; truncation is reported as capped coverage.
     firms_max_records_per_request: int = 10000
+    #: Daily FIRMS request ``day_range`` (D-04). ``1`` returns only the current UTC
+    #: day, so an early-UTC run gets no rows and misses the previous day's late
+    #: passes; ``2`` adds yesterday. The Silver fire key deduplicates the overlap.
+    firms_daily_day_range: int = 2
     #: FIRMS product for all regions. VIIRS S-NPP NRT ends 2026-11-02 at FIRMS
     #: (data_availability API), so the live feed is VIIRS NOAA-20 (same 375 m
     #: VIIRS I-band fields). One sensor per day avoids double counting, as the

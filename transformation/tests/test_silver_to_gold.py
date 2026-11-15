@@ -29,10 +29,14 @@ def test_fire_attribution_accounts_for_overlap_unmatched_and_invalid_date():
         {"fire_key": "out", "event_ts": "2026-10-31T00:00:00Z", "latitude": 0, "longitude": 0},
         {"fire_key": "bad", "event_ts": "invalid", "latitude": 25, "longitude": 55},
     ]
-    aois = [_FIRE_AOI, {**_FIRE_AOI, "aoi_key": "overlap"}]
+    overlay = {**_FIRE_AOI, "aoi_key": "overlap", "rollup_eligible": False}
+    aois = [_FIRE_AOI, overlay]
     ledger = fire_aoi_attribution(rows, aois)
     assert len(ledger) == 3
+    # One reporting AOI plus the event overlay that also contains the point.
     assert ledger[0]["match_count"] == 2
+    assert ledger[0]["reporting_aoi_key"] == "EMSR200"
+    assert ledger[0]["aoi_keys"] == ["EMSR200", "overlap"]
     assert ledger[0]["frp"] == 12.5
     assert ledger[0]["brightness_source_field"] == "bright_ti4"
     assert ledger[0]["brightness_status"] == "present"
@@ -40,6 +44,18 @@ def test_fire_attribution_accounts_for_overlap_unmatched_and_invalid_date():
     assert ledger[1]["match_status"] == "unmatched"
     assert ledger[2]["match_status"] == "invalid_date" and ledger[2]["match_count"] == 0
     assert sum(r["detections"] for r in gold_wildfire_aoi(rows, aois)) == 2
+
+
+def test_point_on_shared_partition_edge_counts_once():
+    west = {"aoi_key": "A-WEST", "bbox": [0.0, 0.0, 1.0, 1.0],
+            "polygons": [[[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]]]}
+    east = {"aoi_key": "B-EAST", "bbox": [1.0, 0.0, 2.0, 1.0],
+            "polygons": [[[[1, 0], [2, 0], [2, 1], [1, 1], [1, 0]]]]}
+    fire = [{"fire_key": "edge", "event_ts": "2026-11-01T00:00:00Z",
+             "latitude": 0.5, "longitude": 1.0}]
+    ledger = fire_aoi_attribution(fire, [east, west])
+    assert ledger[0]["aoi_keys"] == ["A-WEST"]
+    assert sum(r["detections"] for r in gold_wildfire_aoi(fire, [east, west])) == 1
 
 
 def test_gold_satellite_health_grain(telemetry_records):
@@ -145,18 +161,54 @@ def test_gold_wildfire_aoi_point_in_polygon():
     assert gold[0]["max_frp"] == 50.0
 
 
-def test_gold_flood_aoi_from_ndwi():
-    index_rows = [
-        {"index_name": "NDWI", "event_ts": "2026-06-10T00:00:00+00:00",
-         "bbox": "54.8,24.8,55.6,25.5", "mean": 0.3, "valid_pixel_fraction": 0.9},
-        {"index_name": "NDVI", "event_ts": "2026-06-10T00:00:00+00:00",
-         "bbox": "54.8,24.8,55.6,25.5", "mean": 0.6, "valid_pixel_fraction": 0.9},
-    ]
-    gold = gold_flood_aoi(index_rows, [_FLOOD_AOI])
+def test_gold_flood_aoi_decides_only_on_permanent_water_masked_ndwi():
+    legacy = {"index_name": "NDWI", "event_ts": "2026-06-10T00:00:00+00:00",
+              "bbox": "54.8,24.8,55.6,25.5", "mean": 0.3, "valid_pixel_fraction": 0.9}
+    ndvi = {**legacy, "index_name": "NDVI", "mean": 0.6}
+    gold = gold_flood_aoi([legacy, ndvi], [_FLOOD_AOI])
     assert len(gold) == 1
     assert gold[0]["aoi_key"] == "EMSR100"
-    assert gold[0]["flood_flag"] is True  # NDWI mean 0.3 > 0
     assert gold[0]["ndwi_mean"] == 0.3
+    # Unmasked NDWI cannot tell sea from flood water: not evaluated, not True.
+    assert gold[0]["flood_flag"] is None
+
+    def masked(day, water):
+        return {**legacy, "event_ts": f"{day}T00:00:00+00:00", "mean": -0.4,
+                "water_mask": "jrc_gsw_v1_4_seasonality_ge10",
+                "water_fraction": water, "permanent_water_fraction": 0.6}
+
+    out = {r["date_key"]: r for r in gold_flood_aoi(
+        [masked("2026-06-11", 0.005), masked("2026-06-12", 0.08),
+         {**masked("2026-06-13", 0.5), "valid_pixel_fraction": 0.05}], [_FLOOD_AOI])}
+    assert out["2026-06-11"]["flood_flag"] is False   # 0.5 % new water: dry
+    assert out["2026-06-12"]["flood_flag"] is True    # 8 % new water: flood
+    assert out["2026-06-12"]["permanent_water_fraction"] == 0.6
+    assert out["2026-06-13"]["flood_flag"] is None    # 5 % valid pixels: too cloudy
+
+
+def test_aoi_validation_corroborates_only_ems_activations():
+    platform_aoi = {**_FIRE_AOI, "aoi_key": "IN-PB-HR", "is_ems_activation": False}
+    wildfire = [{"aoi_key": "IN-PB-HR", "date_key": "2026-11-01", "detections": 400}]
+    row = gold_aoi_validation([platform_aoi], wildfire, [])[0]
+    assert (row["signal_present"], row["corroborated"]) == (True, False)
+
+
+def test_persistent_heat_sources_are_excluded_from_wildfire_kpis():
+    from transformation.batch.silver_to_gold import classify_heat_sources
+
+    # A flare: same 0.01° cell on 6 days. A crop fire: a different cell each day.
+    flare = [{"event_ts": f"2026-11-0{d}T22:00:00Z", "latitude": 25.20, "longitude": 55.20,
+              "frp": 5.0} for d in range(1, 7)]
+    crops = [{"event_ts": f"2026-11-0{d}T08:00:00Z", "latitude": 25.0 + d / 50,
+              "longitude": 55.0, "frp": 9.0} for d in range(1, 7)]
+    classes = classify_heat_sources(flare + crops)
+    assert classes[:6] == ["persistent_industrial"] * 6
+    assert classes[6:] == ["vegetation_fire"] * 6
+
+    gold = gold_wildfire_aoi(flare + crops, [_FIRE_AOI])
+    assert sum(r["detections"] for r in gold) == 6
+    assert sum(r["persistent_detections"] for r in gold) == 6
+    assert all(r["max_frp"] == 9.0 for r in gold if r["detections"])
 
 
 def test_gold_aoi_validation_corroborates():
@@ -199,7 +251,27 @@ def test_aoi_seed_assigns_every_footprint_a_region():
     from transformation.batch.gold_lakehouse import load_aoi_reference
 
     regions = Counter(a["region"] for a in load_aoi_reference())
-    assert regions == {"UAE-GULF": 10, "INDIA": 6, "US-LEGACY": 1}
+    assert regions == {"UAE-GULF": 11, "INDIA": 6, "US-LEGACY": 1}
+
+
+def test_aoi_seed_reporting_units_partition_and_match_ingestion_boxes():
+    from ingestion.config.settings import settings
+    from transformation.batch.gold_lakehouse import load_aoi_reference
+    from transformation.geospatial.spatial_transform import (
+        overlapping_reporting_pairs,
+        reporting_aois,
+    )
+
+    aois = load_aoi_reference()
+    assert overlapping_reporting_pairs(aois) == []
+    overlays = {a["aoi_key"] for a in aois if a["rollup_eligible"] is False}
+    assert overlays == {"EMSR-AE-FLOOD-2024"}
+    # Request boxes must equal the seed geometry, or Silver quarantines the
+    # records as superseded (ADR-12).
+    seed = {a["aoi_key"]: a["bbox"] for a in reporting_aois(aois)
+            if a["aoi_key"] in settings.climate.aois}
+    assert set(seed) == set(settings.climate.aois)
+    assert all(seed[k] == list(v) for k, v in settings.climate.aois.items())
 
 
 def _maritime(dataset, aoi, day, flag, value, vessels, ingest="2026-11-14T00:00:00Z"):
@@ -242,3 +314,33 @@ def test_gold_maritime_zero_only_where_published_else_not_published():
     assert (d2["presence_hours"], d2["presence_status"]) == (0.0, "measured")
     assert (d3["fishing_hours"], d3["fishing_status"]) == (None, "not_published")
     assert (d3["sar_detections"], d3["sar_status"]) == (None, "not_published")
+
+
+def test_gold_maritime_marks_trailing_days_provisional():
+    from transformation.batch.bronze_to_silver import silver_maritime_activity
+    from transformation.batch.silver_to_gold import gold_maritime_activity
+
+    silver = silver_maritime_activity([
+        _maritime("presence", "AOI-GULF", f"2026-11-{d:02d}", "SAU", 10.0, 2)
+        for d in range(1, 11)
+    ]).rows
+    rows = {r["date_key"]: r["is_provisional"] for r in gold_maritime_activity(silver)}
+    assert rows["2026-11-05"] is False
+    assert [d for d, p in sorted(rows.items()) if p] == [
+        "2026-11-06", "2026-11-07", "2026-11-08", "2026-11-09", "2026-11-10"]
+
+
+def test_silver_maritime_quarantines_superseded_aoi_geometry():
+    from transformation.batch.bronze_to_silver import silver_maritime_activity
+
+    seed = [{"aoi_key": "AOI-GULF", "bbox": [48.0, 26.2, 57.0, 30.5]}]
+    old = {**_maritime("presence", "AOI-GULF", "2026-11-01", "SAU", 10.0, 2),
+           "bbox": [48.0, 24.0, 57.0, 30.5]}
+    new = {**_maritime("presence", "AOI-GULF", "2026-11-02", "SAU", 9.0, 2),
+           "bbox": [48.0, 26.2, 57.0, 30.5]}
+    retired = {**_maritime("presence", "AOI-UAE-NAT", "2026-11-01", "SAU", 1.0, 1),
+               "bbox": [51.0, 22.5, 56.5, 26.2]}
+    result = silver_maritime_activity([old, new, retired], seed)
+    assert [r["stat_date"] for r in result.rows] == ["2026-11-02"]
+    assert sorted(q["_reasons"][0] for q in result.quarantine) == [
+        "retired:aoi", "superseded:aoi_geometry"]

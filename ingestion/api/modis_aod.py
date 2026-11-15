@@ -56,7 +56,7 @@ class ModisAodConnector(SentinelHubStatsConnector):
     #: Sensors this connector can source AOD from (stamped onto the record).
     SENSORS = ("MODIS", "VIIRS")
 
-    def fetch_raw(self, *, aoi_id: str = "AOI-UAE-NAT",
+    def fetch_raw(self, *, aoi_id: str = "AOI-DXB",
                   bbox: list[float] | None = None,
                   sensor: str = "MODIS",
                   datetime_range: str = "2024-06-01T00:00:00Z/2024-06-30T23:59:59Z",

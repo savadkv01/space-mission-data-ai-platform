@@ -37,7 +37,7 @@ def test_tropomi_shapes_one_record_per_bucket():
                    ("2024-06-02T00:00:00Z", "2024-06-03T00:00:00Z"))
     conn = TropomiConnector(http=SequencedHttp(_token(), stats),
                             client_id="cid", client_secret="secret")
-    envelopes = conn.ingest(product="NO2", aoi_id="AOI-UAE-NAT")
+    envelopes = conn.ingest(product="NO2", aoi_id="AOI-AUH")
     assert len(envelopes) == 2
     assert envelopes[0]._source == "TROPOMI"
     assert envelopes[0]._event_ts == "2024-06-01T00:00:00Z"
@@ -47,11 +47,11 @@ def test_tropomi_stamps_product_unit_and_aoi():
     stats = _stats(("2024-06-01T00:00:00Z", "2024-06-02T00:00:00Z"))
     conn = TropomiConnector(http=SequencedHttp(_token(), stats),
                             client_id="cid", client_secret="secret")
-    rec = conn.ingest(product="no2", aoi_id="AOI-UAE-NAT")[0].payload
+    rec = conn.ingest(product="no2", aoi_id="AOI-AUH")[0].payload
     assert rec["product"] == "NO2"
     assert rec["unit"] == "mol/m2"
-    assert rec["aoi_id"] == "AOI-UAE-NAT"
-    assert rec["bbox"] == [51.0, 22.5, 56.5, 26.2]  # UAE national AOI
+    assert rec["aoi_id"] == "AOI-AUH"
+    assert rec["bbox"] == [53.3, 23.5, 55.3, 24.7]  # Abu Dhabi AOI
     assert rec["collection"] == "sentinel-5p-l2"
 
 

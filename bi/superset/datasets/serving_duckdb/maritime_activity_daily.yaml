@@ -1,11 +1,11 @@
 table_name: maritime_activity_daily
 main_dttm_col: event_date
-description: "Certified: Maritime Activity (UC-18), 1 row per maritime AOI per day from GFW 4Wings (fishing hours, AIS presence, SAR detections). Filter or group by region; null + not_published = unreleased day, not zero. Unmatched SAR detections are review candidates. GFW data: non-commercial use only."
+description: "Certified: Maritime Activity (UC-18), 1 row per maritime AOI per day from GFW 4Wings (fishing hours, AIS presence, SAR detections). Filter or group by region; null + not_published = unreleased day, not zero. Unmatched SAR detections are review candidates. Exclude is_provisional days from trends. GFW data: non-commercial use only."
 cache_timeout: 3600
 schema: null
 sql: |
   select
-      aoi_key, aoi_name, region, cast(date_key as date) as event_date,
+      aoi_key, aoi_name, region, cast(date_key as date) as event_date, is_provisional,
       fishing_hours, fishing_vessels, fishing_status,
       presence_hours, presence_vessels, presence_status,
       sar_detections, sar_unmatched_detections, sar_dark_fraction, sar_status

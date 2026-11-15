@@ -129,18 +129,24 @@ def _aer_row(aoi, day, aod, uv=None, vf=0.9):
             "uv_aerosol_index": uv, "valid_fraction": vf}
 
 
+# Centroids (lat, lon): Arabia lies west-south-west of Dubai (bearing ~260°).
+_CENTROIDS = {"AOI-DXB": (25.1, 55.25), "AOI-ARABIA": (23.5, 45.0), "IN-THAR": (26.75, 72.0)}
+_REGIONS = {"AOI-DXB": "UAE-GULF", "AOI-ARABIA": "UAE-GULF", "IN-THAR": "INDIA"}
+
+
 def test_gold_dust_event_daily_flag_and_corridor():
     aerosol = [
         _aer_row("AOI-DXB", "2024-06-01", 0.8, uv=1.5),
         _aer_row("AOI-ARABIA", "2024-06-01", 1.2, uv=2.0),  # corridor source
     ]
-    gold = gold_dust_event_daily(aerosol)
+    gold = gold_dust_event_daily(aerosol, aoi_regions=_REGIONS, aoi_centroids=_CENTROIDS)
     dxb = next(r for r in gold if r["aoi_key"] == "AOI-DXB")
     assert dxb["aod_mean"] == 0.8
     assert dxb["dust_severity_band"] == 2
     assert dxb["dust_flag"] is True
-    # corridor = strongest AOD over OTHER AOIs same day
-    assert dxb["corridor_aod_max"] == 1.2
+    # Without a wind direction nothing is upwind, so no corridor is asserted.
+    assert dxb["corridor_aod_max"] is None
+    assert dxb["transport_flag"] is False
 
 
 def test_gold_dust_uv_from_atmos_column():
@@ -152,25 +158,55 @@ def test_gold_dust_uv_from_atmos_column():
     assert gold[0]["dust_flag"] is True
 
 
-def test_gold_dust_uses_wind_for_context_and_transport_flag():
+def test_gold_dust_uses_wind_for_context_and_upwind_transport():
     aerosol = [
         _aer_row("AOI-DXB", "2024-06-01", 0.8, uv=1.5),
         _aer_row("AOI-ARABIA", "2024-06-01", 1.2, uv=2.0),
     ]
-    wind = {("AOI-DXB", "2024-06-01"): {
-        "wind_speed_mean": 4.5,
-        "wind_dir_dominant": 275.0,
-    }}
 
-    result = gold_dust_event_daily(aerosol, wind_by_aoi_day=wind)
-    dxb = next(row for row in result if row["aoi_key"] == "AOI-DXB")
+    def run(wind_from):
+        wind = {("AOI-DXB", "2024-06-01"): {"wind_speed_mean": 4.5,
+                                            "wind_dir_dominant": wind_from}}
+        rows = gold_dust_event_daily(aerosol, wind_by_aoi_day=wind,
+                                     aoi_regions=_REGIONS, aoi_centroids=_CENTROIDS)
+        return next(row for row in rows if row["aoi_key"] == "AOI-DXB")
 
-    assert dxb["wind_speed_mean"] == 4.5
-    assert dxb["wind_dir_dominant"] == 275.0
-    assert dxb["transport_flag"] is True
+    westerly = run(275.0)   # wind from the west: Arabia is upwind
+    assert westerly["wind_speed_mean"] == 4.5
+    assert westerly["wind_dir_dominant"] == 275.0
+    assert westerly["corridor_aod_max"] == 1.2
+    assert westerly["transport_flag"] is True
+
+    easterly = run(90.0)    # wind from the east: Arabia is downwind (D-06)
+    assert easterly["corridor_aod_max"] is None
+    assert easterly["transport_flag"] is False
+
+
+def test_dust_rule_uses_maiac_aerosol_model_over_uv_index():
+    from transformation.batch.climate_silver_to_gold import aerosol_type
+
+    # Crop-burning smoke: high AOD and UV index, but MAIAC retrieves the smoke model.
+    assert dust_flag(1.5, 1.8, dust_fraction=0.05) is False
+    assert dust_flag(0.8, 0.4, dust_fraction=0.7) is True
+    assert dust_flag(0.8, 1.2, dust_fraction=None) is True   # legacy UV-index rule
+    assert aerosol_type(0.8, 0.1) == "smoke"
+    assert aerosol_type(0.1, 0.6) == "dust"
+    assert aerosol_type(0.3, 0.3) == "mixed"
+    assert aerosol_type(0.1, 0.1) == "background"
+    assert aerosol_type(None, None) is None
+
+    smoke_day = {**_aer_row("IN-DEL-NCR", "2026-11-05", 1.6, uv=1.9),
+                 "smoke_fraction": 0.9, "dust_fraction": 0.0}
+    row = gold_dust_event_daily([smoke_day])[0]
+    assert (row["aerosol_type"], row["dust_flag"]) == ("smoke", False)
 
 
 def test_gold_lakehouse_wires_silver_power_wind_into_dust_mart():
+    def aoi(key, bbox):
+        w, s, e, n = bbox
+        return {"aoi_key": key, "region": "UAE-GULF", "bbox": list(bbox),
+                "polygons": [[[[w, s], [e, s], [e, n], [w, n], [w, s]]]]}
+
     marts = build_marts(
         {
             "aerosol": [
@@ -184,7 +220,7 @@ def test_gold_lakehouse_wires_silver_power_wind_into_dust_mart():
                  "parameter": "WD2M", "value_std": 275.0, "quality_flag": "valid"},
             ],
         },
-        [],
+        [aoi("AOI-DXB", (54.9, 24.8, 55.6, 25.4)), aoi("AOI-ARABIA", (42.0, 18.0, 48.0, 29.0))],
     )
 
     dxb = next(
@@ -223,14 +259,22 @@ def test_gold_vegetation_health_grain_and_band():
     assert r1["ndvi_trend_30d"] < 0
 
 
-def test_gold_vegetation_crop_stress():
+def test_gold_vegetation_crop_stress_only_on_cropland():
     rows = [
         _index_row("NDVI", "2024-06-01", 0.25),
         _index_row("NDVI", "2024-06-02", 0.20),
     ]
-    gold = gold_vegetation_health_daily(rows, [_DXB_AOI])
-    r1 = next(r for r in gold if r["date_key"] == "2024-06-02")
-    assert r1["crop_stress_flag"] is True   # low NDVI + declining
+    crop = next(r for r in gold_vegetation_health_daily(rows, [{**_DXB_AOI, "cropland": True}])
+                if r["date_key"] == "2024-06-02")
+    assert crop["crop_stress_applicable"] is True
+    assert crop["crop_stress_flag"] is True   # low NDVI + declining
+
+    # Same low/declining NDVI over a non-cropland AOI (city, desert, sea) is not
+    # evaluated (D-08).
+    urban = next(r for r in gold_vegetation_health_daily(rows, [_DXB_AOI])
+                 if r["date_key"] == "2024-06-02")
+    assert urban["crop_stress_applicable"] is False
+    assert urban["crop_stress_flag"] is None
 
 
 # --- fact_climate_indicator_daily ------------------------------------------
@@ -283,7 +327,11 @@ def test_dust_corridor_never_crosses_regions():
 
     aerosol = [{"aoi_id": aoi, "stat_date": "2026-11-01", "aod_550nm": aod}
                for aoi, aod in (("AOI-DXB", 0.3), ("AOI-ARABIA", 0.6), ("IN-THAR", 1.4))]
-    regions = {"AOI-DXB": "UAE-GULF", "AOI-ARABIA": "UAE-GULF", "IN-THAR": "INDIA"}
-    out = {r["aoi_key"]: r for r in gold_dust_event_daily(aerosol, aoi_regions=regions)}
+    # Both AOIs have a wind blowing from the direction of every other AOI.
+    wind = {("AOI-DXB", "2026-11-01"): {"wind_speed_mean": 3.0, "wind_dir_dominant": 260.0},
+            ("IN-THAR", "2026-11-01"): {"wind_speed_mean": 3.0, "wind_dir_dominant": 265.0}}
+    out = {r["aoi_key"]: r for r in gold_dust_event_daily(
+        aerosol, wind_by_aoi_day=wind, aoi_regions=_REGIONS, aoi_centroids=_CENTROIDS)}
     assert out["AOI-DXB"]["corridor_aod_max"] == 0.6
+    # Dubai lies upwind of Thar, but in another region.
     assert out["IN-THAR"]["corridor_aod_max"] is None

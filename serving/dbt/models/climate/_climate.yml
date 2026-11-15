@@ -54,7 +54,11 @@ models:
     description: >-
       Dust-Event data product, 1 row per AOI per day. dust_flag / transport_flag
       are null unless evidence decides them (dust_status / transport_status);
-      missing UV aerosol index or wind is not a negative.
+      missing UV aerosol index, aerosol model or wind is not a negative.
+      aerosol_load_label describes AOD of any aerosol type; dust_severity_label
+      uses dust wording only for positive dust rows. aerosol_type is the dominant
+      MAIAC aerosol model (smoke / dust / mixed / background). corridor_aod_max
+      considers upwind same-region AOIs only.
     columns:
       - name: aoi_key
         tests: [not_null]
@@ -69,10 +73,27 @@ models:
         tests:
           - accepted_values:
               values: [0, 1, 2, 3, 4]
+      - name: aerosol_load_label
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Clear', 'Hazy', 'Elevated', 'High', 'Very high', 'unknown']
       - name: dust_severity_label
         tests:
+          - not_null
           - accepted_values:
-              values: ['Clear', 'Hazy', 'Dusty', 'Heavy dust', 'Severe', 'unknown']
+              values: ['Dusty', 'Heavy dust', 'Severe', 'No dust event', 'unknown']
+      - name: aerosol_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['smoke', 'dust', 'mixed', 'background', 'unknown']
+      - name: smoke_fraction
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 1 }
+      - name: dust_fraction
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 1 }
       - name: valid_fraction
         tests:
           - dbt_utils.accepted_range:
@@ -143,8 +164,9 @@ models:
     description: >-
       Vegetation-Health data product, 1 row per AOI per day. ndvi_trend_dir is
       'unknown' when no trend could be computed; crop_stress_flag is null unless
-      evidence decides it (crop_stress_status). A positive is a low/declining
-      NDVI signal, not a verified crop-stress event (no crop mask).
+      evidence decides it (crop_stress_status). Crop stress is evaluated only on
+      cropland AOIs (crop_stress_applicable); elsewhere it is 'not_evaluated'.
+      A positive is a low/declining NDVI signal, not a verified crop-stress event.
     columns:
       - name: aoi_key
         tests: [not_null]
@@ -172,6 +194,8 @@ models:
           - not_null
           - accepted_values:
               values: ['positive', 'negative', 'inconclusive', 'not_evaluated']
+      - name: crop_stress_applicable
+        tests: [not_null]
       - name: valid_pixel_fraction
         tests:
           - dbt_utils.accepted_range:
@@ -184,7 +208,8 @@ models:
   - name: mv_kpi_climate_daily
     description: >-
       Materialized climate/dust/air-quality daily KPI rollup per analysis region
-      (executive/weather view). Regions are never summed together.
+      (executive/weather view). Regions are never summed together; only
+      rollup-eligible AOIs (non-overlapping reporting partition) are counted.
     columns:
       - name: date_key
         tests: [not_null]

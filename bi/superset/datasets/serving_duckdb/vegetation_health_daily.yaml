@@ -1,6 +1,6 @@
 table_name: vegetation_health_daily
 main_dttm_col: event_date
-description: "Certified (12b): Vegetation health — NDVI/EVI, 30-day trend, crop-stress proxy (per AOI per day)."
+description: "Certified (12b): Vegetation health — NDVI/EVI, 30-day trend, crop-stress proxy (per AOI per day; cropland AOIs only)."
 default_endpoint: null
 offset: 0
 cache_timeout: 3600
@@ -10,7 +10,7 @@ sql: |
       aoi_key, aoi_name, region, cast(date_key as date) as event_date,
       ndvi_mean, ndvi_max, evi_mean, ndvi_trend_30d, ndvi_trend_dir,
       valid_pixel_fraction, ndvi_health_band, ndvi_health_label, crop_stress_flag,
-      crop_stress_status, area_km2
+      crop_stress_status, crop_stress_applicable, area_km2
   from serving.serving_vegetation_health_daily
 params: null
 template_params: null

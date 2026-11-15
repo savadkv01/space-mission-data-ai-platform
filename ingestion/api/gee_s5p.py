@@ -48,7 +48,7 @@ class GeeS5pConnector(EarthEngineStatsConnector):
     }
 
     def fetch_raw(self, *, product: str = "NO2",
-                  aoi_id: str = "AOI-UAE-NAT",
+                  aoi_id: str = "AOI-DXB",
                   bbox: list[float] | None = None,
                   datetime_range: str = "2024-06-01T00:00:00Z/2024-06-07T23:59:59Z",
                   **_: Any) -> tuple[list[dict[str, Any]], str]:

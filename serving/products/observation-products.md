@@ -90,7 +90,7 @@ does not waive that upstream requirement.
 **Interpretation:**
 - **Unpublished days:** a null measure with `*_status = 'not_published'` means GFW has not released that day; it is not zero.
 - **Unmatched radar detections:** `sar_unmatched_detections` are Sentinel-1 detections with no matching AIS broadcast. They are review candidates (small craft, non-AIS vessels, platforms, AIS gaps), not confirmed illegal or "dark" activity.
-- **Overlapping AOIs:** `AOI-COAST` lies inside `AOI-GULF`, so values are not additive across AOIs; the product is deliberately not rolled up into `mv_kpi_platform_daily`.
+- **Reporting partition:** since 2026-11-15 `AOI-COAST` (Abu Dhabi offshore) and `AOI-GULF` (Gulf basin north of 26.2°N) no longer overlap (ADR-12), so values are additive within a region. The product is still not rolled up into `mv_kpi_platform_daily`. `is_provisional` marks the trailing days GFW still revises; exclude them from trends.
 - **Licence:** GFW data is free for non-commercial use only.
 
 ---

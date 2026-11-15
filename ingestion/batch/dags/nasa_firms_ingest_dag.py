@@ -1,7 +1,8 @@
 """DAG: NASA FIRMS active-fire batch ingestion (Task 3).
 
 Schedule: hourly (FIRMS NRT updates within ~3h). Incremental: each run pulls the
-last `days=1` window for the configured AOI and lands it in Bronze.
+last ``settings.climate.firms_daily_day_range`` days (today + yesterday, so the
+previous day's late passes are never missed) and lands them in Bronze.
 """
 
 from __future__ import annotations
@@ -33,7 +34,8 @@ REGIONS = {
 
 def _ingest_region(region: str, area: str, **_) -> dict:
     return run_connector_to_bronze(
-        FirmsConnector(), source=settings.climate.firms_source, area=area, days=1,
+        FirmsConnector(), source=settings.climate.firms_source, area=area,
+        days=settings.climate.firms_daily_day_range,
         max_records=settings.climate.firms_max_records_per_request)
 
 

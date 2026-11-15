@@ -159,3 +159,22 @@ def test_openaq_defaults_start_date_from_requested_end_date():
     params = conn.http.calls[1][1]["params"]
     assert params["datetime_from"] == "2026-10-30T00:00:00Z"
     assert params["datetime_to"] == "2026-10-31T23:59:59Z"
+
+
+def test_openaq_request_budget_drops_oldest_days_not_newest():
+    # D-02: a 9-day range in 3-day windows with a 2-request budget must keep the
+    # newest days and record the oldest complete day in the coverage note.
+    locations = {"results": [_location(1, "Delhi-1", [_sensor(10, "pm25")])]}
+    newest = {"results": [_measurement(250.0, "2026-11-14T00:00:00Z")]}
+    middle = {"results": [_measurement(240.0, "2026-11-11T00:00:00Z")]}
+    conn = OpenAqConnector(http=SequencedHttp(locations, newest, middle), api_key="k")
+    envelopes = conn.ingest(aoi_id="AOI-DXB", pollutants=["pm25"], limit=1000,
+                            max_pages=2, window_days=3,
+                            date_from="2026-11-06", date_to="2026-11-14")
+    windows = [(c[1]["params"]["datetime_from"][:10], c[1]["params"]["datetime_to"][:10])
+               for c in conn.http.calls[1:]]
+    assert windows == [("2026-11-12", "2026-11-14"), ("2026-11-09", "2026-11-11")]
+    assert len(envelopes) == 2
+    assert conn.coverage_notes == [
+        "OpenAQ AOI-DXB: sensor 10 capped at 2 requests; "
+        "newest-first, complete days 2026-11-09..2026-11-14"]

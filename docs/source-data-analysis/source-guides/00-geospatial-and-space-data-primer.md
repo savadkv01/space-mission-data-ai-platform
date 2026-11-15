@@ -127,7 +127,7 @@ Statistical API, so Silver code is backend-agnostic:
  "outputs": {"index": {"bands": {"B0": {"stats": {
      "mean": 0.156, "min": 0.0, "max": 2.233, "stDev": 0.108,
      "sampleCount": 236785, "noDataCount": 15783}}}}},
- "aoi_id": "AOI-UAE-NAT", "bbox": [51.0, 22.5, 56.5, 26.2], "…": "source-specific context"}
+ "aoi_id": "AOI-DXB", "bbox": [54.9, 24.8, 55.6, 25.4], "…": "source-specific context"}
 ```
 
 | Field | Meaning | How to use it |
